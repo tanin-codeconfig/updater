@@ -20,6 +20,7 @@ require_once MYPLUGIN_API_PATH . 'includes/class-version-db.php';
 require_once MYPLUGIN_API_PATH . 'includes/class-users-db.php';
 require_once MYPLUGIN_API_PATH . 'includes/class-routes.php';
 require_once MYPLUGIN_API_PATH . 'includes/class-update-check.php';
+require_once MYPLUGIN_API_PATH . 'includes/class-zip-parser.php';
 require_once MYPLUGIN_API_PATH . 'includes/class-admin.php';
 require_once MYPLUGIN_API_PATH . 'includes/class-users-admin.php';
 

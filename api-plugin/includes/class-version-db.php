@@ -163,4 +163,17 @@ class MyPlugin_Version_DB {
 			array( '%d' )
 		);
 	}
+
+	public static function get_existing_version_by_id( $id ) {
+		global $wpdb;
+		$table_name = self::get_table_name();
+
+		return $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT * FROM {$table_name} WHERE id = %d LIMIT 1",
+				(int) $id
+			),
+			ARRAY_A
+		);
+	}
 }
