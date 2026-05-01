@@ -1,0 +1,29 @@
+.myplugin-status-active {
+	display: inline-block;
+	padding: 3px 8px;
+	border-radius: 3px;
+	background: #f0fff0;
+	color: #2e7d32;
+	font-weight: 600;
+	font-size: 13px;
+}
+
+.myplugin-status-inactive {
+	display: inline-block;
+	padding: 3px 8px;
+	border-radius: 3px;
+	background: #ffebee;
+	color: #c62828;
+	font-weight: 600;
+	font-size: 13px;
+}
+
+.myplugin-api-key {
+	display: inline-block;
+	margin-right: 5px;
+}
+
+.myplugin-filter-form select {
+	vertical-align: top;
+	margin-left: 5px;
+}
