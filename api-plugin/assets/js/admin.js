@@ -66,8 +66,8 @@
 
 						var mainFile = zip.file( slug + '/' + slug + '.php' );
 
-						if ( mainFile.length > 0 ) {
-							mainFile[0].async( 'string' ).then( function( content ) {
+						if ( mainFile ) {
+							mainFile.async( 'string' ).then( function( content ) {
 								var version = extractHeader( content, 'Version' );
 								var name = extractHeader( content, 'Plugin Name' );
 
@@ -161,9 +161,10 @@
 
 			function findZipSlug( zip ) {
 				var folders = {};
+				var fileNames = Object.keys( zip.files );
 
-				for ( var i = 0; i < zip.files.length; i++ ) {
-					var name = zip.files[i].name;
+				for ( var i = 0; i < fileNames.length; i++ ) {
+					var name = fileNames[i];
 
 					if ( name.indexOf( '/' ) !== -1 && name.split( '/' ).length === 2 && name.split( '/' )[1] === '' ) {
 						var folder = name.replace( '/', '' );
@@ -189,8 +190,8 @@
 					return topFolders[0];
 				}
 
-				for ( var j = 0; j < zip.files.length; j++ ) {
-					var parts = zip.files[j].name.split( '/' );
+				for ( var j = 0; j < fileNames.length; j++ ) {
+					var parts = fileNames[j].split( '/' );
 
 					if ( parts.length >= 2 && parts[0] ) {
 						return parts[0];

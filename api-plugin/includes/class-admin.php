@@ -359,7 +359,7 @@ class MyPlugin_Admin {
 			<h1>MyPlugin Update Manager</h1>
 
 			<h2>Add New Version</h2>
-			<form method="post" enctype="multipart/form-data" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+			<form id="myplugin-add-version-form" method="post" enctype="multipart/form-data" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 				<?php wp_nonce_field( 'myplugin_admin_action', 'myplugin_nonce' ); ?>
 				<input type="hidden" name="action" value="myplugin_versions_action" />
 				<input type="hidden" name="myplugin_action" value="add_version" />
