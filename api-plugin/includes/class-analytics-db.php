@@ -97,12 +97,12 @@ class MyPlugin_Analytics_DB {
 		$values = array();
 
 		if ( $args['start_date'] ) {
-			$where[] = 'a.created_at >= %s';
+			$where[] = 'created_at >= %s';
 			$values[] = $args['start_date'];
 		}
 
 		if ( $args['end_date'] ) {
-			$where[] = 'a.created_at <= %s';
+			$where[] = 'created_at <= %s';
 			$values[] = $args['end_date'];
 		}
 
