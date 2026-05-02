@@ -138,29 +138,26 @@
 				input.focus();
 			});
 
-			$( document ).on( 'click', '.myplugin-edit-btn', function() {
-				var btn = $( this );
-				var id = btn.data( 'id' );
-				var data = mypluginAdmin.versions && mypluginAdmin.versions[ id ];
+		$( document ).on( 'click', '.myplugin-edit-btn', function() {
+			var btn = $( this );
+			var id = btn.data( 'id' );
+			var data = mypluginAdmin.versions && mypluginAdmin.versions[ id ];
 
-				if ( ! data ) {
-					return;
-				}
+			if ( ! data ) {
+				return;
+			}
 
-				var form = $( '#myplugin-edit-form' );
+			$( '#edit_id' ).val( id );
+			$( '#edit_version' ).val( data.version );
+			$( '#edit_slug' ).val( data.slug );
+			$( '#edit_changelog' ).val( data.changelog );
+			$( '#edit_zip' ).val( '' );
 
-				$( '#edit_id' ).val( id );
-				$( '#edit_version' ).val( data.version );
-				$( '#edit_slug' ).val( data.slug );
-				$( '#edit_changelog' ).val( data.changelog );
-				$( '#edit_zip' ).val( '' );
-
-				form.slideDown( 200 );
-				$( 'html, body' ).animate({ scrollTop: form.offset().top - 50 }, 300 );
-			});
+			tb_show( 'Edit Version', '#TB_inline?height=400&width=500&inlineId=myplugin-edit-form' );
+		});
 
 		$( document ).on( 'click', '#myplugin-cancel-edit', function() {
-			$( '#myplugin-edit-form' ).slideUp( 200 );
+			tb_remove();
 		});
 
 		$( document ).on( 'click', '.myplugin-dropdown-toggle', function( e ) {

@@ -52,10 +52,12 @@ class MyPlugin_Admin {
 		wp_enqueue_script(
 			'myplugin-admin-js',
 			MYPLUGIN_API_URL . 'assets/js/admin.js',
-			array( 'jquery', 'media-views', 'myplugin-jszip' ),
+			array( 'jquery', 'media-views', 'myplugin-jszip', 'thickbox' ),
 			MYPLUGIN_API_VERSION,
 			true
 		);
+
+		wp_enqueue_style( 'thickbox' );
 
 		$selected_slug = isset( $_GET['filter_slug'] ) ? sanitize_text_field( $_GET['filter_slug'] ) : 'all';
 		$versions      = $selected_slug === 'all' ? MyPlugin_Version_DB::get_all_versions() : MyPlugin_Version_DB::get_all_versions( $selected_slug );
@@ -608,44 +610,44 @@ class MyPlugin_Admin {
 						<?php endforeach; ?>
 					<?php endif; ?>
 				</tbody>
-			</table>
-			</form>
+		</table>
+		</form>
 
-			<div id="myplugin-edit-form" style="display:none; margin-top:20px;">
-				<div class="card">
-					<h3>Edit Version</h3>
+		<div id="myplugin-edit-form" style="display:none;">
+			<div class="card">
+				<h3>Edit Version</h3>
 			<form id="myplugin-edit-version-form" method="post" enctype="multipart/form-data" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-						<?php wp_nonce_field( 'myplugin_admin_action', 'myplugin_nonce' ); ?>
-						<input type="hidden" name="action" value="myplugin_versions_action" />
-						<input type="hidden" name="myplugin_action" value="edit" />
-						<input type="hidden" id="edit_id" name="id" value="" />
+					<?php wp_nonce_field( 'myplugin_admin_action', 'myplugin_nonce' ); ?>
+					<input type="hidden" name="action" value="myplugin_versions_action" />
+					<input type="hidden" name="myplugin_action" value="edit" />
+					<input type="hidden" id="edit_id" name="id" value="" />
 
-						<table class="form-table">
-							<tr>
-								<th><label for="edit_version">Version</label></th>
-								<td><input type="text" id="edit_version" name="version" class="regular-text" /></td>
-							</tr>
-							<tr>
-								<th><label for="edit_slug">Plugin Slug</label></th>
-								<td><input type="text" id="edit_slug" name="slug" class="regular-text" /></td>
-							</tr>
-							<tr>
-								<th><label for="edit_changelog">Changelog</label></th>
-								<td><textarea id="edit_changelog" name="changelog" rows="4" class="large-text"></textarea></td>
-							</tr>
-							<tr>
-								<th><label for="edit_zip">Replace ZIP (optional)</label></th>
-								<td><input type="file" id="edit_zip" name="plugin_zip" accept=".zip" /> <p class="description">Leave empty to keep the current file.</p></td>
-							</tr>
-						</table>
+					<table class="form-table">
+						<tr>
+							<th><label for="edit_version">Version</label></th>
+							<td><input type="text" id="edit_version" name="version" class="regular-text" /></td>
+						</tr>
+						<tr>
+							<th><label for="edit_slug">Plugin Slug</label></th>
+							<td><input type="text" id="edit_slug" name="slug" class="regular-text" /></td>
+						</tr>
+						<tr>
+							<th><label for="edit_changelog">Changelog</label></th>
+							<td><textarea id="edit_changelog" name="changelog" rows="4" class="large-text"></textarea></td>
+						</tr>
+						<tr>
+							<th><label for="edit_zip">Replace ZIP (optional)</label></th>
+							<td><input type="file" id="edit_zip" name="plugin_zip" accept=".zip" /> <p class="description">Leave empty to keep the current file.</p></td>
+						</tr>
+					</table>
 
-						<p>
-							<?php submit_button( 'Save Changes', 'primary', 'submit', false ); ?>
-							<button type="button" id="myplugin-cancel-edit" class="button">Cancel</button>
-						</p>
-					</form>
-				</div>
+					<p>
+						<?php submit_button( 'Save Changes', 'primary', 'submit', false ); ?>
+						<button type="button" id="myplugin-cancel-edit" class="button">Cancel</button>
+					</p>
+				</form>
 			</div>
+		</div>
 		</div>
 		<?php
 	}
