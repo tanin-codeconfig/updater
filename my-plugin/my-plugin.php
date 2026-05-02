@@ -3,7 +3,7 @@
 /**
  * Plugin Name: My Plugin
  * Description: Your awesome plugin with custom update system
- * Version: 1.0.10
+ * Version: 1.0.13
  * Author: Your Name
  * Text Domain: my-plugin
  */
@@ -12,7 +12,7 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
-define('MY_PLUGIN_VERSION', '1.0.10');
+define('MY_PLUGIN_VERSION', '1.0.13');
 define('MY_PLUGIN_PATH', plugin_dir_path(__FILE__));
 define('MY_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -30,3 +30,7 @@ if (! my_plugin_is_pro()) {
 MyPlugin_Admin::init();
 
 add_filter('plugin_action_links_' . MY_PLUGIN_BASENAME, array( 'MyPlugin_Admin', 'add_plugin_action_links' ));
+
+// Register activation and deactivation hooks for cron
+register_activation_hook(__FILE__, array( 'MyPlugin_Updater', 'activate' ));
+register_deactivation_hook(__FILE__, array( 'MyPlugin_Updater', 'deactivate' ));

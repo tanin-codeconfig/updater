@@ -83,7 +83,8 @@ class MyPlugin_Admin
         $is_pro     = my_plugin_is_pro();
         $api_status = get_option('my_plugin_api_status', 'unknown');
         $last_check = MyPlugin_Ajax::get_last_check();
-        $api_data   = $is_pro ? array() : self::get_fresh_api_data();
+        // Use cached data from cron job instead of calling API on every page load
+        $api_data   = $is_pro ? array() : get_option('my_plugin_check_result', array());
 
         self::maybe_update_plugin();
         self::render_notices();
@@ -106,6 +107,8 @@ class MyPlugin_Admin
 
     private static function get_fresh_api_data()
     {
+        // Only used for manual "Check for Updates" button via AJAX
+        // Page loads now use cached data from cron
         $result = MyPlugin_Ajax::check_api();
 
         if (is_wp_error($result)) {

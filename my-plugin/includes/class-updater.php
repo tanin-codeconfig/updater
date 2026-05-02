@@ -8,10 +8,93 @@ class MyPlugin_Updater
 {
     public static function init()
     {
-        add_filter('pre_set_site_transient_update_plugins', array( __CLASS__, 'check_for_update' ));
+        // Remove automatic update check on page reload
+        // Updates now only happen via cron or manual check
         add_filter('plugins_api', array( __CLASS__, 'plugin_info' ), 20, 3);
         add_action('upgrader_process_complete', array( __CLASS__, 'on_update_complete' ), 10, 2);
         add_filter('http_request_args', array( __CLASS__, 'allow_api_host' ), 10, 2);
+
+        // Register cron schedule and event
+        add_filter('cron_schedules', array( __CLASS__, 'add_cron_schedule' ));
+        add_action('my_plugin_cron_update_check', array( __CLASS__, 'cron_check_for_update' ));
+    }
+
+    public static function activate()
+    {
+        // Schedule the cron event (4 times daily = every 6 hours)
+        if (! wp_next_scheduled('my_plugin_cron_update_check')) {
+            wp_schedule_event(time(), 'six_hours', 'my_plugin_cron_update_check');
+        }
+    }
+
+    public static function deactivate()
+    {
+        // Clear the cron event
+        wp_clear_scheduled_hook('my_plugin_cron_update_check');
+    }
+
+    public static function add_cron_schedule($schedules)
+    {
+        $schedules['six_hours'] = array(
+            'interval' => 6 * HOUR_IN_SECONDS,
+            'display'  => 'Every 6 Hours (4 times daily)',
+        );
+        return $schedules;
+    }
+
+    public static function cron_check_for_update()
+    {
+        self::force_check_for_update();
+    }
+
+    public static function force_check_for_update()
+    {
+        if (my_plugin_is_pro()) {
+            return;
+        }
+
+        $installed_version = MY_PLUGIN_VERSION;
+        $data = MyPlugin_Ajax::check_api_for_version($installed_version);
+
+        // Save result to options for AJAX handler
+        if (! is_wp_error($data)) {
+            update_option('my_plugin_check_result', $data);
+            update_option('my_plugin_last_check', time());
+            update_option('my_plugin_api_status', $data['success'] ? 'connected' : 'error');
+        } else {
+            update_option('my_plugin_api_status', 'error');
+        }
+
+        if (is_wp_error($data) || ! $data['update']) {
+            // Remove from transient if no update
+            $transient = get_site_transient('update_plugins');
+            if (is_object($transient) && isset($transient->response[ MY_PLUGIN_BASENAME ])) {
+                unset($transient->response[ MY_PLUGIN_BASENAME ]);
+                set_site_transient('update_plugins', $transient);
+            }
+            return;
+        }
+
+        // Set the transient with update info
+        $transient = get_site_transient('update_plugins');
+        if (! is_object($transient)) {
+            $transient = new stdClass();
+        }
+
+        $transient->response[ MY_PLUGIN_BASENAME ] = (object) array(
+            'slug'         => MY_PLUGIN_SLUG,
+            'plugin'       => MY_PLUGIN_BASENAME,
+            'new_version'  => $data['new_version'],
+            'package'      => $data['package'],
+            'url'          => $data['changelog'] ?? '',
+            'tested'       => get_bloginfo('version'),
+            'requires'     => '',
+            'requires_php' => '',
+            'icons'        => array(),
+            'banners'      => array(),
+        );
+
+        set_site_transient('update_plugins', $transient);
     }
 
     public static function allow_api_host($args, $url)
