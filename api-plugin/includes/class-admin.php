@@ -549,7 +549,24 @@ class MyPlugin_Admin {
 								<td><?php echo esc_html( wp_trim_words( $v['changelog'] ?? '', 10 ) ); ?></td>
 								<td><?php echo esc_html( basename( $v['download_path'] ?? '' ) ); ?></td>
 								<td><?php echo $v['is_active'] ? '<span class="myplugin-status-active">Active</span>' : '<span class="myplugin-status-inactive">Inactive</span>'; ?></td>
-								<td><?php echo (int) ( $v['download_count'] ?? 0 ); ?></td>
+								<td>
+									<?php
+									// Calculate downloads from analytics table
+									$download_count = 0;
+									if ( class_exists( 'MyPlugin_Analytics_DB' ) ) {
+										global $wpdb;
+										$analytics_table = $wpdb->prefix . 'myplugin_analytics';
+										$download_count = (int) $wpdb->get_var(
+											$wpdb->prepare(
+												"SELECT COUNT(*) FROM {$analytics_table} WHERE slug = %s AND version = %s AND request_type = 'download'",
+												$v['slug'],
+												$v['version']
+											)
+										);
+									}
+									echo esc_html( $download_count );
+									?>
+								</td>
 								<td><?php echo esc_html( $v['created_at'] ); ?></td>
 								<td>
 									<button type="button" class="button button-small myplugin-edit-btn" data-id="<?php echo (int) $v['id']; ?>" data-version="<?php echo esc_attr( $v['version'] ); ?>" data-slug="<?php echo esc_attr( $v['slug'] ); ?>">Edit</button>
