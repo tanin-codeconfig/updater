@@ -25,12 +25,14 @@ class MyPlugin_Users_DB {
 			api_key VARCHAR(64) NOT NULL,
 			domain VARCHAR(255),
 			is_active TINYINT(1) DEFAULT 1,
+			last_used_at DATETIME NULL,
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 			PRIMARY KEY (id),
 			UNIQUE KEY api_key (api_key),
 			KEY email (email),
-			KEY is_active (is_active)
+			KEY is_active (is_active),
+			KEY last_used_at (last_used_at)
 		) {$charset_collate};";
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
@@ -164,5 +166,94 @@ class MyPlugin_Users_DB {
 			array( 'id' => (int) $id ),
 			array( '%d' )
 		);
+	}
+
+	public static function update_last_used( $id ) {
+		global $wpdb;
+		$table_name = self::get_table_name();
+
+		return $wpdb->update(
+			$table_name,
+			array( 'last_used_at' => current_time( 'mysql' ) ),
+			array( 'id' => (int) $id ),
+			array( '%s' ),
+			array( '%d' )
+		);
+	}
+
+	public static function get_users_filtered( $args = array() ) {
+		global $wpdb;
+		$table_name = self::get_table_name();
+
+		$where = array( '1=1' );
+		$values = array();
+
+		if ( ! empty( $args['search'] ) ) {
+			$where[] = '(name LIKE %s OR email LIKE %s)';
+			$search = '%' . $wpdb->esc_like( $args['search'] ) . '%';
+			$values[] = $search;
+			$values[] = $search;
+		}
+
+		if ( isset( $args['is_active'] ) && '' !== $args['is_active'] ) {
+			$where[] = 'is_active = %d';
+			$values[] = (int) $args['is_active'];
+		}
+
+		$orderby = 'created_at';
+		$order   = 'DESC';
+
+		if ( ! empty( $args['orderby'] ) && in_array( $args['orderby'], array( 'name', 'email', 'created_at', 'last_used_at' ), true ) ) {
+			$orderby = $args['orderby'];
+		}
+
+		if ( ! empty( $args['order'] ) && in_array( strtoupper( $args['order'] ), array( 'ASC', 'DESC' ), true ) ) {
+			$order = $args['order'];
+		}
+
+		$limit  = isset( $args['limit'] ) ? (int) $args['limit'] : 20;
+		$offset = isset( $args['offset'] ) ? (int) $args['offset'] : 0;
+
+		$sql = "SELECT * FROM {$table_name} WHERE " . implode( ' AND ', $where ) . " ORDER BY {$orderby} {$order} LIMIT %d OFFSET %d";
+
+		$values[] = $limit;
+		$values[] = $offset;
+
+		if ( ! empty( $values ) ) {
+			return $wpdb->get_results(
+				$wpdb->prepare( $sql, $values ),
+				ARRAY_A
+			);
+		}
+
+		return $wpdb->get_results( $sql, ARRAY_A );
+	}
+
+	public static function get_users_count( $args = array() ) {
+		global $wpdb;
+		$table_name = self::get_table_name();
+
+		$where = array( '1=1' );
+		$values = array();
+
+		if ( ! empty( $args['search'] ) ) {
+			$where[] = '(name LIKE %s OR email LIKE %s)';
+			$search = '%' . $wpdb->esc_like( $args['search'] ) . '%';
+			$values[] = $search;
+			$values[] = $search;
+		}
+
+		if ( isset( $args['is_active'] ) && '' !== $args['is_active'] ) {
+			$where[] = 'is_active = %d';
+			$values[] = (int) $args['is_active'];
+		}
+
+		$sql = "SELECT COUNT(*) FROM {$table_name} WHERE " . implode( ' AND ', $where );
+
+		if ( ! empty( $values ) ) {
+			return (int) $wpdb->get_var( $wpdb->prepare( $sql, $values ) );
+		}
+
+		return (int) $wpdb->get_var( $sql );
 	}
 }

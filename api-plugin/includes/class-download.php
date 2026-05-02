@@ -24,6 +24,8 @@ class MyPlugin_Download {
 
 		$stored_key = $transient['api_key'] ?? '';
 
+		$user_id = null;
+
 		if ( $stored_key ) {
 			$user = MyPlugin_Users_DB::get_user_by_api_key( $stored_key );
 
@@ -33,6 +35,9 @@ class MyPlugin_Download {
 					'message' => 'API key invalid or user deactivated.',
 				), 403 );
 			}
+
+			$user_id = $user['id'];
+			MyPlugin_Users_DB::update_last_used( $user['id'] );
 		} elseif ( $key ) {
 			$user = MyPlugin_Users_DB::get_user_by_api_key( $key );
 
@@ -42,7 +47,17 @@ class MyPlugin_Download {
 					'message' => 'Invalid API key or user deactivated.',
 				), 403 );
 			}
+
+			$user_id = $user['id'];
+			MyPlugin_Users_DB::update_last_used( $user['id'] );
 		}
+
+		MyPlugin_Analytics_DB::log_request( array(
+			'user_id'      => $user_id,
+			'api_key'       => $key ? $key : $stored_key,
+			'slug'          => $slug,
+			'request_type'  => 'download',
+		) );
 
 		$latest = MyPlugin_Version_DB::get_active_version( $slug );
 

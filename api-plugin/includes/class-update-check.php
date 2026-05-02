@@ -11,6 +11,8 @@ class MyPlugin_Update_Check {
 		$version = $request->get_param( 'version' );
 		$key     = $request->get_param( 'api_key' );
 
+		$user_id = null;
+
 		if ( $key ) {
 			$user = MyPlugin_Users_DB::get_user_by_api_key( $key );
 
@@ -20,7 +22,18 @@ class MyPlugin_Update_Check {
 					'message' => 'Invalid API key or user deactivated.',
 				), 403 );
 			}
+
+			$user_id = $user['id'];
+			MyPlugin_Users_DB::update_last_used( $user['id'] );
 		}
+
+		MyPlugin_Analytics_DB::log_request( array(
+			'user_id'      => $user_id,
+			'api_key'       => $key,
+			'slug'          => $slug,
+			'version'       => $version,
+			'request_type'  => 'update-check',
+		) );
 
 		$latest = MyPlugin_Version_DB::get_active_version( $slug );
 
