@@ -52,9 +52,17 @@
 	box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
 
+.myplugin-upload-metabox .postbox-header {
+	padding-left: 12px;
+}
+
 .myplugin-upload-metabox .handlediv {
 	width: 36px;
 	height: 36px;
+}
+
+.myplugin-upload-metabox .hndle {
+	padding: 12px 12px 12px 40px;
 }
 
 .myplugin-upload-metabox .toggle-indicator:before {
@@ -87,29 +95,66 @@
 	transition: all 0.3s ease;
 }
 
-.myplugin-upload-zone:hover {
+.myplugin-text-link {
+	background: none;
+	border: none;
+	color: #2271b1;
+	text-decoration: underline;
+	padding: 4px 0;
+	cursor: pointer;
+	font-size: 13px;
+}
+
+.myplugin-text-link:hover {
+	color: #135e96;
+	text-decoration: underline;
+}
+
+/* Upload zone - drag and drop */
+.myplugin-drop-zone {
+	border: 2px dashed #ddd;
+	border-radius: 8px;
+	padding: 40px 20px;
+	text-align: center;
+	background: #fafafa;
+	transition: all 0.3s ease;
+	cursor: pointer;
+	margin-bottom: 16px;
+}
+
+.myplugin-drop-zone.drag-over {
 	border-color: #2271b1;
 	background: #f0f8ff;
 }
 
-.myplugin-file-input-wrapper {
+.myplugin-drop-zone-inner {
 	display: flex;
 	flex-direction: column;
-	gap: 12px;
 	align-items: center;
+	gap: 12px;
 }
 
-.myplugin-file-input-wrapper input[type="file"] {
-	width: 100%;
-	padding: 10px;
-	border: 1px solid #ddd;
-	border-radius: 4px;
-	background: white;
+.myplugin-drop-zone .dashicons-upload {
+	font-size: 48px;
+	color: #aaa;
+	width: 48px;
+	height: 48px;
 }
 
-.myplugin-file-input-wrapper .button {
-	width: 100%;
-	padding: 8px 16px;
+.myplugin-drop-text {
+	font-size: 16px;
+	color: #666;
+	margin: 0;
+}
+
+.myplugin-drop-or {
+	font-size: 13px;
+	color: #999;
+	margin: 0;
+}
+
+.myplugin-upload-zone input[type="file"] {
+	display: none;
 }
 
 .myplugin-upload-fields {

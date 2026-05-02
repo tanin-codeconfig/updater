@@ -454,14 +454,19 @@ class MyPlugin_Admin {
 						<input type="hidden" name="myplugin_action" value="add_version" />
 						<input type="hidden" id="media_attachment_id" name="media_attachment_id" value="" />
 
-						<div class="myplugin-upload-grid">
-							<div class="myplugin-upload-zone">
-								<div class="myplugin-file-input-wrapper">
-									<input type="file" id="plugin_zip" name="plugin_zip" accept=".zip" />
-									<button type="button" id="myplugin-select-media" class="button button-secondary">Select from Media Library</button>
-								</div>
-								<div id="myplugin-detect-status" class="myplugin-detect-status"></div>
+					<div class="myplugin-upload-grid">
+						<div class="myplugin-upload-zone myplugin-drop-zone" id="myplugin-drop-zone">
+							<div class="myplugin-drop-zone-inner">
+								<span class="dashicons dashicons-upload"></span>
+								<p class="myplugin-drop-text">Drag & Drop your ZIP file here</p>
+								<p class="myplugin-drop-or">- OR -</p>
+								<input type="file" id="plugin_zip" name="plugin_zip" accept=".zip" />
 							</div>
+							<button type="button" id="myplugin-select-media" class="myplugin-text-link">
+								Select from Media Library
+							</button>
+							<div id="myplugin-detect-status" class="myplugin-detect-status"></div>
+						</div>
 
 							<div class="myplugin-upload-fields">
 								<div class="myplugin-field-row">
