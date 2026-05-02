@@ -456,18 +456,26 @@ class MyPlugin_Admin {
 
 			<hr />
 
-			<h2>Latest Version Download</h2>
+			<h2>Latest Version Download URL</h2>
 			<?php
-			$latest_version = MyPlugin_Version_DB::get_active_version('my-plugin');
-			if ($latest_version && !empty($latest_version['download_path'])) {
-				$file_name = basename($latest_version['download_path']);
-				$download_url = MYPLUGIN_API_STORAGE_URL . $file_name;
-				echo '<p><a href="' . esc_url($download_url) . '" class="button button-primary" target="_blank">Download Latest Version (' . esc_html($latest_version['version']) . ')</a></p>';
-				echo '<p class="description">Share this link with users for initial plugin installation.</p>';
-			} else {
-				echo '<p>No active version available for download yet. Upload a version first.</p>';
-			}
+			$site_url = untrailingslashit(get_site_url());
+			$latest_download_url = $site_url . '/wp-json/myplugin/v1/latest-download?slug=my-plugin';
 			?>
+			<p>Share this URL - it always points to the latest version:</p>
+			<p>
+				<input type="text" id="latest-download-url" value="<?php echo esc_url($latest_download_url); ?>" class="regular-text" readonly onclick="this.select();" />
+				<button type="button" class="button" onclick="copyLatestDownloadUrl()">Copy</button>
+			</p>
+			<p class="description">This URL always downloads the active version. Add this to your frontend for initial plugin installation.</p>
+
+			<script>
+			function copyLatestDownloadUrl() {
+				var copyText = document.getElementById("latest-download-url");
+				copyText.select();
+				document.execCommand("copy");
+				alert("URL copied to clipboard!");
+			}
+			</script>
 
 			<hr />
 
