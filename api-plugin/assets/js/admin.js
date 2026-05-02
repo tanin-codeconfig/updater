@@ -40,10 +40,7 @@
 			});
 
 			function submitForm() {
-				var $submitBtn = versionForm.find( 'input[name="submit"], button[name="submit"]' );
-				$submitBtn.removeAttr( 'name' );
 				versionForm[0].submit();
-				$submitBtn.attr( 'name', 'submit' );
 			}
 
 			fileInput.on( 'change', function() {

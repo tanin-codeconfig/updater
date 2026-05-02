@@ -400,7 +400,7 @@ class MyPlugin_Admin {
 					</tr>
 				</table>
 
-				<?php submit_button( 'Upload' ); ?>
+				<?php submit_button( 'Upload', 'primary', 'submit_btn', true, array( 'name' => 'submit_btn' ) ); ?>
 			</form>
 
 			<hr />
