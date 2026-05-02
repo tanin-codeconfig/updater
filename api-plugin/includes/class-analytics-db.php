@@ -151,9 +151,39 @@ class MyPlugin_Analytics_DB {
 				),
 				ARRAY_A
 			),
-			'recent_activity' => $wpdb->get_results(
+ 		'recent_activity' => $wpdb->get_results(
 				$wpdb->prepare(
 					"SELECT a.*, u.name as user_name FROM {$table_name} a LEFT JOIN {$wpdb->prefix}myplugin_users u ON a.user_id = u.id WHERE {$where_sql} ORDER BY a.created_at DESC LIMIT 20",
+					$values
+				),
+				ARRAY_A
+			),
+			'top_domains' => $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT domain,
+						SUM(CASE WHEN request_type = 'update-check' THEN 1 ELSE 0 END) as update_checks,
+						SUM(CASE WHEN request_type = 'download' THEN 1 ELSE 0 END) as downloads,
+						COUNT(*) as total
+					FROM {$table_name} a
+					WHERE {$where_sql} AND domain != ''
+					GROUP BY domain
+					ORDER BY total DESC
+					LIMIT 10",
+					$values
+				),
+				ARRAY_A
+			),
+			'top_domains' => $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT domain,
+						SUM(CASE WHEN request_type = 'update-check' THEN 1 ELSE 0 END) as update_checks,
+						SUM(CASE WHEN request_type = 'download' THEN 1 ELSE 0 END) as downloads,
+						COUNT(*) as total
+					FROM {$table_name} a
+					WHERE {$where_sql} AND domain != ''
+					GROUP BY domain
+					ORDER BY total DESC
+					LIMIT 10",
 					$values
 				),
 				ARRAY_A

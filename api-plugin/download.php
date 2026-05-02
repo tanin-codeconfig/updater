@@ -52,6 +52,7 @@ if ( ! $latest || empty( $latest['download_path'] ) ) {
 if ( class_exists( 'MyPlugin_Analytics_DB' ) ) {
     $log_user_id = isset( $user ) && $user ? $user['id'] : null;
     $log_api_key = $stored_key ? $stored_key : ( $key ? $key : '' );
+    $log_domain = $transient['domain'] ?? '';
     
     MyPlugin_Analytics_DB::log_request( array(
         'user_id'      => $log_user_id,
@@ -59,6 +60,7 @@ if ( class_exists( 'MyPlugin_Analytics_DB' ) ) {
         'slug'         => $slug,
         'version'      => $latest['version'] ?? '',
         'request_type' => 'download',
+        'domain'       => $log_domain,
     ) );
 }
 

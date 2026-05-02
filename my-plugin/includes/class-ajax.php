@@ -82,6 +82,7 @@ class MyPlugin_Ajax
         $params = array(
             'version' => $version,
             'slug'    => MY_PLUGIN_SLUG,
+            'domain'  => site_url(),
         );
 
         if ($api_key) {

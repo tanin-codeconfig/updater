@@ -53,6 +53,7 @@ class MyPlugin_Download {
 		}
 
 		$latest = MyPlugin_Version_DB::get_active_version( $slug );
+		$domain = $transient['domain'] ?? '';
 
 		MyPlugin_Analytics_DB::log_request( array(
 			'user_id'      => $user_id,
@@ -60,6 +61,7 @@ class MyPlugin_Download {
 			'slug'          => $slug,
 			'version'       => $latest['version'] ?? '',
 			'request_type'  => 'download',
+			'domain'        => $domain,
 		) );
 
 		// Increment download count
