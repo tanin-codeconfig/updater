@@ -456,21 +456,25 @@ class MyPlugin_Admin {
 
 			<hr />
 
-			<h2>Latest Version Download URL</h2>
+			<h2>Latest Version Download URLs</h2>
 			<?php
 			$site_url = untrailingslashit(get_site_url());
-			$latest_download_url = $site_url . '/wp-json/myplugin/v1/latest-download?slug=my-plugin';
+			$all_slugs = MyPlugin_Version_DB::get_unique_slugs();
 			?>
-			<p>Share this URL - it always points to the latest version:</p>
-			<p>
-				<input type="text" id="latest-download-url" value="<?php echo esc_url($latest_download_url); ?>" class="regular-text" readonly onclick="this.select();" />
-				<button type="button" class="button" onclick="copyLatestDownloadUrl()">Copy</button>
-			</p>
-			<p class="description">This URL always downloads the active version. Add this to your frontend for initial plugin installation.</p>
+			<p>Share these URLs - they always point to the latest version for each plugin:</p>
+			<?php foreach ($all_slugs as $slug): ?>
+				<?php $latest_download_url = $site_url . '/wp-json/myplugin/v1/latest-download?slug=' . urlencode($slug); ?>
+				<p><strong><?php echo esc_html($slug); ?>:</strong></p>
+				<p>
+					<input type="text" id="latest-download-<?php echo esc_attr($slug); ?>" value="<?php echo esc_url($latest_download_url); ?>" class="regular-text" readonly onclick="this.select();" />
+					<button type="button" class="button" onclick="copyLatestDownloadUrl('<?php echo esc_js($slug); ?>')">Copy</button>
+				</p>
+			<?php endforeach; ?>
+			<p class="description">These URLs always download the active version. Add them to your frontend for initial plugin installation.</p>
 
 			<script>
-			function copyLatestDownloadUrl() {
-				var copyText = document.getElementById("latest-download-url");
+			function copyLatestDownloadUrl(slug) {
+				var copyText = document.getElementById("latest-download-" + slug);
 				copyText.select();
 				document.execCommand("copy");
 				alert("URL copied to clipboard!");
