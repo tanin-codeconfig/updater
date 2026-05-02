@@ -179,6 +179,10 @@ class MyPlugin_Admin {
 					if ( $version && ! empty( $version['download_path'] ) && file_exists( $version['download_path'] ) ) {
 						unlink( $version['download_path'] );
 					}
+					// Only delete media attachment if it exists and we're deleting
+					if ( $version && ! empty( $version['attachment_id'] ) ) {
+						wp_delete_attachment( (int) $version['attachment_id'], true );
+					}
 					MyPlugin_Version_DB::delete_version( $id );
 				} else {
 					MyPlugin_Version_DB::update_version( $id, array( 'is_active' => 'activate' === $action ? 1 : 0 ) );
@@ -203,8 +207,9 @@ class MyPlugin_Admin {
 					wp_mkdir_p( MYPLUGIN_API_STORAGE );
 				}
 
-				$zip_path = '';
+				$upload_file = '';
 
+				// Handle file upload
 				if ( ! empty( $_FILES['plugin_zip']['tmp_name'] ) ) {
 					$ext = strtolower( pathinfo( $_FILES['plugin_zip']['name'], PATHINFO_EXTENSION ) );
 					if ( 'zip' !== $ext ) {
@@ -213,16 +218,42 @@ class MyPlugin_Admin {
 						exit;
 					}
 
-					$zip_path = $_FILES['plugin_zip']['tmp_name'];
+					require_once ABSPATH . 'wp-admin/includes/file.php';
+
+					$override_upload_dir = function( $dirs ) {
+						$dirs['path'] = MYPLUGIN_API_STORAGE;
+						$dirs['url']  = MYPLUGIN_API_STORAGE_URL;
+						$dirs['subdir']  = '';
+						return $dirs;
+					};
+
+					add_filter( 'upload_dir', $override_upload_dir );
+					$upload = wp_handle_upload( $_FILES['plugin_zip'], array( 'test_form' => false ) );
+					remove_filter( 'upload_dir', $override_upload_dir );
+
+					if ( isset( $upload['error'] ) ) {
+						$args['myplugin_notice'] = 'upload_failed';
+						wp_safe_redirect( add_query_arg( $args, admin_url( 'admin.php' ) ) );
+						exit;
+					}
+
+					$upload_file = $upload['file'];
 				} elseif ( $attachment_id ) {
-					$zip_path = get_attached_file( $attachment_id );
+					// Copy file from media library (don't move it!)
+					$source_path = get_attached_file( $attachment_id );
+					if ( $source_path && file_exists( $source_path ) ) {
+						$copied_file = MYPLUGIN_API_STORAGE . basename( $source_path );
+						copy( $source_path, $copied_file );
+						$upload_file = $copied_file;
+					}
 				}
 
-				if ( ! $zip_path || ! file_exists( $zip_path ) ) {
+				if ( ! $upload_file || ! file_exists( $upload_file ) ) {
 					$args['myplugin_notice'] = 'upload_failed';
 				} else {
+					// Auto-detect version and slug if not provided
 					if ( empty( $version ) || empty( $slug ) ) {
-						$parsed = MyPlugin_Zip_Parser::parse( $zip_path );
+						$parsed = MyPlugin_Zip_Parser::parse( $upload_file );
 						if ( $parsed ) {
 							if ( empty( $slug ) ) {
 								$slug = sanitize_text_field( $parsed['slug'] );
@@ -239,42 +270,7 @@ class MyPlugin_Admin {
 						exit;
 					}
 
-					$upload_file = $zip_path;
-
-					if ( ! empty( $_FILES['plugin_zip']['tmp_name'] ) ) {
-						require_once ABSPATH . 'wp-admin/includes/file.php';
-
-						// Override upload dir to save directly to wp-content/uploads/myplugin-api/
-						$override_upload_dir = function( $dirs ) {
-							$dirs['path'] = MYPLUGIN_API_STORAGE;
-							$dirs['url']  = MYPLUGIN_API_STORAGE_URL;
-							$dirs['subdir']  = '';
-							return $dirs;
-						};
-
-						add_filter( 'upload_dir', $override_upload_dir );
-						$upload = wp_handle_upload( $_FILES['plugin_zip'], array( 'test_form' => false ) );
-						remove_filter( 'upload_dir', $override_upload_dir );
-
-						if ( isset( $upload['error'] ) ) {
-							$args['myplugin_notice'] = 'upload_failed';
-							wp_safe_redirect( add_query_arg( $args, admin_url( 'admin.php' ) ) );
-							exit;
-						}
-
-						// If file didn't go to storage, move it there
-						if ( $upload['file'] && dirname( $upload['file'] ) !== rtrim( MYPLUGIN_API_STORAGE, '/' ) ) {
-							$new_path = MYPLUGIN_API_STORAGE . basename( $upload['file'] );
-							if ( file_exists( $new_path ) ) {
-								unlink( $new_path );
-							}
-							rename( $upload['file'], $new_path );
-							$upload['file'] = $new_path;
-						}
-
-						$upload_file = $upload['file'];
-					}
-
+					// Generate final filename
 					$rename = MYPLUGIN_API_STORAGE . $slug . '-v' . $version . '.zip';
 
 					if ( file_exists( $upload_file ) && $upload_file !== $rename ) {
@@ -289,6 +285,7 @@ class MyPlugin_Admin {
 					$existing = MyPlugin_Version_DB::get_existing_version( $slug, $version );
 
 					if ( $existing ) {
+						// Update existing version
 						if ( ! empty( $existing['download_path'] ) && file_exists( $existing['download_path'] ) ) {
 							unlink( $existing['download_path'] );
 						}
@@ -300,6 +297,7 @@ class MyPlugin_Admin {
 						) );
 						$args['myplugin_notice'] = 'updated';
 					} else {
+						// Insert new version
 						MyPlugin_Version_DB::insert_version( array(
 							'version'       => $version,
 							'slug'          => $slug,
@@ -333,7 +331,7 @@ class MyPlugin_Admin {
 			if ( $version && ! empty( $version['download_path'] ) && file_exists( $version['download_path'] ) ) {
 				unlink( $version['download_path'] );
 			}
-			// Also delete the media attachment if it exists
+			// Only delete media attachment when explicitly deleting the version
 			if ( $version && ! empty( $version['attachment_id'] ) ) {
 				wp_delete_attachment( (int) $version['attachment_id'], true );
 			}
@@ -349,9 +347,6 @@ class MyPlugin_Admin {
 
 			$existing = MyPlugin_Version_DB::get_existing_version_by_id( $id );
 
-			if ( $new_slug && empty( $new_slug ) ) {
-				$new_slug = $existing['slug'];
-			}
 			if ( empty( $new_slug ) && $existing ) {
 				$new_slug = $existing['slug'];
 			}
@@ -371,58 +366,43 @@ class MyPlugin_Admin {
 				$update_data['changelog'] = $new_changelog;
 			}
 
-				if ( ! empty( $_FILES['plugin_zip']['name'] ) ) {
-					require_once ABSPATH . 'wp-admin/includes/file.php';
+			if ( ! empty( $_FILES['plugin_zip']['name'] ) ) {
+				require_once ABSPATH . 'wp-admin/includes/file.php';
 
-					// Override upload dir to save directly to wp-content/uploads/myplugin-api/
-					$override_upload_dir = function( $dirs ) {
-						$dirs['path']    = MYPLUGIN_API_STORAGE;
-						$dirs['url']     = MYPLUGIN_API_STORAGE_URL;
-						$dirs['subdir']  = '';
-						return $dirs;
-					};
+				$override_upload_dir = function( $dirs ) {
+					$dirs['path'] = MYPLUGIN_API_STORAGE;
+					$dirs['url']  = MYPLUGIN_API_STORAGE_URL;
+					$dirs['subdir']  = '';
+					return $dirs;
+				};
 
-					add_filter( 'upload_dir', $override_upload_dir );
-					$upload = wp_handle_upload( $_FILES['plugin_zip'], array( 'test_form' => false ) );
-					remove_filter( 'upload_dir', $override_upload_dir );
+				add_filter( 'upload_dir', $override_upload_dir );
+				$upload = wp_handle_upload( $_FILES['plugin_zip'], array( 'test_form' => false ) );
+				remove_filter( 'upload_dir', $override_upload_dir );
 
-					if ( isset( $upload['error'] ) ) {
-						$args['myplugin_notice'] = 'upload_failed';
-						wp_safe_redirect( add_query_arg( $args, admin_url( 'admin.php' ) ) );
-						exit;
+				if ( isset( $upload['error'] ) ) {
+					$args['myplugin_notice'] = 'upload_failed';
+					wp_safe_redirect( add_query_arg( $args, admin_url( 'admin.php' ) ) );
+					exit;
+				}
+
+				$ext = strtolower( pathinfo( $_FILES['plugin_zip']['name'], PATHINFO_EXTENSION ) );
+				if ( 'zip' === $ext ) {
+					if ( $existing && ! empty( $existing['download_path'] ) && file_exists( $existing['download_path'] ) ) {
+						unlink( $existing['download_path'] );
 					}
 
-					// If file didn't go to storage, move it there
-					if ( $upload['file'] && dirname( $upload['file'] ) !== rtrim( MYPLUGIN_API_STORAGE, '/' ) ) {
-						$new_path = MYPLUGIN_API_STORAGE . basename( $upload['file'] );
-						if ( file_exists( $new_path ) ) {
-							unlink( $new_path );
-						}
-						rename( $upload['file'], $new_path );
-						$upload['file'] = $new_path;
-					}
+					$rename = MYPLUGIN_API_STORAGE . $new_slug . '-v' . $new_version . '.zip';
 
-					$ext = strtolower( pathinfo( $_FILES['plugin_zip']['name'], PATHINFO_EXTENSION ) );
-					if ( 'zip' === $ext ) {
-						if ( $existing && ! empty( $existing['download_path'] ) && file_exists( $existing['download_path'] ) ) {
-							unlink( $existing['download_path'] );
+					if ( file_exists( $upload['file'] ) ) {
+						if ( file_exists( $rename ) ) {
+							unlink( $rename );
 						}
-
-						$rename = MYPLUGIN_API_STORAGE . $new_slug . '-v' . $new_version . '.zip';
-
-						if ( file_exists( $upload['file'] ) ) {
-							if ( file_exists( $rename ) ) {
-								unlink( $rename );
-							}
-							rename( $upload['file'], $rename );
-							$update_data['download_path'] = $rename;
-							// Store the attachment_id if we have one
-							if ( ! empty( $_POST['media_attachment_id'] ) ) {
-								$update_data['attachment_id'] = (int) $_POST['media_attachment_id'];
-							}
-						}
+						rename( $upload['file'], $rename );
+						$update_data['download_path'] = $rename;
 					}
 				}
+			}
 
 			if ( ! empty( $update_data ) ) {
 				MyPlugin_Version_DB::update_version( $id, $update_data );
@@ -449,7 +429,7 @@ class MyPlugin_Admin {
 
 			<div class="myplugin-upload-metabox postbox">
 				<div class="postbox-header">
-					<h2 class="hndle"><span>Add New Version</span></h2>
+					<h2 class="handle"><span>Add New Version</span></h2>
 					<div class="handle-actions">
 						<button type="button" class="handlediv" aria-expanded="true">
 							<span class="screen-reader-text">Toggle panel: Add New Version</span>
@@ -478,72 +458,72 @@ class MyPlugin_Admin {
 							<div id="myplugin-detect-status" class="myplugin-detect-status"></div>
 						</div>
 
-							<div class="myplugin-upload-fields">
-								<div class="myplugin-field-row">
-									<label for="version" class="myplugin-field-label">Version</label>
-									<div class="myplugin-field-wrapper" id="version-wrapper">
-										<input type="text" id="version" name="version" class="regular-text" placeholder="e.g. 1.1.0" />
-										<span class="myplugin-detected-badge" style="display:none;"></span>
-										<button type="button" class="myplugin-edit-toggle" style="display:none;"><?php esc_html_e( 'Edit' ); ?></button>
-									</div>
-								</div>
-
-								<div class="myplugin-field-row">
-									<label for="slug" class="myplugin-field-label">Plugin Slug</label>
-									<div class="myplugin-field-wrapper" id="slug-wrapper">
-										<input type="text" id="slug" name="slug" class="regular-text" placeholder="e.g. my-plugin" />
-										<span class="myplugin-detected-badge" style="display:none;"></span>
-										<button type="button" class="myplugin-edit-toggle" style="display:none;"><?php esc_html_e( 'Edit' ); ?></button>
-									</div>
-								</div>
-
-								<div class="myplugin-field-row">
-									<label for="changelog" class="myplugin-field-label">Changelog</label>
-									<textarea id="changelog" name="changelog" rows="4" class="large-text" placeholder="What's new in this version..."></textarea>
+						<div class="myplugin-upload-fields">
+							<div class="myplugin-field-row">
+								<label for="version" class="myplugin-field-label">Version</label>
+								<div class="myplugin-field-wrapper" id="version-wrapper">
+									<input type="text" id="version" name="version" class="regular-text" placeholder="e.g. 1.1.0" />
+									<span class="myplugin-detected-badge" style="display:none;"></span>
+									<button type="button" class="myplugin-edit-toggle" style="display:none;"><?php esc_html_e( 'Edit' ); ?></button>
 								</div>
 							</div>
-						</div>
 
-						<?php submit_button( 'Upload', 'primary', 'submit_btn', true, array( 'name' => 'submit_btn' ) ); ?>
-					</form>
+							<div class="myplugin-field-row">
+								<label for="slug" class="myplugin-field-label">Plugin Slug</label>
+								<div class="myplugin-field-wrapper" id="slug-wrapper">
+									<input type="text" id="slug" name="slug" class="regular-text" placeholder="e.g. my-plugin" />
+									<span class="myplugin-detected-badge" style="display:none;"></span>
+									<button type="button" class="myplugin-edit-toggle" style="display:none;"><?php esc_html_e( 'Edit' ); ?></button>
+								</div>
+							</div>
+
+							<div class="myplugin-field-row">
+								<label for="changelog" class="myplugin-field-label">Changelog</label>
+								<textarea id="changelog" name="changelog" rows="4" class="large-text" placeholder="What's new in this version..."></textarea>
+							</div>
+						</div>
+					</div>
+
+					<?php submit_button( 'Upload', 'primary', 'submit_btn', true, array( 'name' => 'submit_btn' ) ); ?>
+				</form>
+			</div>
+		</div>
+
+		<hr />
+
+		<h2>Version History</h2>
+
+		<form method="get" class="myplugin-filter-form" style="margin-bottom:15px;">
+			<input type="hidden" name="page" value="myplugin-api" />
+			<label for="filter_slug">Filter by Plugin:</label>
+			<select name="filter_slug" id="filter_slug" onchange="this.form.submit()">
+				<option value="all"<?php selected( $selected_slug, 'all' ); ?>>All Plugins</option>
+				<?php foreach ( $all_slugs as $s ) : ?>
+					<option value="<?php echo esc_attr( $s ); ?>"<?php selected( $selected_slug, $s ); ?>><?php echo esc_html( $s ); ?></option>
+				<?php endforeach; ?>
+			</select>
+			<?php if ( $selected_slug !== 'all' ) : ?>
+				<a href="<?php echo esc_url( admin_url( 'admin.php?page=myplugin-api' ) ); ?>" class="button" style="vertical-align:top;">Clear Filter</a>
+			<?php endif; ?>
+		</form>
+
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" id="myplugin-bulk-action-form">
+			<?php wp_nonce_field( 'myplugin_admin_action', 'myplugin_nonce' ); ?>
+			<input type="hidden" name="action" value="myplugin_versions_action" />
+			<input type="hidden" name="myplugin_action" id="bulk-action-type" value="" />
+
+			<div class="tablenav top">
+				<div class="alignleft actions bulkactions">
+					<label for="bulk-action-selector" class="screen-reader-text">Select bulk action</label>
+					<select name="bulk_action" id="bulk-action-selector">
+						<option value="">Bulk Actions</option>
+						<option value="activate">Activate</option>
+						<option value="deactivate">Deactivate</option>
+						<option value="delete">Delete</option>
+					</select>
+					<button type="submit" class="button" id="doaction" onclick="return confirmBulkAction();">Apply</button>
 				</div>
 			</div>
-
-			<hr />
-
-			<h2>Version History</h2>
-
-			<form method="get" class="myplugin-filter-form" style="margin-bottom:15px;">
-				<input type="hidden" name="page" value="myplugin-api" />
-				<label for="filter_slug">Filter by Plugin:</label>
-				<select name="filter_slug" id="filter_slug" onchange="this.form.submit()">
-					<option value="all"<?php selected( $selected_slug, 'all' ); ?>>All Plugins</option>
-					<?php foreach ( $all_slugs as $s ) : ?>
-						<option value="<?php echo esc_attr( $s ); ?>"<?php selected( $selected_slug, $s ); ?>><?php echo esc_html( $s ); ?></option>
-					<?php endforeach; ?>
-				</select>
-				<?php if ( $selected_slug !== 'all' ) : ?>
-					<a href="<?php echo esc_url( admin_url( 'admin.php?page=myplugin-api' ) ); ?>" class="button" style="vertical-align:top;">Clear Filter</a>
-				<?php endif; ?>
-			</form>
-
-			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" id="myplugin-bulk-action-form">
-				<?php wp_nonce_field( 'myplugin_admin_action', 'myplugin_nonce' ); ?>
-				<input type="hidden" name="action" value="myplugin_versions_action" />
-				<input type="hidden" name="myplugin_action" id="bulk-action-type" value="" />
-
-				<div class="tablenav top">
-					<div class="alignleft actions bulkactions">
-						<label for="bulk-action-selector" class="screen-reader-text">Select bulk action</label>
-						<select name="bulk_action" id="bulk-action-selector">
-							<option value="">Bulk Actions</option>
-							<option value="activate">Activate</option>
-							<option value="deactivate">Deactivate</option>
-							<option value="delete">Delete</option>
-						</select>
-						<button type="submit" class="button" id="doaction" onclick="return confirmBulkAction();">Apply</button>
-					</div>
-				</div>
 
 			<table class="wp-list-table widefat striped">
 				<thead>
@@ -559,70 +539,69 @@ class MyPlugin_Admin {
 						<th>Date</th>
 					</tr>
 				</thead>
-					<tbody>
-						<?php if ( empty( $versions ) ) : ?>
-							<tr><td colspan="9">No versions uploaded yet.</td></tr>
-						<?php else : ?>
-							<?php foreach ( $versions as $v ) : ?>
-								<tr>
-									<th scope="row" class="check-column"><input type="checkbox" name="bulk_ids[]" value="<?php echo (int) $v['id']; ?>" /></th>
-									<td><?php echo esc_html( $v['id'] ); ?></td>
-									<td><?php echo esc_html( $v['version'] ); ?></td>
-									<td><?php echo esc_html( $v['slug'] ); ?></td>
-									<td><?php echo esc_html( basename( $v['download_path'] ?? '' ) ); ?></td>
-									<td>
-										<div class="myplugin-actions-dropdown">
-											<button type="button" class="button button-small myplugin-dropdown-toggle">Actions <span class="dashicons dashicons-arrow-down-alt2"></span></button>
-											<div class="myplugin-dropdown-content">
-												<button type="button" class="myplugin-dropdown-item myplugin-edit-btn" data-id="<?php echo (int) $v['id']; ?>" data-version="<?php echo esc_attr( $v['version'] ); ?>" data-slug="<?php echo esc_attr( $v['slug'] ); ?>">Edit</button>
-												<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display:inline;">
-													<?php wp_nonce_field( 'myplugin_admin_action', 'myplugin_nonce' ); ?>
-													<input type="hidden" name="action" value="myplugin_versions_action" />
-													<?php if ( ! $v['is_active'] ) : ?>
-														<input type="hidden" name="myplugin_action" value="activate" />
-														<input type="hidden" name="id" value="<?php echo (int) $v['id']; ?>" />
-														<button type="submit" class="myplugin-dropdown-item">Activate</button>
-													<?php else : ?>
-														<input type="hidden" name="myplugin_action" value="deactivate" />
-														<input type="hidden" name="id" value="<?php echo (int) $v['id']; ?>" />
-														<button type="submit" class="myplugin-dropdown-item">Deactivate</button>
-													<?php endif; ?>
-												</form>
-												<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display:inline;">
-													<?php wp_nonce_field( 'myplugin_admin_action', 'myplugin_nonce' ); ?>
-													<input type="hidden" name="action" value="myplugin_versions_action" />
-													<input type="hidden" name="myplugin_action" value="delete" />
-													<input type="hidden" name="id" value="<?php echo (int) $v['id']; ?>" />
-													<button type="submit" class="myplugin-dropdown-item" onclick="return confirm('Delete this version?');">Delete</button>
-												</form>
-											</div>
-										</div>
-									</td>
-									<td><?php echo $v['is_active'] ? '<span class="myplugin-status-active">Active</span>' : '<span class="myplugin-status-inactive">Inactive</span>'; ?></td>
-									<td>
-										<?php
-										// Calculate downloads from analytics table
-										$download_count = 0;
-										if ( class_exists( 'MyPlugin_Analytics_DB' ) ) {
-											global $wpdb;
-											$analytics_table = $wpdb->prefix . 'myplugin_analytics';
-											$download_count = (int) $wpdb->get_var(
-												$wpdb->prepare(
-													"SELECT COUNT(*) FROM {$analytics_table} WHERE slug = %s AND version = %s AND request_type = 'download'",
-													$v['slug'],
-													$v['version']
-												)
-											);
-										}
-										echo esc_html( $download_count );
-										?>
-									</td>
-									<td><?php echo esc_html( $v['created_at'] ); ?></td>
-								</tr>
-							<?php endforeach; ?>
-						<?php endif; ?>
-					</tbody>
-				</table>
+				<tbody>
+					<?php if ( empty( $versions ) ) : ?>
+						<tr><td colspan="9">No versions uploaded yet.</td></tr>
+					<?php else : ?>
+						<?php foreach ( $versions as $v ) : ?>
+							<tr>
+								<th scope="row" class="check-column"><input type="checkbox" name="bulk_ids[]" value="<?php echo (int) $v['id']; ?>" /></th>
+								<td><?php echo esc_html( $v['id'] ); ?></td>
+								<td><?php echo esc_html( $v['version'] ); ?></td>
+								<td><?php echo esc_html( $v['slug'] ); ?></td>
+								<td>
+									<?php echo esc_html( basename( $v['download_path'] ?? '' ) ); ?>
+									<div class="row-actions">
+										<button type="button" class="button-link myplugin-edit-btn" data-id="<?php echo (int) $v['id']; ?>" data-version="<?php echo esc_attr( $v['version'] ); ?>" data-slug="<?php echo esc_attr( $v['slug'] ); ?>">Edit</button>
+										|
+										<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display:inline;">
+											<?php wp_nonce_field( 'myplugin_admin_action', 'myplugin_nonce' ); ?>
+											<input type="hidden" name="action" value="myplugin_versions_action" />
+											<?php if ( ! $v['is_active'] ) : ?>
+												<input type="hidden" name="myplugin_action" value="activate" />
+												<input type="hidden" name="id" value="<?php echo (int) $v['id']; ?>" />
+												<button type="submit" class="button-link">Activate</button>
+											<?php else : ?>
+												<input type="hidden" name="myplugin_action" value="deactivate" />
+												<input type="hidden" name="id" value="<?php echo (int) $v['id']; ?>" />
+												<button type="submit" class="button-link">Deactivate</button>
+											<?php endif; ?>
+										</form>
+										|
+										<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display:inline;">
+											<?php wp_nonce_field( 'myplugin_admin_action', 'myplugin_nonce' ); ?>
+											<input type="hidden" name="action" value="myplugin_versions_action" />
+											<input type="hidden" name="myplugin_action" value="delete" />
+											<input type="hidden" name="id" value="<?php echo (int) $v['id']; ?>" />
+											<button type="submit" class="button-link" onclick="return confirm('Delete this version?');">Delete</button>
+										</form>
+									</div>
+								</td>
+								<td><?php echo $v['is_active'] ? '<span class="myplugin-status-active">Active</span>' : '<span class="myplugin-status-inactive">Inactive</span>'; ?></td>
+								<td>
+									<?php
+									// Calculate downloads from analytics table
+									$download_count = 0;
+									if ( class_exists( 'MyPlugin_Analytics_DB' ) ) {
+										global $wpdb;
+										$analytics_table = $wpdb->prefix . 'myplugin_analytics';
+										$download_count = (int) $wpdb->get_var(
+											$wpdb->prepare(
+												"SELECT COUNT(*) FROM {$analytics_table} WHERE slug = %s AND version = %s AND request_type = 'download'",
+												$v['slug'],
+												$v['version']
+											)
+										);
+									}
+									echo esc_html( $download_count );
+									?>
+								</td>
+								<td><?php echo esc_html( $v['created_at'] ); ?></td>
+							</tr>
+						<?php endforeach; ?>
+					<?php endif; ?>
+				</tbody>
+			</table>
 		</form>
 
 		<div id="myplugin-edit-form" style="display:none;">
@@ -660,8 +639,8 @@ class MyPlugin_Admin {
 				</form>
 			</div>
 		</div>
-		</div>
-		<?php
+	</div>
+	<?php
 	}
 
 	private static function maybe_show_notice() {
@@ -734,7 +713,7 @@ class MyPlugin_Admin {
 				esc_html( $message )
 			);
 		}
-}
+	}
 
 	public static function render_latest_urls_page() { ?>
 		<div class="wrap">

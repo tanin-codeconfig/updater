@@ -1,4 +1,4 @@
-(function( $ ) {
+( function( $ ) {
 	'use strict';
 
 	$( document ).ready( function() {
@@ -138,69 +138,27 @@
 				input.focus();
 			});
 
-		$( document ).on( 'click', '.myplugin-edit-btn', function() {
-			var btn = $( this );
-			var id = btn.data( 'id' );
-			var data = mypluginAdmin.versions && mypluginAdmin.versions[ id ];
+			$( document ).on( 'click', '.myplugin-edit-btn', function() {
+				var btn = $( this );
+				var id = btn.data( 'id' );
+				var data = mypluginAdmin.versions && mypluginAdmin.versions[ id ];
 
-			if ( ! data ) {
-				return;
-			}
+				if ( ! data ) {
+					return;
+				}
 
-			$( '#edit_id' ).val( id );
-			$( '#edit_version' ).val( data.version );
-			$( '#edit_slug' ).val( data.slug );
-			$( '#edit_changelog' ).val( data.changelog );
-			$( '#edit_zip' ).val( '' );
+				$( '#edit_id' ).val( id );
+				$( '#edit_version' ).val( data.version );
+				$( '#edit_slug' ).val( data.slug );
+				$( '#edit_changelog' ).val( data.changelog );
+				$( '#edit_zip' ).val( '' );
 
-			tb_show( 'Edit Version', '#TB_inline?height=400&width=500&inlineId=myplugin-edit-form' );
-		});
+				tb_show( 'Edit Version', '#TB_inline?height=400&width=500&inlineId=myplugin-edit-form' );
+			});
 
-		$( document ).on( 'click', '#myplugin-cancel-edit', function() {
-			tb_remove();
-		});
-
-		$( document ).on( 'click', '.myplugin-dropdown-toggle', function( e ) {
-			e.stopPropagation();
-			var dropdown = $( this ).closest( '.myplugin-actions-dropdown' );
-			$( '.myplugin-dropdown-content' ).not( dropdown.find( '.myplugin-dropdown-content' ) ).hide();
-			dropdown.find( '.myplugin-dropdown-content' ).toggle();
-		});
-
-		$( document ).on( 'click', function() {
-			$( '.myplugin-dropdown-content' ).hide();
-		});
-
-		$( document ).on( 'click', '.myplugin-dropdown-content', function( e ) {
-			e.stopPropagation();
-		});
-
-		window.confirmBulkAction = function() {
-			var action = $( '#bulk-action-selector' ).val();
-			var checked = $( 'input[name="bulk_ids[]"]:checked' ).length;
-
-			if ( ! action ) {
-				alert( 'Please select an action.' );
-				return false;
-			}
-
-			if ( checked === 0 ) {
-				alert( 'Please select at least one item.' );
-				return false;
-			}
-
-			$( '#bulk-action-type' ).val( action );
-
-			if ( action === 'delete' ) {
-				return confirm( 'Are you sure you want to delete the selected items?' );
-			}
-
-			return true;
-		};
-
-		$( '#cb-select-all' ).on( 'click', function() {
-			$( 'input[name="bulk_ids[]"]' ).prop( 'checked', this.checked );
-		});
+			$( document ).on( 'click', '#myplugin-cancel-edit', function() {
+				tb_remove();
+			});
 
 			function findZipSlug( zip ) {
 				var folders = {};
@@ -307,57 +265,85 @@
 				});
 			}
 		}
-	});
 
 		// Make metabox collapsible
-		$(document).on('click', '.myplugin-upload-metabox .handlediv, .myplugin-upload-metabox .hndle', function(e) {
+		$( document ).on( 'click', '.myplugin-upload-metabox .handlediv, .myplugin-upload-metabox .handle', function( e ) {
 			e.preventDefault();
-			var postbox = $(this).closest('.postbox');
-			var inside = postbox.find('.inside');
-			var expanded = postbox.find('.handlediv').attr('aria-expanded') === 'true';
+			var postbox = $( this ).closest( '.postbox' );
+			var inside = postbox.find( '.inside' );
+			var expanded = postbox.find( '.handlediv' ).attr( 'aria-expanded' ) === 'true';
 
-			postbox.find('.handlediv').attr('aria-expanded', !expanded);
-			postbox.toggleClass('closed');
-			inside.slideToggle(200);
+			postbox.find( '.handlediv' ).attr( 'aria-expanded', ! expanded );
+			postbox.toggleClass( 'closed' );
+			inside.slideToggle( 200 );
 		});
 
 		// Drag and drop functionality
-		var dropZone = $('#myplugin-drop-zone');
+		var dropZone = $( '#myplugin-drop-zone' );
 
-		dropZone.on('dragenter dragover', function(e) {
+		dropZone.on( 'dragenter dragover', function( e ) {
 			e.preventDefault();
 			e.stopPropagation();
-			$(this).addClass('drag-over');
+			$( this ).addClass( 'drag-over' );
 		});
 
-		dropZone.on('dragleave', function(e) {
+		dropZone.on( 'dragleave', function( e ) {
 			e.preventDefault();
 			e.stopPropagation();
-			$(this).removeClass('drag-over');
+			$( this ).removeClass( 'drag-over' );
 		});
 
-		dropZone.on('drop', function(e) {
+		dropZone.on( 'drop', function( e ) {
 			e.preventDefault();
 			e.stopPropagation();
-			$(this).removeClass('drag-over');
+			$( this ).removeClass( 'drag-over' );
 
 			var files = e.originalEvent.dataTransfer.files;
-			if (files.length > 0) {
+			if ( files.length > 0 ) {
 				var file = files[0];
 				// Check if it's a ZIP file
-				if (file.name.toLowerCase().endsWith('.zip')) {
+				if ( file.name.toLowerCase().endsWith( '.zip' ) ) {
 					// Set the file to the input
-					var input = $('#plugin_zip')[0];
+					var input = $( '#plugin_zip' )[0];
 					var dataTransfer = new DataTransfer();
-					dataTransfer.items.add(file);
+					dataTransfer.items.add( file );
 					input.files = dataTransfer.files;
 
 					// Trigger change event to parse the file
-					$(input).trigger('change');
+					$( input ).trigger( 'change' );
 				} else {
-					alert('Please drop a ZIP file only.');
+					alert( 'Please drop a ZIP file only.' );
 				}
 			}
 		});
 
+		// Confirm bulk action
+		window.confirmBulkAction = function() {
+			var action = $( '#bulk-action-selector' ).val();
+			var checked = $( 'input[name="bulk_ids[]"]:checked' ).length;
+
+			if ( ! action ) {
+				alert( 'Please select an action.' );
+				return false;
+			}
+
+			if ( checked === 0 ) {
+				alert( 'Please select at least one item.' );
+				return false;
+			}
+
+			$( '#bulk-action-type' ).val( action );
+
+			if ( action === 'delete' ) {
+				return confirm( 'Are you sure you want to delete the selected items?' );
+			}
+
+			return true;
+		};
+
+		// Select all checkbox
+		$( '#cb-select-all' ).on( 'click', function() {
+			$( 'input[name="bulk_ids[]"]' ).prop( 'checked', this.checked );
+		});
+	});
 })( jQuery );

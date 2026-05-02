@@ -47,6 +47,7 @@
 
 /* Upload form - modern grid layout */
 .myplugin-upload-metabox.postbox {
+	margin-top: 20px;
 	border-radius: 8px;
 	border: 1px solid #e0e0e0;
 	box-shadow: 0 1px 3px rgba(0,0,0,0.05);
@@ -262,43 +263,30 @@
 	vertical-align: middle;
 }
 
-.myplugin-dropdown-content {
-	display: none;
-	position: absolute;
-	right: 0;
-	background: white;
-	min-width: 150px;
-	box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-	border: 1px solid #e0e0e0;
-	border-radius: 6px;
-	z-index: 9999; /* High z-index to appear above everything */
-	padding: 6px 0;
-	overflow: hidden;
+/* Row actions for Version History table */
+.row-actions {
+	display: flex;
+	gap: 8px;
 }
 
-.myplugin-dropdown-content form {
-	margin: 0;
-	padding: 0;
-	display: block;
-}
-
-.myplugin-dropdown-item {
-	display: block;
-	width: 100%;
-	padding: 8px 14px;
-	text-align: left;
+.row-actions .button-link {
 	background: none;
 	border: none;
-	color: #333;
+	color: #2271b1;
+	padding: 4px 8px;
 	font-size: 13px;
 	cursor: pointer;
-	text-decoration: none;
-	box-sizing: border-box;
-	transition: background 0.2s ease;
+	text-decoration: underline;
 }
 
-.myplugin-dropdown-item:hover {
-	background: #f0f0f1;
+.row-actions .button-link:hover {
+	color: #135e96;
+}
+
+.row-actions form {
+	display: inline-block;
+	margin: 0;
+	padding: 0;
 }
 
 /* Postbox closed state */
