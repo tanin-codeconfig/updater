@@ -309,16 +309,55 @@
 		}
 	});
 
-	// Make metabox collapsible
-	$(document).on('click', '.myplugin-upload-metabox .handlediv, .myplugin-upload-metabox .hndle', function(e) {
-		e.preventDefault();
-		var postbox = $(this).closest('.postbox');
-		var inside = postbox.find('.inside');
-		var expanded = postbox.find('.handlediv').attr('aria-expanded') === 'true';
+		// Make metabox collapsible
+		$(document).on('click', '.myplugin-upload-metabox .handlediv, .myplugin-upload-metabox .hndle', function(e) {
+			e.preventDefault();
+			var postbox = $(this).closest('.postbox');
+			var inside = postbox.find('.inside');
+			var expanded = postbox.find('.handlediv').attr('aria-expanded') === 'true';
 
-		postbox.find('.handlediv').attr('aria-expanded', !expanded);
-		postbox.toggleClass('closed');
-		inside.slideToggle(200);
-	});
+			postbox.find('.handlediv').attr('aria-expanded', !expanded);
+			postbox.toggleClass('closed');
+			inside.slideToggle(200);
+		});
+
+		// Drag and drop functionality
+		var dropZone = $('#myplugin-drop-zone');
+
+		dropZone.on('dragenter dragover', function(e) {
+			e.preventDefault();
+			e.stopPropagation();
+			$(this).addClass('drag-over');
+		});
+
+		dropZone.on('dragleave', function(e) {
+			e.preventDefault();
+			e.stopPropagation();
+			$(this).removeClass('drag-over');
+		});
+
+		dropZone.on('drop', function(e) {
+			e.preventDefault();
+			e.stopPropagation();
+			$(this).removeClass('drag-over');
+
+			var files = e.originalEvent.dataTransfer.files;
+			if (files.length > 0) {
+				var file = files[0];
+				// Check if it's a ZIP file
+				if (file.name.toLowerCase().endsWith('.zip')) {
+					// Set the file to the input
+					var input = $('#plugin_zip')[0];
+					var dataTransfer = new DataTransfer();
+					dataTransfer.items.add(file);
+					input.files = dataTransfer.files;
+
+					// Trigger change event to parse the file
+					$(input).trigger('change');
+				} else {
+					alert('Please drop a ZIP file only.');
+				}
+			}
+		});
 
 })( jQuery );
