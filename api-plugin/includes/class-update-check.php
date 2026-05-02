@@ -57,6 +57,9 @@ class MyPlugin_Update_Check {
 
 		$download_url = self::get_download_url( $token, $slug, $key );
 
+		// Get download count
+		$download_count = MyPlugin_Version_DB::get_download_count( $slug, $latest['version'] );
+
 		return new WP_REST_Response( array(
 			'success'     => true,
 			'update'      => true,
@@ -64,6 +67,7 @@ class MyPlugin_Update_Check {
 			'slug'        => $slug,
 			'package'     => $download_url,
 			'changelog'   => $latest['changelog'] ?? '',
+			'downloads'   => (int) $download_count,
 		), 200 );
 	}
 

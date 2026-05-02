@@ -532,13 +532,14 @@ class MyPlugin_Admin {
 						<th>Changelog</th>
 						<th>File</th>
 						<th>Active</th>
+						<th>Downloads</th>
 						<th>Date</th>
 						<th>Actions</th>
 					</tr>
 				</thead>
 				<tbody>
 					<?php if ( empty( $versions ) ) : ?>
-						<tr><td colspan="8">No versions uploaded yet.</td></tr>
+						<tr><td colspan="9">No versions uploaded yet.</td></tr>
 					<?php else : ?>
 						<?php foreach ( $versions as $v ) : ?>
 							<tr>
@@ -548,6 +549,7 @@ class MyPlugin_Admin {
 								<td><?php echo esc_html( wp_trim_words( $v['changelog'] ?? '', 10 ) ); ?></td>
 								<td><?php echo esc_html( basename( $v['download_path'] ?? '' ) ); ?></td>
 								<td><?php echo $v['is_active'] ? '<span class="myplugin-status-active">Active</span>' : '<span class="myplugin-status-inactive">Inactive</span>'; ?></td>
+								<td><?php echo (int) ( $v['download_count'] ?? 0 ); ?></td>
 								<td><?php echo esc_html( $v['created_at'] ); ?></td>
 								<td>
 									<button type="button" class="button button-small myplugin-edit-btn" data-id="<?php echo (int) $v['id']; ?>" data-version="<?php echo esc_attr( $v['version'] ); ?>" data-slug="<?php echo esc_attr( $v['slug'] ); ?>">Edit</button>

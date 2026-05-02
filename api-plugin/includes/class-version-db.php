@@ -24,6 +24,7 @@ class MyPlugin_Version_DB {
 			slug VARCHAR(100) NOT NULL,
 			changelog TEXT,
 			download_path VARCHAR(500),
+			download_count BIGINT UNSIGNED DEFAULT 0,
 			is_active TINYINT(1) DEFAULT 1,
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY (id),
@@ -174,6 +175,32 @@ class MyPlugin_Version_DB {
 				(int) $id
 			),
 			ARRAY_A
+		);
+	}
+
+	public static function increment_download_count( $slug, $version ) {
+		global $wpdb;
+		$table_name = self::get_table_name();
+
+		return $wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$table_name} SET download_count = download_count + 1 WHERE slug = %s AND version = %s",
+				sanitize_text_field( $slug ),
+				sanitize_text_field( $version )
+			)
+		);
+	}
+
+	public static function get_download_count( $slug, $version ) {
+		global $wpdb;
+		$table_name = self::get_table_name();
+
+		return (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT download_count FROM {$table_name} WHERE slug = %s AND version = %s LIMIT 1",
+				sanitize_text_field( $slug ),
+				sanitize_text_field( $version )
+			)
 		);
 	}
 }

@@ -273,6 +273,12 @@ class MyPlugin_Admin
 							<td>Never</td>
 						</tr>
 					<?php endif; ?>
+					<?php if (! empty($api_data['downloads'])) : ?>
+						<tr>
+							<th>Downloads</th>
+							<td><?php echo (int) $api_data['downloads']; ?></td>
+						</tr>
+					<?php endif; ?>
 				</tbody>
 			</table>
 		</div>

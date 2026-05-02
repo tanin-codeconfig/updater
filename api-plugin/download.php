@@ -5,6 +5,7 @@ require_once __DIR__ . '/../../../wp-load.php';
 
 require_once MYPLUGIN_API_PATH . 'includes/class-version-db.php';
 require_once MYPLUGIN_API_PATH . 'includes/class-users-db.php';
+require_once MYPLUGIN_API_PATH . 'includes/class-analytics-db.php';
 
 $token = isset( $_GET['token'] ) ? sanitize_text_field( $_GET['token'] ) : '';
 $slug  = isset( $_GET['slug'] ) ? sanitize_text_field( $_GET['slug'] ) : 'my-plugin';
@@ -39,6 +40,25 @@ if ( $stored_key ) {
 }
 
 delete_transient( 'myplugin_dl_' . $token );
+
+// Log the download
+if ( class_exists( 'MyPlugin_Analytics_DB' ) ) {
+    $log_user_id = isset( $user ) && $user ? $user['id'] : null;
+    $log_api_key = $stored_key ? $stored_key : ( $key ? $key : '' );
+    
+    MyPlugin_Analytics_DB::log_request( array(
+        'user_id'      => $log_user_id,
+        'api_key'      => $log_api_key,
+        'slug'         => $slug,
+        'version'      => $latest['version'] ?? '',
+        'request_type' => 'download',
+    ) );
+}
+
+// Increment download count in versions table
+if ( class_exists( 'MyPlugin_Version_DB' ) && ! empty( $latest['version'] ) ) {
+    MyPlugin_Version_DB::increment_download_count( $slug, $latest['version'] );
+}
 
 $latest = MyPlugin_Version_DB::get_active_version( $slug );
 
