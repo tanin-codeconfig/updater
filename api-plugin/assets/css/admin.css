@@ -62,7 +62,7 @@
 }
 
 .myplugin-upload-metabox .hndle {
-	padding: 12px 12px 12px 40px;
+	padding: 12px 12px 12px 20px;
 }
 
 .myplugin-upload-metabox .toggle-indicator:before {
@@ -271,7 +271,7 @@
 	box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 	border: 1px solid #e0e0e0;
 	border-radius: 6px;
-	z-index: 100;
+	z-index: 9999; /* High z-index to appear above everything */
 	padding: 6px 0;
 	overflow: hidden;
 }
@@ -341,6 +341,7 @@
 	border-radius: 4px;
 	padding: 4px 8px;
 	border: 1px solid #ddd;
+	min-width: 150px;
 }
 
 .bulkactions .button {

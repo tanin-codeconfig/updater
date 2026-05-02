@@ -545,20 +545,20 @@ class MyPlugin_Admin {
 					</div>
 				</div>
 
-				<table class="wp-list-table widefat fixed striped">
-					<thead>
-						<tr>
-							<th class="check-column"><input type="checkbox" id="cb-select-all" /></th>
-							<th>ID</th>
-							<th>Version</th>
-							<th>Slug</th>
-							<th>File</th>
-							<th>Actions</th>
-							<th>Active</th>
-							<th>Downloads</th>
-							<th>Date</th>
-						</tr>
-					</thead>
+			<table class="wp-list-table widefat striped">
+				<thead>
+					<tr>
+						<th class="check-column"><input type="checkbox" id="cb-select-all" /></th>
+						<th>ID</th>
+						<th>Version</th>
+						<th>Slug</th>
+						<th>File</th>
+						<th>Actions</th>
+						<th>Active</th>
+						<th>Downloads</th>
+						<th>Date</th>
+					</tr>
+				</thead>
 					<tbody>
 						<?php if ( empty( $versions ) ) : ?>
 							<tr><td colspan="9">No versions uploaded yet.</td></tr>
@@ -748,7 +748,7 @@ class MyPlugin_Admin {
 			if ( empty( $all_slugs ) ) : ?>
 				<p>No plugins found. Upload a version first.</p>
 			<?php else : ?>
-				<table class="wp-list-table widefat fixed striped">
+				<table class="wp-list-table widefat striped">
 					<thead>
 						<tr>
 							<th>Plugin Slug</th>
