@@ -212,7 +212,7 @@ class MyPlugin_Admin {
 						require_once ABSPATH . 'wp-admin/includes/file.php';
 
 						// Override upload dir to save directly to storage
-						$override_upload_dir = function( $dirs ) use ( $slug, $version ) {
+						$override_upload_dir = function( $dirs ) {
 							$dirs['path'] = MYPLUGIN_API_STORAGE;
 							$dirs['url']  = MYPLUGIN_API_URL . 'storage';
 							$dirs['subdir']  = '';
@@ -227,6 +227,16 @@ class MyPlugin_Admin {
 							$args['myplugin_notice'] = 'upload_failed';
 							wp_safe_redirect( add_query_arg( $args, admin_url( 'admin.php' ) ) );
 							exit;
+						}
+
+						// If file didn't go to storage, move it there
+						if ( $upload['file'] && dirname( $upload['file'] ) !== rtrim( MYPLUGIN_API_STORAGE, '/' ) ) {
+							$new_path = MYPLUGIN_API_STORAGE . basename( $upload['file'] );
+							if ( file_exists( $new_path ) ) {
+								unlink( $new_path );
+							}
+							rename( $upload['file'], $new_path );
+							$upload['file'] = $new_path;
 						}
 
 						$upload_file = $upload['file'];
@@ -337,6 +347,16 @@ class MyPlugin_Admin {
 					$args['myplugin_notice'] = 'upload_failed';
 					wp_safe_redirect( add_query_arg( $args, admin_url( 'admin.php' ) ) );
 					exit;
+				}
+
+				// If file didn't go to storage, move it there
+				if ( $upload['file'] && dirname( $upload['file'] ) !== rtrim( MYPLUGIN_API_STORAGE, '/' ) ) {
+					$new_path = MYPLUGIN_API_STORAGE . basename( $upload['file'] );
+					if ( file_exists( $new_path ) ) {
+						unlink( $new_path );
+					}
+					rename( $upload['file'], $new_path );
+					$upload['file'] = $new_path;
 				}
 
 				$ext = strtolower( pathinfo( $_FILES['plugin_zip']['name'], PATHINFO_EXTENSION ) );
