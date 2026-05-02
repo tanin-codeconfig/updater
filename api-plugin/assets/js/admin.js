@@ -12,7 +12,6 @@
 			var fileInput = $( '#plugin_zip' );
 			var statusDiv = $( '#myplugin-detect-status' );
 			var mediaBtn = $( '#myplugin-select-media' );
-			var nativeSubmit = versionForm[0].submit;
 
 			versionForm.on( 'submit', function( e ) {
 				var version = versionInput.val();
@@ -32,13 +31,20 @@
 				}, function( response ) {
 					if ( response.success && response.data.exists ) {
 						if ( confirm( mypluginAdmin.confirmUpdate ) ) {
-							nativeSubmit.call( versionForm[0] );
+							submitForm();
 						}
 					} else {
-						nativeSubmit.call( versionForm[0] );
+						submitForm();
 					}
 				});
 			});
+
+			function submitForm() {
+				var $submitBtn = versionForm.find( 'input[name="submit"], button[name="submit"]' );
+				$submitBtn.removeAttr( 'name' );
+				versionForm[0].submit();
+				$submitBtn.attr( 'name', 'submit' );
+			}
 
 			fileInput.on( 'change', function() {
 				var file = this.files[0];
