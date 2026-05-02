@@ -97,12 +97,12 @@ class MyPlugin_Analytics_DB {
 		$values = array();
 
 		if ( $args['start_date'] ) {
-			$where[] = 'created_at >= %s';
+			$where[] = 'a.created_at >= %s';
 			$values[] = $args['start_date'];
 		}
 
 		if ( $args['end_date'] ) {
-			$where[] = 'created_at <= %s';
+			$where[] = 'a.created_at <= %s';
 			$values[] = $args['end_date'];
 		}
 
@@ -126,19 +126,19 @@ class MyPlugin_Analytics_DB {
 		return array(
 			'total_update_checks' => (int) $wpdb->get_var(
 				$wpdb->prepare(
-					"SELECT COUNT(*) FROM {$table_name} WHERE {$where_sql} AND request_type = 'update-check'",
+					"SELECT COUNT(*) FROM {$table_name} a WHERE {$where_sql} AND request_type = 'update-check'",
 					$values
 				)
 			),
 			'total_downloads'     => (int) $wpdb->get_var(
 				$wpdb->prepare(
-					"SELECT COUNT(*) FROM {$table_name} WHERE {$where_sql} AND request_type = 'download'",
+					"SELECT COUNT(*) FROM {$table_name} a WHERE {$where_sql} AND request_type = 'download'",
 					$values
 				)
 			),
 			'by_slug' => $wpdb->get_results(
 				$wpdb->prepare(
-					"SELECT slug, COUNT(*) as count FROM {$table_name} WHERE {$where_sql} GROUP BY slug ORDER BY count DESC LIMIT 10",
+					"SELECT slug, COUNT(*) as count FROM {$table_name} a WHERE {$where_sql} GROUP BY slug ORDER BY count DESC LIMIT 10",
 					$values
 				),
 				ARRAY_A
