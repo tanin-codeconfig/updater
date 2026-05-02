@@ -138,7 +138,15 @@ class MyPlugin_Analytics_DB {
 			),
 			'by_slug' => $wpdb->get_results(
 				$wpdb->prepare(
-					"SELECT slug, COUNT(*) as count FROM {$table_name} a WHERE {$where_sql} GROUP BY slug ORDER BY count DESC LIMIT 10",
+					"SELECT slug,
+						SUM(CASE WHEN request_type = 'update-check' THEN 1 ELSE 0 END) as update_checks,
+						SUM(CASE WHEN request_type = 'download' THEN 1 ELSE 0 END) as downloads,
+						COUNT(*) as total
+					FROM {$table_name} a
+					WHERE {$where_sql}
+					GROUP BY slug
+					ORDER BY total DESC
+					LIMIT 10",
 					$values
 				),
 				ARRAY_A

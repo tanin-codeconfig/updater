@@ -64,57 +64,63 @@ class MyPlugin_Analytics_Admin {
 				</div>
 			</div>
 
-			<h2>Top Plugins</h2>
-			<table class="wp-list-table widefat fixed striped">
-				<thead>
-					<tr>
-						<th>Plugin Slug</th>
-						<th>Requests</th>
-					</tr>
-				</thead>
-				<tbody>
-					<?php if ( empty( $stats['by_slug'] ) ) : ?>
-						<tr><td colspan="2">No data yet.</td></tr>
-					<?php else : ?>
-						<?php foreach ( $stats['by_slug'] as $row ) : ?>
-							<tr>
-								<td><?php echo esc_html( $row['slug'] ); ?></td>
-								<td><?php echo (int) $row['count']; ?></td>
-							</tr>
-						<?php endforeach; ?>
-					<?php endif; ?>
-				</tbody>
-			</table>
+		<h2>Top Plugins</h2>
+		<table class="wp-list-table widefat fixed striped">
+			<thead>
+				<tr>
+					<th>Plugin Slug</th>
+					<th>Update Checks</th>
+					<th>Downloads</th>
+					<th>Total</th>
+				</tr>
+			</thead>
+			<tbody>
+				<?php if ( empty( $stats['by_slug'] ) ) : ?>
+					<tr><td colspan="4">No data yet.</td></tr>
+				<?php else : ?>
+					<?php foreach ( $stats['by_slug'] as $row ) : ?>
+						<tr>
+							<td><?php echo esc_html( $row['slug'] ); ?></td>
+							<td><?php echo (int) $row['update_checks']; ?></td>
+							<td><?php echo (int) $row['downloads']; ?></td>
+							<td><?php echo (int) $row['total']; ?></td>
+						</tr>
+					<?php endforeach; ?>
+				<?php endif; ?>
+			</tbody>
+		</table>
 
-			<h2 style="margin-top:30px;">Recent Activity</h2>
-			<table class="wp-list-table widefat fixed striped">
-				<thead>
-					<tr>
-						<th>Time</th>
-						<th>User</th>
-						<th>Type</th>
-						<th>Slug</th>
-						<th>Version</th>
-						<th>IP Address</th>
-					</tr>
-				</thead>
-				<tbody>
-					<?php if ( empty( $stats['recent_activity'] ) ) : ?>
-						<tr><td colspan="6">No activity yet.</td></tr>
-					<?php else : ?>
-						<?php foreach ( $stats['recent_activity'] as $row ) : ?>
-							<tr>
-								<td><?php echo esc_html( $row['created_at'] ); ?></td>
-								<td><?php echo esc_html( $row['user_name'] ?? $row['api_key'] ); ?></td>
-								<td><?php echo esc_html( ucfirst( $row['request_type'] ) ); ?></td>
-								<td><?php echo esc_html( $row['slug'] ); ?></td>
-								<td><?php echo esc_html( $row['version'] ?? '—' ); ?></td>
-								<td><?php echo esc_html( $row['ip_address'] ?? '—' ); ?></td>
-							</tr>
-						<?php endforeach; ?>
-					<?php endif; ?>
-				</tbody>
-			</table>
+		<h2 style="margin-top:30px;">Recent Activity</h2>
+		<table class="wp-list-table widefat fixed striped">
+			<thead>
+				<tr>
+					<th>Time</th>
+					<th>User</th>
+					<th>Type</th>
+					<th>Slug</th>
+					<th>Version</th>
+					<th>Download Version</th>
+					<th>IP Address</th>
+				</tr>
+			</thead>
+			<tbody>
+				<?php if ( empty( $stats['recent_activity'] ) ) : ?>
+					<tr><td colspan="7">No activity yet.</td></tr>
+				<?php else : ?>
+					<?php foreach ( $stats['recent_activity'] as $row ) : ?>
+						<tr>
+							<td><?php echo esc_html( $row['created_at'] ); ?></td>
+							<td><?php echo esc_html( $row['user_name'] ?? $row['api_key'] ); ?></td>
+							<td><?php echo esc_html( ucfirst( $row['request_type'] ) ); ?></td>
+							<td><?php echo esc_html( $row['slug'] ); ?></td>
+							<td><?php echo esc_html( $row['version'] ?? '—' ); ?></td>
+							<td><?php echo esc_html( $row['version'] ?? '—' ); ?></td>
+							<td><?php echo esc_html( $row['ip_address'] ?? '—' ); ?></td>
+						</tr>
+					<?php endforeach; ?>
+				<?php endif; ?>
+			</tbody>
+		</table>
 		</div>
 		<?php
 	}
