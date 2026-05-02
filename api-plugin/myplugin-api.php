@@ -12,7 +12,7 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
-define('MYPLUGIN_API_VERSION', '1.0.3');
+define('MYPLUGIN_API_VERSION', '1.0.5');
 define('MYPLUGIN_API_PATH', plugin_dir_path(__FILE__));
 define('MYPLUGIN_API_URL', plugin_dir_url(__FILE__));
 define('MYPLUGIN_API_STORAGE', MYPLUGIN_API_PATH . 'storage/');
