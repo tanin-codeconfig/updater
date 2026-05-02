@@ -50,6 +50,13 @@
 					return;
 				}
 
+				// Check if it's a ZIP file
+				if ( ! file.name.toLowerCase().endsWith('.zip') ) {
+					alert( 'Only ZIP files are allowed.' );
+					this.value = ''; // Clear the file input
+					return;
+				}
+
 				if ( typeof JSZip === 'undefined' ) {
 					serverParseZip( file );
 					return;
