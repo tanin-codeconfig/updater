@@ -15,6 +15,15 @@ class MyPlugin_Admin {
 			'dashicons-update',
 			30
 		);
+
+		add_submenu_page(
+			'myplugin-api',
+			'Latest Version URLs',
+			'Latest URLs',
+			'manage_options',
+			'myplugin-latest-urls',
+			array( __CLASS__, 'render_latest_urls_page' )
+		);
 	}
 
 	public static function enqueue_assets( $hook ) {
@@ -456,33 +465,6 @@ class MyPlugin_Admin {
 
 			<hr />
 
-			<h2>Latest Version Download URLs</h2>
-			<?php
-			$site_url = untrailingslashit(get_site_url());
-			$all_slugs = MyPlugin_Version_DB::get_unique_slugs();
-			?>
-			<p>Share these URLs - they always point to the latest version for each plugin:</p>
-			<?php foreach ($all_slugs as $slug): ?>
-				<?php $latest_download_url = $site_url . '/wp-json/myplugin/v1/latest-download?slug=' . urlencode($slug); ?>
-				<p><strong><?php echo esc_html($slug); ?>:</strong></p>
-				<p>
-					<input type="text" id="latest-download-<?php echo esc_attr($slug); ?>" value="<?php echo esc_url($latest_download_url); ?>" class="regular-text" readonly onclick="this.select();" />
-					<button type="button" class="button" onclick="copyLatestDownloadUrl('<?php echo esc_js($slug); ?>')">Copy</button>
-				</p>
-			<?php endforeach; ?>
-			<p class="description">These URLs always download the active version. Add them to your frontend for initial plugin installation.</p>
-
-			<script>
-			function copyLatestDownloadUrl(slug) {
-				var copyText = document.getElementById("latest-download-" + slug);
-				copyText.select();
-				document.execCommand("copy");
-				alert("URL copied to clipboard!");
-			}
-			</script>
-
-			<hr />
-
 			<h2>Storage Files</h2>
 			<?php
 			$storage_files = array();
@@ -729,5 +711,116 @@ class MyPlugin_Admin {
 				esc_html( $message )
 			);
 		}
+}
+
+	public static function render_latest_urls_page() { ?>
+		<div class="wrap">
+			<h1>Latest Version Download URLs</h1>
+			<p>Share these URLs - they always point to the latest active version for each plugin:</p>
+
+			<?php
+			$all_slugs = MyPlugin_Version_DB::get_unique_slugs();
+			$site_url = untrailingslashit( get_site_url() );
+			
+			if ( empty( $all_slugs ) ) : ?>
+				<p>No plugins found. Upload a version first.</p>
+			<?php else : ?>
+				<table class="wp-list-table widefat fixed striped">
+					<thead>
+						<tr>
+							<th>Plugin Slug</th>
+							<th>Latest Version</th>
+							<th>Download URL</th>
+							<th>Action</th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php foreach ( $all_slugs as $slug ) : ?>
+							<?php
+							$latest = MyPlugin_Version_DB::get_active_version( $slug );
+							$version = $latest ? $latest['version'] : 'N/A';
+							$url = $site_url . '/wp-json/myplugin/v1/latest-download?slug=' . urlencode( $slug );
+							?>
+							<tr>
+								<td><strong><?php echo esc_html( $slug ); ?></strong></td>
+								<td><?php echo esc_html( $version ); ?></td>
+								<td>
+									<input type="text" id="latest-url-<?php echo esc_attr( $slug ); ?>" value="<?php echo esc_url( $url ); ?>" class="regular-text" readonly onclick="this.select();" />
+								</td>
+								<td>
+									<button type="button" class="button" onclick="copyLatestUrl('<?php echo esc_js( $slug ); ?>')">Copy URL</button>
+								</td>
+							</tr>
+						<?php endforeach; ?>
+					</tbody>
+				</table>
+			<?php endif; ?>
+
+			<hr />
+			<p class="description">Add these URLs to your frontend for initial plugin installation. The URLs always serve the active version.</p>
+		</div>
+
+		<script>
+			function copyLatestUrl(slug) {
+				var input = document.getElementById('latest-url-' + slug);
+				input.select();
+				document.execCommand('copy');
+				alert('URL copied to clipboard!');
+			}
+		</script>
+		<?php
 	}
+		<div class="wrap">
+			<h1>Latest Version Download URLs</h1>
+			<p>Share these URLs - they always point to the latest active version for each plugin:</p>
+
+			<?php if ( empty( $all_slugs ) ) : ?>
+				<p>No plugins found. Upload a version first.</p>
+			<?php else : ?>
+				<table class="wp-list-table widefat fixed striped">
+					<thead>
+						<tr>
+							<th>Plugin Slug</th>
+							<th>Latest Version</th>
+							<th>Download URL</th>
+							<th>Action</th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php foreach ( $all_slugs as $slug ) : ?>
+							<?php
+							$latest = MyPlugin_Version_DB::get_active_version( $slug );
+							$version = $latest ? $latest['version'] : 'N/A';
+							$url = $site_url . '/wp-json/myplugin/v1/latest-download?slug=' . urlencode( $slug );
+							?>
+							<tr>
+								<td><strong><?php echo esc_html( $slug ); ?></strong></td>
+								<td><?php echo esc_html( $version ); ?></td>
+								<td>
+									<input type="text" id="latest-url-<?php echo esc_attr( $slug ); ?>" value="<?php echo esc_url( $url ); ?>" class="regular-text" readonly onclick="this.select();" />
+								</td>
+								<td>
+									<button type="button" class="button" onclick="copyLatestUrl('<?php echo esc_js( $slug ); ?>')">Copy URL</button>
+								</td>
+							</tr>
+						<?php endforeach; ?>
+					</tbody>
+				</table>
+			<?php endif; ?>
+
+			<hr />
+			<p class="description">Add these URLs to your frontend for initial plugin installation. The URLs always serve the active version.</p>
+		</div>
+
+		<script>
+			function copyLatestUrl(slug) {
+				var input = document.getElementById('latest-url-' + slug);
+				input.select();
+				document.execCommand('copy');
+				alert('URL copied to clipboard!');
+			}
+		</script>
+		<?php
+	}
+}
 }
