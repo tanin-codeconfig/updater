@@ -49,6 +49,13 @@ if ( ! $latest || empty( $latest['download_path'] ) ) {
 
 $file_path = $latest['download_path'];
 
+// If stored path doesn't exist, try constructing it from storage dir
+if ( ! file_exists( $file_path ) ) {
+	$slug    = $latest['slug'];
+	$version = $latest['version'];
+	$file_path = MYPLUGIN_API_STORAGE . $slug . '-v' . $version . '.zip';
+}
+
 if ( ! file_exists( $file_path ) ) {
 	status_header( 404 );
 	die( 'Plugin ZIP does not exist on server.' );

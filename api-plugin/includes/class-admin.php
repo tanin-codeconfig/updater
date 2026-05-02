@@ -210,7 +210,18 @@ class MyPlugin_Admin {
 
 					if ( ! empty( $_FILES['plugin_zip']['tmp_name'] ) ) {
 						require_once ABSPATH . 'wp-admin/includes/file.php';
+
+						// Override upload dir to save directly to storage
+						$override_upload_dir = function( $dirs ) use ( $slug, $version ) {
+							$dirs['path'] = MYPLUGIN_API_STORAGE;
+							$dirs['url']  = MYPLUGIN_API_URL . 'storage';
+							$dirs['subdir']  = '';
+							return $dirs;
+						};
+
+						add_filter( 'upload_dir', $override_upload_dir );
 						$upload = wp_handle_upload( $_FILES['plugin_zip'], array( 'test_form' => false ) );
+						remove_filter( 'upload_dir', $override_upload_dir );
 
 						if ( isset( $upload['error'] ) ) {
 							$args['myplugin_notice'] = 'upload_failed';
@@ -309,7 +320,18 @@ class MyPlugin_Admin {
 
 			if ( ! empty( $_FILES['plugin_zip']['name'] ) ) {
 				require_once ABSPATH . 'wp-admin/includes/file.php';
+
+				// Override upload dir to save directly to storage
+				$override_upload_dir = function( $dirs ) {
+					$dirs['path']    = MYPLUGIN_API_STORAGE;
+					$dirs['url']     = MYPLUGIN_API_URL . 'storage';
+					$dirs['subdir']  = '';
+					return $dirs;
+				};
+
+				add_filter( 'upload_dir', $override_upload_dir );
 				$upload = wp_handle_upload( $_FILES['plugin_zip'], array( 'test_form' => false ) );
+				remove_filter( 'upload_dir', $override_upload_dir );
 
 				if ( isset( $upload['error'] ) ) {
 					$args['myplugin_notice'] = 'upload_failed';

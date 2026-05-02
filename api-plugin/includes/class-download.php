@@ -70,6 +70,13 @@ class MyPlugin_Download {
 
 		$file_path = $latest['download_path'];
 
+		// If the stored path doesn't exist, try constructing it from storage dir
+		if ( ! file_exists( $file_path ) ) {
+			$slug    = $latest['slug'];
+			$version = $latest['version'];
+			$file_path = MYPLUGIN_API_STORAGE . $slug . '-v' . $version . '.zip';
+		}
+
 		if ( ! file_exists( $file_path ) ) {
 			return new WP_REST_Response( array(
 				'success' => false,
