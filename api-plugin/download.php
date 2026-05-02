@@ -41,26 +41,38 @@ if ( $stored_key ) {
 
 delete_transient( 'myplugin_dl_' . $token );
 
+$latest = MyPlugin_Version_DB::get_active_version( $slug );
+
+if ( ! $latest || empty( $latest['download_path'] ) ) {
+	status_header( 404 );
+	die( 'Plugin file not found.' );
+}
+
 // Log the download
 if ( class_exists( 'MyPlugin_Analytics_DB' ) ) {
     $log_user_id = isset( $user ) && $user ? $user['id'] : null;
     $log_api_key = $stored_key ? $stored_key : ( $key ? $key : '' );
     
-    MyPlugin_Analytics_DB::log_request( array(
+    // Debug: Log what version we're trying to save
+    error_log( 'Download logging - Slug: ' . $slug . ', Version: ' . ( $latest['version'] ?? 'EMPTY' ) );
+    
+    $result = MyPlugin_Analytics_DB::log_request( array(
         'user_id'      => $log_user_id,
         'api_key'      => $log_api_key,
         'slug'         => $slug,
         'version'      => $latest['version'] ?? '',
         'request_type' => 'download',
     ) );
+    
+    // Debug: Check if insert was successful
+    global $wpdb;
+    error_log( 'Download log result: ' . ( $result ? 'SUCCESS' : 'FAILED - ' . $wpdb->last_error ) );
 }
 
 // Increment download count in versions table
 if ( class_exists( 'MyPlugin_Version_DB' ) && ! empty( $latest['version'] ) ) {
     MyPlugin_Version_DB::increment_download_count( $slug, $latest['version'] );
 }
-
-$latest = MyPlugin_Version_DB::get_active_version( $slug );
 
 if ( ! $latest || empty( $latest['download_path'] ) ) {
 	status_header( 404 );
