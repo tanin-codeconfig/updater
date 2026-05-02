@@ -456,6 +456,21 @@ class MyPlugin_Admin {
 
 			<hr />
 
+			<h2>Latest Version Download</h2>
+			<?php
+			$latest_version = MyPlugin_Version_DB::get_active_version('my-plugin');
+			if ($latest_version && !empty($latest_version['download_path'])) {
+				$file_name = basename($latest_version['download_path']);
+				$download_url = MYPLUGIN_API_STORAGE_URL . $file_name;
+				echo '<p><a href="' . esc_url($download_url) . '" class="button button-primary" target="_blank">Download Latest Version (' . esc_html($latest_version['version']) . ')</a></p>';
+				echo '<p class="description">Share this link with users for initial plugin installation.</p>';
+			} else {
+				echo '<p>No active version available for download yet. Upload a version first.</p>';
+			}
+			?>
+
+			<hr />
+
 			<h2>Storage Files</h2>
 			<?php
 			$storage_files = array();
@@ -482,6 +497,7 @@ class MyPlugin_Admin {
 							<th>File Name</th>
 							<th>Size</th>
 							<th>Last Modified</th>
+							<th>Download</th>
 							<th>Action</th>
 						</tr>
 					</thead>
@@ -491,6 +507,9 @@ class MyPlugin_Admin {
 								<td><?php echo esc_html( $file['name'] ); ?></td>
 								<td><?php echo esc_html( size_format( $file['size'] ) ); ?></td>
 								<td><?php echo esc_html( date( 'Y-m-d H:i:s', $file['modified'] ) ); ?></td>
+								<td>
+									<a href="<?php echo esc_url( MYPLUGIN_API_STORAGE_URL . $file['name'] ); ?>" class="button button-small" target="_blank">Download</a>
+								</td>
 								<td>
 									<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display:inline;">
 										<?php wp_nonce_field( 'myplugin_admin_action', 'myplugin_nonce' ); ?>
