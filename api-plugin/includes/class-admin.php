@@ -303,6 +303,10 @@ class MyPlugin_Admin {
 
 		if ( 'delete' === $action ) {
 			$id = (int) $_POST['id'];
+			$version = MyPlugin_Version_DB::get_existing_version_by_id( $id );
+			if ( $version && ! empty( $version['download_path'] ) && file_exists( $version['download_path'] ) ) {
+				unlink( $version['download_path'] );
+			}
 			MyPlugin_Version_DB::delete_version( $id );
 			$args['myplugin_notice'] = 'deleted';
 		}
@@ -314,6 +318,12 @@ class MyPlugin_Admin {
 				unlink( $file_path );
 				$args['myplugin_notice'] = 'file_deleted';
 			}
+			global $wpdb;
+			$wpdb->delete(
+				MyPlugin_Version_DB::get_table_name(),
+				array( 'download_path' => $file_path ),
+				array( '%s' )
+			);
 		}
 
 		if ( 'edit' === $action ) {
