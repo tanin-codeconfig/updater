@@ -12,7 +12,7 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
-define('MYPLUGIN_API_VERSION', '1.0.5');
+define('MYPLUGIN_API_VERSION', '1.0.6');
 define('MYPLUGIN_API_PATH', plugin_dir_path(__FILE__));
 define('MYPLUGIN_API_URL', plugin_dir_url(__FILE__));
 define('MYPLUGIN_API_STORAGE', MYPLUGIN_API_PATH . 'storage/');
@@ -31,6 +31,16 @@ require_once MYPLUGIN_API_PATH . 'includes/class-users-admin.php';
 register_activation_hook(__FILE__, array( 'MyPlugin_Version_DB', 'create_table' ));
 register_activation_hook(__FILE__, array( 'MyPlugin_Users_DB', 'create_table' ));
 register_activation_hook(__FILE__, array( 'MyPlugin_Analytics_DB', 'create_table' ));
+
+// Check and update table structure on admin init
+add_action('admin_init', function() {
+    $db_version = get_option('myplugin_api_db_version', '1.0.5');
+    
+    if (version_compare($db_version, '1.0.6', '<')) {
+        MyPlugin_Version_DB::create_table();
+        update_option('myplugin_api_db_version', '1.0.6');
+    }
+});
 register_deactivation_hook(__FILE__, array( 'MyPlugin_Version_DB', 'drop_table' ));
 register_deactivation_hook(__FILE__, array( 'MyPlugin_Users_DB', 'drop_table' ));
 register_deactivation_hook(__FILE__, array( 'MyPlugin_Analytics_DB', 'drop_table' ));
