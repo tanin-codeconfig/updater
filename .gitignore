@@ -33,3 +33,6 @@ build/
 
 # PHPUnit
 .phpunit.result.cache
+
+# Archives
+*.zip
