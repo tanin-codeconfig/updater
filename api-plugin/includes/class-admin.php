@@ -211,10 +211,10 @@ class MyPlugin_Admin {
 					if ( ! empty( $_FILES['plugin_zip']['tmp_name'] ) ) {
 						require_once ABSPATH . 'wp-admin/includes/file.php';
 
-						// Override upload dir to save directly to storage
+						// Override upload dir to save directly to wp-content/uploads/myplugin-api/
 						$override_upload_dir = function( $dirs ) {
 							$dirs['path'] = MYPLUGIN_API_STORAGE;
-							$dirs['url']  = MYPLUGIN_API_URL . 'storage';
+							$dirs['url']  = MYPLUGIN_API_STORAGE_URL;
 							$dirs['subdir']  = '';
 							return $dirs;
 						};
@@ -340,10 +340,10 @@ class MyPlugin_Admin {
 			if ( ! empty( $_FILES['plugin_zip']['name'] ) ) {
 				require_once ABSPATH . 'wp-admin/includes/file.php';
 
-				// Override upload dir to save directly to storage
+				// Override upload dir to save directly to wp-content/uploads/myplugin-api/
 				$override_upload_dir = function( $dirs ) {
 					$dirs['path']    = MYPLUGIN_API_STORAGE;
-					$dirs['url']     = MYPLUGIN_API_URL . 'storage';
+					$dirs['url']     = MYPLUGIN_API_STORAGE_URL;
 					$dirs['subdir']  = '';
 					return $dirs;
 				};

@@ -12,10 +12,14 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
-define('MYPLUGIN_API_VERSION', '1.0.6');
+define('MYPLUGIN_API_VERSION', '1.0.7');
 define('MYPLUGIN_API_PATH', plugin_dir_path(__FILE__));
 define('MYPLUGIN_API_URL', plugin_dir_url(__FILE__));
-define('MYPLUGIN_API_STORAGE', MYPLUGIN_API_PATH . 'storage/');
+
+// Use wp-content/uploads for storage
+$myplugin_upload_dir = wp_upload_dir();
+define('MYPLUGIN_API_STORAGE', $myplugin_upload_dir['basedir'] . '/myplugin-api/');
+define('MYPLUGIN_API_STORAGE_URL', $myplugin_upload_dir['baseurl'] . '/myplugin-api/');
 
 require_once MYPLUGIN_API_PATH . 'includes/class-version-db.php';
 require_once MYPLUGIN_API_PATH . 'includes/class-users-db.php';
@@ -32,13 +36,66 @@ register_activation_hook(__FILE__, array( 'MyPlugin_Version_DB', 'create_table' 
 register_activation_hook(__FILE__, array( 'MyPlugin_Users_DB', 'create_table' ));
 register_activation_hook(__FILE__, array( 'MyPlugin_Analytics_DB', 'create_table' ));
 
-// Check and update table structure on admin init
+// Migration: Move storage from plugin dir to wp-content/uploads
+function myplugin_migrate_storage_to_uploads() {
+    global $wpdb;
+    
+    $old_storage = MYPLUGIN_API_PATH . 'storage/';
+    $new_storage = MYPLUGIN_API_STORAGE;
+    
+    if ( ! is_dir( $old_storage ) || ! is_dir( $new_storage ) ) {
+        return false;
+    }
+    
+    // 1. Copy files to new location
+    $files = scandir( $old_storage );
+    foreach ( $files as $file ) {
+        if ( $file !== '.' && $file !== '..' && pathinfo( $file, PATHINFO_EXTENSION ) === 'zip' ) {
+            $old_path = $old_storage . $file;
+            $new_path = $new_storage . $file;
+            if ( ! file_exists( $new_path ) ) {
+                copy( $old_path, $new_path );
+            }
+        }
+    }
+    
+    // 2. Update database paths
+    $table = $wpdb->prefix . 'myplugin_versions';
+    $versions = $wpdb->get_results( "SELECT id, download_path FROM {$table}" );
+    
+    foreach ( $versions as $version ) {
+        if ( strpos( $version->download_path, $old_storage ) === 0 ) {
+            $new_path = str_replace( $old_storage, $new_storage, $version->download_path );
+            if ( file_exists( $new_path ) ) {
+                $wpdb->update(
+                    $table,
+                    array( 'download_path' => $new_path ),
+                    array( 'id' => $version->id ),
+                    array( '%s' ),
+                    array( '%d' )
+                );
+            }
+        }
+    }
+    
+    return true;
+}
+
+// Check and update table structure and migrate storage on admin init
 add_action('admin_init', function() {
     $db_version = get_option('myplugin_api_db_version', '1.0.5');
     
     if (version_compare($db_version, '1.0.6', '<')) {
         MyPlugin_Version_DB::create_table();
         update_option('myplugin_api_db_version', '1.0.6');
+    }
+    
+    if (version_compare($db_version, '1.0.7', '<')) {
+        // Migrate storage from plugin dir to wp-content/uploads
+        if (function_exists('myplugin_migrate_storage_to_uploads')) {
+            myplugin_migrate_storage_to_uploads();
+        }
+        update_option('myplugin_api_db_version', '1.0.7');
     }
 });
 register_deactivation_hook(__FILE__, array( 'MyPlugin_Version_DB', 'drop_table' ));
