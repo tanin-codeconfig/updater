@@ -64,6 +64,10 @@
 	vertical-align: middle;
 }
 
+.postbox.closed .inside {
+	display: none;
+}
+
 .myplugin-actions-dropdown {
 	position: relative;
 	display: inline-block;

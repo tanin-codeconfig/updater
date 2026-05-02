@@ -435,50 +435,63 @@ class MyPlugin_Admin {
 		<div class="wrap">
 			<h1>MyPlugin Update Manager</h1>
 
-			<h2>Add New Version</h2>
-			<form id="myplugin-add-version-form" method="post" enctype="multipart/form-data" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-				<?php wp_nonce_field( 'myplugin_admin_action', 'myplugin_nonce' ); ?>
-				<input type="hidden" name="action" value="myplugin_versions_action" />
-				<input type="hidden" name="myplugin_action" value="add_version" />
-				<input type="hidden" id="media_attachment_id" name="media_attachment_id" value="" />
+		<h2>Add New Version</h2>
+		<div class="postbox">
+			<div class="postbox-header">
+				<h3 class="hndle"><span>Add New Version</span></h3>
+				<div class="handle-actions">
+					<button type="button" class="handlediv" aria-expanded="true">
+						<span class="screen-reader-text">Toggle panel: Add New Version</span>
+						<span class="toggle-indicator" aria-hidden="true"></span>
+					</button>
+				</div>
+			</div>
+			<div class="inside">
+				<form id="myplugin-add-version-form" method="post" enctype="multipart/form-data" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+					<?php wp_nonce_field( 'myplugin_admin_action', 'myplugin_nonce' ); ?>
+					<input type="hidden" name="action" value="myplugin_versions_action" />
+					<input type="hidden" name="myplugin_action" value="add_version" />
+					<input type="hidden" id="media_attachment_id" name="media_attachment_id" value="" />
 
-				<table class="form-table">
-					<tr>
-						<th><label for="plugin_zip">Plugin ZIP</label></th>
-						<td>
-							<input type="file" id="plugin_zip" name="plugin_zip" accept=".zip" />
-							<button type="button" id="myplugin-select-media" class="button" style="margin-left:10px;">Select from Media Library</button>
-							<div id="myplugin-detect-status" class="myplugin-detect-status"></div>
-						</td>
-					</tr>
-					<tr>
-						<th><label for="version">Version</label></th>
-						<td>
-							<div class="myplugin-field-wrapper" id="version-wrapper">
-								<input type="text" id="version" name="version" class="regular-text" placeholder="e.g. 1.1.0" />
-								<span class="myplugin-detected-badge" style="display:none;"></span>
-								<button type="button" class="myplugin-edit-toggle" style="display:none;"><?php esc_html_e( 'Edit' ); ?></button>
-							</div>
-						</td>
-					</tr>
-					<tr>
-						<th><label for="slug">Plugin Slug</label></th>
-						<td>
-							<div class="myplugin-field-wrapper" id="slug-wrapper">
-								<input type="text" id="slug" name="slug" class="regular-text" placeholder="e.g. my-plugin" />
-								<span class="myplugin-detected-badge" style="display:none;"></span>
-								<button type="button" class="myplugin-edit-toggle" style="display:none;"><?php esc_html_e( 'Edit' ); ?></button>
-							</div>
-						</td>
-					</tr>
-					<tr>
-						<th><label for="changelog">Changelog</label></th>
-						<td><textarea id="changelog" name="changelog" rows="4" class="large-text" placeholder="What's new in this version..."></textarea></td>
-					</tr>
-				</table>
+					<table class="form-table">
+						<tr>
+							<th><label for="plugin_zip">Plugin ZIP</label></th>
+							<td>
+								<input type="file" id="plugin_zip" name="plugin_zip" accept=".zip" />
+								<button type="button" id="myplugin-select-media" class="button" style="margin-left:10px;">Select from Media Library</button>
+								<div id="myplugin-detect-status" class="myplugin-detect-status"></div>
+							</td>
+						</tr>
+						<tr>
+							<th><label for="version">Version</label></th>
+							<td>
+								<div class="myplugin-field-wrapper" id="version-wrapper">
+									<input type="text" id="version" name="version" class="regular-text" placeholder="e.g. 1.1.0" />
+									<span class="myplugin-detected-badge" style="display:none;"></span>
+									<button type="button" class="myplugin-edit-toggle" style="display:none;"><?php esc_html_e( 'Edit' ); ?></button>
+								</div>
+							</td>
+						</tr>
+						<tr>
+							<th><label for="slug">Plugin Slug</label></th>
+							<td>
+								<div class="myplugin-field-wrapper" id="slug-wrapper">
+									<input type="text" id="slug" name="slug" class="regular-text" placeholder="e.g. my-plugin" />
+									<span class="myplugin-detected-badge" style="display:none;"></span>
+									<button type="button" class="myplugin-edit-toggle" style="display:none;"><?php esc_html_e( 'Edit' ); ?></button>
+								</div>
+							</td>
+						</tr>
+						<tr>
+							<th><label for="changelog">Changelog</label></th>
+							<td><textarea id="changelog" name="changelog" rows="4" class="large-text" placeholder="What's new in this version..."></textarea></td>
+						</tr>
+					</table>
 
-				<?php submit_button( 'Upload', 'primary', 'submit_btn', true, array( 'name' => 'submit_btn' ) ); ?>
-			</form>
+					<?php submit_button( 'Upload', 'primary', 'submit_btn', true, array( 'name' => 'submit_btn' ) ); ?>
+				</form>
+			</div>
+		</div>
 
 			<hr />
 

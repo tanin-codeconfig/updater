@@ -311,4 +311,16 @@
 			}
 		}
 	});
+
+	// Make metabox collapsible
+	$(document).on('click', '.postbox .handlediv', function() {
+		var postbox = $(this).closest('.postbox');
+		var inside = postbox.find('.inside');
+		var expanded = $(this).attr('aria-expanded') === 'true';
+
+		$(this).attr('aria-expanded', !expanded);
+		postbox.toggleClass('closed');
+		inside.toggle();
+	});
+
 })( jQuery );
