@@ -333,21 +333,6 @@ class MyPlugin_Admin {
 			$args['myplugin_notice'] = 'deleted';
 		}
 
-		if ( 'delete_file' === $action ) {
-			$file_name = sanitize_file_name( $_POST['file_name'] );
-			$file_path = MYPLUGIN_API_STORAGE . $file_name;
-			if ( file_exists( $file_path ) && pathinfo( $file_path, PATHINFO_EXTENSION ) === 'zip' ) {
-				unlink( $file_path );
-				$args['myplugin_notice'] = 'file_deleted';
-			}
-			global $wpdb;
-			$wpdb->delete(
-				MyPlugin_Version_DB::get_table_name(),
-				array( 'download_path' => $file_path ),
-				array( '%s' )
-			);
-		}
-
 		if ( 'edit' === $action ) {
 			$id = (int) $_POST['id'];
 			$new_version = sanitize_text_field( $_POST['version'] );
@@ -494,62 +479,6 @@ class MyPlugin_Admin {
 
 				<?php submit_button( 'Upload', 'primary', 'submit_btn', true, array( 'name' => 'submit_btn' ) ); ?>
 			</form>
-
-			<hr />
-
-			<h2>Storage Files</h2>
-			<?php
-			$storage_files = array();
-			if ( is_dir( MYPLUGIN_API_STORAGE ) ) {
-				$files = scandir( MYPLUGIN_API_STORAGE );
-				foreach ( $files as $file ) {
-					if ( $file !== '.' && $file !== '..' && pathinfo( $file, PATHINFO_EXTENSION ) === 'zip' ) {
-						$file_path = MYPLUGIN_API_STORAGE . $file;
-						$storage_files[] = array(
-							'name' => $file,
-							'size' => filesize( $file_path ),
-							'modified' => filemtime( $file_path ),
-						);
-					}
-				}
-			}
-			?>
-			<?php if ( empty( $storage_files ) ) : ?>
-				<p>No files in storage.</p>
-			<?php else : ?>
-				<table class="wp-list-table widefat fixed striped">
-					<thead>
-						<tr>
-							<th>File Name</th>
-							<th>Size</th>
-							<th>Last Modified</th>
-							<th>Download</th>
-							<th>Action</th>
-						</tr>
-					</thead>
-					<tbody>
-						<?php foreach ( $storage_files as $file ) : ?>
-							<tr>
-								<td><?php echo esc_html( $file['name'] ); ?></td>
-								<td><?php echo esc_html( size_format( $file['size'] ) ); ?></td>
-								<td><?php echo esc_html( date( 'Y-m-d H:i:s', $file['modified'] ) ); ?></td>
-								<td>
-									<a href="<?php echo esc_url( MYPLUGIN_API_STORAGE_URL . $file['name'] ); ?>" class="button button-small" target="_blank">Download</a>
-								</td>
-								<td>
-									<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display:inline;">
-										<?php wp_nonce_field( 'myplugin_admin_action', 'myplugin_nonce' ); ?>
-										<input type="hidden" name="action" value="myplugin_versions_action" />
-										<input type="hidden" name="myplugin_action" value="delete_file" />
-										<input type="hidden" name="file_name" value="<?php echo esc_attr( $file['name'] ); ?>" />
-										<button type="submit" class="button button-small" onclick="return confirm('Delete this file?');">Delete</button>
-									</form>
-								</td>
-							</tr>
-						<?php endforeach; ?>
-					</tbody>
-				</table>
-			<?php endif; ?>
 
 			<hr />
 
@@ -752,10 +681,6 @@ class MyPlugin_Admin {
 			case 'bulk_delete':
 				$type    = 'success';
 				$message = 'Selected versions deleted.';
-				break;
-			case 'file_deleted':
-				$type    = 'success';
-				$message = 'File deleted from storage.';
 				break;
 			case 'upload_error':
 				$type    = 'error';
