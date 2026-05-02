@@ -3,7 +3,7 @@
 /**
  * Plugin Name: My Plugin
  * Description: Your awesome plugin with custom update system
- * Version: 1.0.13
+ * Version: 1.0.15
  * Author: Your Name
  * Text Domain: my-plugin
  */
@@ -12,7 +12,7 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
-define('MY_PLUGIN_VERSION', '1.0.13');
+define('MY_PLUGIN_VERSION', '1.0.15');
 define('MY_PLUGIN_PATH', plugin_dir_path(__FILE__));
 define('MY_PLUGIN_URL', plugin_dir_url(__FILE__));
 
