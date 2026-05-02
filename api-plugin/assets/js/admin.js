@@ -12,6 +12,7 @@
 			var fileInput = $( '#plugin_zip' );
 			var statusDiv = $( '#myplugin-detect-status' );
 			var mediaBtn = $( '#myplugin-select-media' );
+			var nativeSubmit = versionForm[0].submit;
 
 			versionForm.on( 'submit', function( e ) {
 				var version = versionInput.val();
@@ -31,10 +32,10 @@
 				}, function( response ) {
 					if ( response.success && response.data.exists ) {
 						if ( confirm( mypluginAdmin.confirmUpdate ) ) {
-							versionForm[0].submit();
+							nativeSubmit.call( versionForm[0] );
 						}
 					} else {
-						versionForm[0].submit();
+						nativeSubmit.call( versionForm[0] );
 					}
 				});
 			});
