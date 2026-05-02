@@ -63,10 +63,7 @@ class MyPlugin_Analytics_DB {
 
 		$data = wp_parse_args( $args, $defaults );
 
-		// Debug: Log what we're about to insert
-		error_log( 'Analytics log_request - Data: ' . print_r( $data, true ) );
-
-		$result = $wpdb->insert(
+		return $wpdb->insert(
 			$table_name,
 			array(
 				'user_id'      => $data['user_id'] ? $data['user_id'] : null,
@@ -80,15 +77,6 @@ class MyPlugin_Analytics_DB {
 			),
 			array( '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s' )
 		);
-
-		// Debug: Check result
-		if ( ! $result ) {
-			error_log( 'Analytics insert FAILED: ' . $wpdb->last_error );
-		} else {
-			error_log( 'Analytics insert SUCCESS - Last insert ID: ' . $wpdb->insert_id );
-		}
-
-		return $result;
 	}
 
 	public static function get_stats( $args = array() ) {
