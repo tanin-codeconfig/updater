@@ -178,6 +178,33 @@
 			e.stopPropagation();
 		});
 
+		window.confirmBulkAction = function() {
+			var action = $( '#bulk-action-selector' ).val();
+			var checked = $( 'input[name="bulk_ids[]"]:checked' ).length;
+
+			if ( ! action ) {
+				alert( 'Please select an action.' );
+				return false;
+			}
+
+			if ( checked === 0 ) {
+				alert( 'Please select at least one item.' );
+				return false;
+			}
+
+			$( '#bulk-action-type' ).val( action );
+
+			if ( action === 'delete' ) {
+				return confirm( 'Are you sure you want to delete the selected items?' );
+			}
+
+			return true;
+		};
+
+		$( '#cb-select-all' ).on( 'click', function() {
+			$( 'input[name="bulk_ids[]"]' ).prop( 'checked', this.checked );
+		});
+
 			function findZipSlug( zip ) {
 				var folders = {};
 				var fileNames = Object.keys( zip.files );

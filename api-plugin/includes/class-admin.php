@@ -166,6 +166,28 @@ class MyPlugin_Admin {
 		$action = sanitize_text_field( $_POST['myplugin_action'] );
 		$args   = array( 'page' => 'myplugin-api' );
 
+		// Handle bulk actions
+		if ( in_array( $action, array( 'activate', 'deactivate', 'delete' ), true ) && isset( $_POST['bulk_ids'] ) ) {
+			$bulk_ids = array_map( 'intval', (array) $_POST['bulk_ids'] );
+			$bulk_ids = array_filter( $bulk_ids );
+
+			foreach ( $bulk_ids as $id ) {
+				if ( 'delete' === $action ) {
+					$version = MyPlugin_Version_DB::get_existing_version_by_id( $id );
+					if ( $version && ! empty( $version['download_path'] ) && file_exists( $version['download_path'] ) ) {
+						unlink( $version['download_path'] );
+					}
+					MyPlugin_Version_DB::delete_version( $id );
+				} else {
+					MyPlugin_Version_DB::update_version( $id, array( 'is_active' => 'activate' === $action ? 1 : 0 ) );
+				}
+			}
+
+			$args['myplugin_notice'] = 'bulk_' . $action;
+			wp_safe_redirect( add_query_arg( $args, admin_url( 'admin.php' ) ) );
+			exit;
+		}
+
 		if ( 'add_version' === $action ) {
 			$version      = sanitize_text_field( $_POST['version'] );
 			$slug         = sanitize_text_field( $_POST['slug'] );
@@ -546,76 +568,97 @@ class MyPlugin_Admin {
 					<a href="<?php echo esc_url( admin_url( 'admin.php?page=myplugin-api' ) ); ?>" class="button" style="vertical-align:top;">Clear Filter</a>
 				<?php endif; ?>
 			</form>
-			<table class="wp-list-table widefat fixed striped">
-				<thead>
-					<tr>
-						<th>ID</th>
-						<th>Version</th>
-						<th>Slug</th>
-						<th>Changelog</th>
-						<th>File</th>
-						<th>Active</th>
-						<th>Downloads</th>
-						<th>Date</th>
-						<th>Actions</th>
-					</tr>
-				</thead>
-				<tbody>
-					<?php if ( empty( $versions ) ) : ?>
-						<tr><td colspan="9">No versions uploaded yet.</td></tr>
-					<?php else : ?>
-						<?php foreach ( $versions as $v ) : ?>
-							<tr>
-								<td><?php echo esc_html( $v['id'] ); ?></td>
-								<td><?php echo esc_html( $v['version'] ); ?></td>
-								<td><?php echo esc_html( $v['slug'] ); ?></td>
-								<td><?php echo esc_html( wp_trim_words( $v['changelog'] ?? '', 10 ) ); ?></td>
-								<td><?php echo esc_html( basename( $v['download_path'] ?? '' ) ); ?></td>
-								<td><?php echo $v['is_active'] ? '<span class="myplugin-status-active">Active</span>' : '<span class="myplugin-status-inactive">Inactive</span>'; ?></td>
-								<td>
-									<?php
-									// Calculate downloads from analytics table
-									$download_count = 0;
-									if ( class_exists( 'MyPlugin_Analytics_DB' ) ) {
-										global $wpdb;
-										$analytics_table = $wpdb->prefix . 'myplugin_analytics';
-										$download_count = (int) $wpdb->get_var(
-											$wpdb->prepare(
-												"SELECT COUNT(*) FROM {$analytics_table} WHERE slug = %s AND version = %s AND request_type = 'download'",
-												$v['slug'],
-												$v['version']
-											)
-										);
-									}
-									echo esc_html( $download_count );
-									?>
-								</td>
-								<td><?php echo esc_html( $v['created_at'] ); ?></td>
-								<td>
-									<div class="myplugin-actions-dropdown">
-										<button type="button" class="button button-small myplugin-dropdown-toggle">Actions <span class="dashicons dashicons-arrow-down-alt2"></span></button>
-										<div class="myplugin-dropdown-content">
-											<button type="button" class="myplugin-dropdown-item myplugin-edit-btn" data-id="<?php echo (int) $v['id']; ?>" data-version="<?php echo esc_attr( $v['version'] ); ?>" data-slug="<?php echo esc_attr( $v['slug'] ); ?>">Edit</button>
-											<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display:inline;">
-												<?php wp_nonce_field( 'myplugin_admin_action', 'myplugin_nonce' ); ?>
-												<input type="hidden" name="action" value="myplugin_versions_action" />
-												<?php if ( ! $v['is_active'] ) : ?>
-													<input type="hidden" name="myplugin_action" value="activate" />
+
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" id="myplugin-bulk-action-form">
+				<?php wp_nonce_field( 'myplugin_admin_action', 'myplugin_nonce' ); ?>
+				<input type="hidden" name="action" value="myplugin_versions_action" />
+				<input type="hidden" name="myplugin_action" id="bulk-action-type" value="" />
+
+				<div class="tablenav top">
+					<div class="alignleft actions bulkactions">
+						<label for="bulk-action-selector" class="screen-reader-text">Select bulk action</label>
+						<select name="bulk_action" id="bulk-action-selector">
+							<option value="">Bulk Actions</option>
+							<option value="activate">Activate</option>
+							<option value="deactivate">Deactivate</option>
+							<option value="delete">Delete</option>
+						</select>
+						<button type="submit" class="button" id="doaction" onclick="return confirmBulkAction();">Apply</button>
+					</div>
+				</div>
+
+				<table class="wp-list-table widefat fixed striped">
+					<thead>
+						<tr>
+							<th class="check-column"><input type="checkbox" id="cb-select-all" /></th>
+							<th>ID</th>
+							<th>Version</th>
+							<th>Slug</th>
+							<th>Changelog</th>
+							<th>File</th>
+							<th>Active</th>
+							<th>Downloads</th>
+							<th>Date</th>
+							<th>Actions</th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php if ( empty( $versions ) ) : ?>
+							<tr><td colspan="10">No versions uploaded yet.</td></tr>
+						<?php else : ?>
+							<?php foreach ( $versions as $v ) : ?>
+								<tr>
+									<th scope="row" class="check-column"><input type="checkbox" name="bulk_ids[]" value="<?php echo (int) $v['id']; ?>" /></th>
+									<td><?php echo esc_html( $v['id'] ); ?></td>
+									<td><?php echo esc_html( $v['version'] ); ?></td>
+									<td><?php echo esc_html( $v['slug'] ); ?></td>
+									<td><?php echo esc_html( wp_trim_words( $v['changelog'] ?? '', 10 ) ); ?></td>
+									<td><?php echo esc_html( basename( $v['download_path'] ?? '' ) ); ?></td>
+									<td><?php echo $v['is_active'] ? '<span class="myplugin-status-active">Active</span>' : '<span class="myplugin-status-inactive">Inactive</span>'; ?></td>
+									<td>
+										<?php
+										// Calculate downloads from analytics table
+										$download_count = 0;
+										if ( class_exists( 'MyPlugin_Analytics_DB' ) ) {
+											global $wpdb;
+											$analytics_table = $wpdb->prefix . 'myplugin_analytics';
+											$download_count = (int) $wpdb->get_var(
+												$wpdb->prepare(
+													"SELECT COUNT(*) FROM {$analytics_table} WHERE slug = %s AND version = %s AND request_type = 'download'",
+													$v['slug'],
+													$v['version']
+												)
+											);
+										}
+										echo esc_html( $download_count );
+										?>
+									</td>
+									<td><?php echo esc_html( $v['created_at'] ); ?></td>
+									<td>
+										<div class="myplugin-actions-dropdown">
+											<button type="button" class="button button-small myplugin-dropdown-toggle">Actions <span class="dashicons dashicons-arrow-down-alt2"></span></button>
+											<div class="myplugin-dropdown-content">
+												<button type="button" class="myplugin-dropdown-item myplugin-edit-btn" data-id="<?php echo (int) $v['id']; ?>" data-version="<?php echo esc_attr( $v['version'] ); ?>" data-slug="<?php echo esc_attr( $v['slug'] ); ?>">Edit</button>
+												<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display:inline;">
+													<?php wp_nonce_field( 'myplugin_admin_action', 'myplugin_nonce' ); ?>
+													<input type="hidden" name="action" value="myplugin_versions_action" />
+													<?php if ( ! $v['is_active'] ) : ?>
+														<input type="hidden" name="myplugin_action" value="activate" />
+														<input type="hidden" name="id" value="<?php echo (int) $v['id']; ?>" />
+														<button type="submit" class="myplugin-dropdown-item">Activate</button>
+													<?php else : ?>
+														<input type="hidden" name="myplugin_action" value="deactivate" />
+														<input type="hidden" name="id" value="<?php echo (int) $v['id']; ?>" />
+														<button type="submit" class="myplugin-dropdown-item">Deactivate</button>
+													<?php endif; ?>
+												</form>
+												<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display:inline;">
+													<?php wp_nonce_field( 'myplugin_admin_action', 'myplugin_nonce' ); ?>
+													<input type="hidden" name="action" value="myplugin_versions_action" />
+													<input type="hidden" name="myplugin_action" value="delete" />
 													<input type="hidden" name="id" value="<?php echo (int) $v['id']; ?>" />
-													<button type="submit" class="myplugin-dropdown-item">Activate</button>
-												<?php else : ?>
-													<input type="hidden" name="myplugin_action" value="deactivate" />
-													<input type="hidden" name="id" value="<?php echo (int) $v['id']; ?>" />
-													<button type="submit" class="myplugin-dropdown-item">Deactivate</button>
-												<?php endif; ?>
-											</form>
-											<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display:inline;">
-												<?php wp_nonce_field( 'myplugin_admin_action', 'myplugin_nonce' ); ?>
-												<input type="hidden" name="action" value="myplugin_versions_action" />
-												<input type="hidden" name="myplugin_action" value="delete" />
-												<input type="hidden" name="id" value="<?php echo (int) $v['id']; ?>" />
-												<button type="submit" class="myplugin-dropdown-item" onclick="return confirm('Delete this version?');">Delete</button>
-											</form>
+													<button type="submit" class="myplugin-dropdown-item" onclick="return confirm('Delete this version?');">Delete</button>
+												</form>
 										</div>
 									</div>
 								</td>
@@ -624,6 +667,7 @@ class MyPlugin_Admin {
 					<?php endif; ?>
 				</tbody>
 			</table>
+			</form>
 
 			<div id="myplugin-edit-form" style="display:none; margin-top:20px;">
 				<div class="card">
@@ -696,6 +740,18 @@ class MyPlugin_Admin {
 			case 'deleted':
 				$type    = 'success';
 				$message = 'Version deleted.';
+				break;
+			case 'bulk_activate':
+				$type    = 'success';
+				$message = 'Selected versions activated.';
+				break;
+			case 'bulk_deactivate':
+				$type    = 'success';
+				$message = 'Selected versions deactivated.';
+				break;
+			case 'bulk_delete':
+				$type    = 'success';
+				$message = 'Selected versions deleted.';
 				break;
 			case 'file_deleted':
 				$type    = 'success';
