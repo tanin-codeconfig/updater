@@ -592,27 +592,32 @@ class MyPlugin_Admin {
 								</td>
 								<td><?php echo esc_html( $v['created_at'] ); ?></td>
 								<td>
-									<button type="button" class="button button-small myplugin-edit-btn" data-id="<?php echo (int) $v['id']; ?>" data-version="<?php echo esc_attr( $v['version'] ); ?>" data-slug="<?php echo esc_attr( $v['slug'] ); ?>">Edit</button>
-									<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display:inline;">
-										<?php wp_nonce_field( 'myplugin_admin_action', 'myplugin_nonce' ); ?>
-										<input type="hidden" name="action" value="myplugin_versions_action" />
-										<?php if ( ! $v['is_active'] ) : ?>
-											<input type="hidden" name="myplugin_action" value="activate" />
-											<input type="hidden" name="id" value="<?php echo (int) $v['id']; ?>" />
-											<button type="submit" class="button button-small">Activate</button>
-										<?php else : ?>
-											<input type="hidden" name="myplugin_action" value="deactivate" />
-											<input type="hidden" name="id" value="<?php echo (int) $v['id']; ?>" />
-											<button type="submit" class="button button-small">Deactivate</button>
-										<?php endif; ?>
-									</form>
-									<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display:inline;">
-										<?php wp_nonce_field( 'myplugin_admin_action', 'myplugin_nonce' ); ?>
-										<input type="hidden" name="action" value="myplugin_versions_action" />
-										<input type="hidden" name="myplugin_action" value="delete" />
-										<input type="hidden" name="id" value="<?php echo (int) $v['id']; ?>" />
-										<button type="submit" class="button button-small" onclick="return confirm('Delete this version?');">Delete</button>
-									</form>
+									<div class="myplugin-actions-dropdown">
+										<button type="button" class="button button-small myplugin-dropdown-toggle">Actions <span class="dashicons dashicons-arrow-down-alt2"></span></button>
+										<div class="myplugin-dropdown-content">
+											<button type="button" class="myplugin-dropdown-item myplugin-edit-btn" data-id="<?php echo (int) $v['id']; ?>" data-version="<?php echo esc_attr( $v['version'] ); ?>" data-slug="<?php echo esc_attr( $v['slug'] ); ?>">Edit</button>
+											<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display:inline;">
+												<?php wp_nonce_field( 'myplugin_admin_action', 'myplugin_nonce' ); ?>
+												<input type="hidden" name="action" value="myplugin_versions_action" />
+												<?php if ( ! $v['is_active'] ) : ?>
+													<input type="hidden" name="myplugin_action" value="activate" />
+													<input type="hidden" name="id" value="<?php echo (int) $v['id']; ?>" />
+													<button type="submit" class="myplugin-dropdown-item">Activate</button>
+												<?php else : ?>
+													<input type="hidden" name="myplugin_action" value="deactivate" />
+													<input type="hidden" name="id" value="<?php echo (int) $v['id']; ?>" />
+													<button type="submit" class="myplugin-dropdown-item">Deactivate</button>
+												<?php endif; ?>
+											</form>
+											<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display:inline;">
+												<?php wp_nonce_field( 'myplugin_admin_action', 'myplugin_nonce' ); ?>
+												<input type="hidden" name="action" value="myplugin_versions_action" />
+												<input type="hidden" name="myplugin_action" value="delete" />
+												<input type="hidden" name="id" value="<?php echo (int) $v['id']; ?>" />
+												<button type="submit" class="myplugin-dropdown-item" onclick="return confirm('Delete this version?');">Delete</button>
+											</form>
+										</div>
+									</div>
 								</td>
 							</tr>
 						<?php endforeach; ?>

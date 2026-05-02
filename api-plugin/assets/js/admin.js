@@ -159,9 +159,24 @@
 				$( 'html, body' ).animate({ scrollTop: form.offset().top - 50 }, 300 );
 			});
 
-			$( document ).on( 'click', '#myplugin-cancel-edit', function() {
-				$( '#myplugin-edit-form' ).slideUp( 200 );
-			});
+		$( document ).on( 'click', '#myplugin-cancel-edit', function() {
+			$( '#myplugin-edit-form' ).slideUp( 200 );
+		});
+
+		$( document ).on( 'click', '.myplugin-dropdown-toggle', function( e ) {
+			e.stopPropagation();
+			var dropdown = $( this ).closest( '.myplugin-actions-dropdown' );
+			$( '.myplugin-dropdown-content' ).not( dropdown.find( '.myplugin-dropdown-content' ) ).hide();
+			dropdown.find( '.myplugin-dropdown-content' ).toggle();
+		});
+
+		$( document ).on( 'click', function() {
+			$( '.myplugin-dropdown-content' ).hide();
+		});
+
+		$( document ).on( 'click', '.myplugin-dropdown-content', function( e ) {
+			e.stopPropagation();
+		});
 
 			function findZipSlug( zip ) {
 				var folders = {};
