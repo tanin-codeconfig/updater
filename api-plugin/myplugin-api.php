@@ -3,7 +3,7 @@
 /**
  * Plugin Name: MyPlugin API
  * Description: Custom update API server for MyPlugin (Free + Pro)
- * Version: 1.0.3
+ * Version: 1.0.5
  * Author: Your Name
  * Text Domain: myplugin-api
  */
