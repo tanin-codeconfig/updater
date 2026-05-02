@@ -99,13 +99,12 @@ class MyPlugin_Analytics_Admin {
 					<th>Type</th>
 					<th>Slug</th>
 					<th>Version</th>
-					<th>Download Version</th>
 					<th>IP Address</th>
 				</tr>
 			</thead>
 			<tbody>
 				<?php if ( empty( $stats['recent_activity'] ) ) : ?>
-					<tr><td colspan="7">No activity yet.</td></tr>
+					<tr><td colspan="6">No activity yet.</td></tr>
 				<?php else : ?>
 					<?php foreach ( $stats['recent_activity'] as $row ) : ?>
 						<tr>
@@ -113,7 +112,6 @@ class MyPlugin_Analytics_Admin {
 							<td><?php echo esc_html( $row['user_name'] ?? $row['api_key'] ); ?></td>
 							<td><?php echo esc_html( ucfirst( $row['request_type'] ) ); ?></td>
 							<td><?php echo esc_html( $row['slug'] ); ?></td>
-							<td><?php echo esc_html( $row['version'] ?? '—' ); ?></td>
 							<td><?php echo esc_html( $row['version'] ?? '—' ); ?></td>
 							<td><?php echo esc_html( $row['ip_address'] ?? '—' ); ?></td>
 						</tr>

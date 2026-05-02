@@ -52,12 +52,20 @@ class MyPlugin_Download {
 			MyPlugin_Users_DB::update_last_used( $user['id'] );
 		}
 
+		$latest = MyPlugin_Version_DB::get_active_version( $slug );
+
 		MyPlugin_Analytics_DB::log_request( array(
 			'user_id'      => $user_id,
 			'api_key'       => $key ? $key : $stored_key,
 			'slug'          => $slug,
+			'version'       => $latest['version'] ?? '',
 			'request_type'  => 'download',
 		) );
+
+		// Increment download count
+		if ( $latest && ! empty( $latest['version'] ) ) {
+			MyPlugin_Version_DB::increment_download_count( $slug, $latest['version'] );
+		}
 
 		$latest = MyPlugin_Version_DB::get_active_version( $slug );
 
