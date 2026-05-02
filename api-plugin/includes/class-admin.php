@@ -296,15 +296,17 @@ class MyPlugin_Admin {
 							'changelog'     => $changelog,
 							'download_path' => $rename,
 							'is_active'     => 0,
+							'attachment_id' => $attachment_id,
 						) );
 						$args['myplugin_notice'] = 'updated';
 					} else {
 						MyPlugin_Version_DB::insert_version( array(
-							'version'     => $version,
-							'slug'        => $slug,
-							'changelog'   => $changelog,
+							'version'       => $version,
+							'slug'          => $slug,
+							'changelog'     => $changelog,
 							'download_path' => $rename,
-							'is_active'   => 0,
+							'attachment_id' => $attachment_id,
+							'is_active'     => 0,
 						) );
 						$args['myplugin_notice'] = 'success';
 					}
@@ -330,6 +332,10 @@ class MyPlugin_Admin {
 			$version = MyPlugin_Version_DB::get_existing_version_by_id( $id );
 			if ( $version && ! empty( $version['download_path'] ) && file_exists( $version['download_path'] ) ) {
 				unlink( $version['download_path'] );
+			}
+			// Also delete the media attachment if it exists
+			if ( $version && ! empty( $version['attachment_id'] ) ) {
+				wp_delete_attachment( (int) $version['attachment_id'], true );
 			}
 			MyPlugin_Version_DB::delete_version( $id );
 			$args['myplugin_notice'] = 'deleted';
@@ -365,54 +371,58 @@ class MyPlugin_Admin {
 				$update_data['changelog'] = $new_changelog;
 			}
 
-			if ( ! empty( $_FILES['plugin_zip']['name'] ) ) {
-				require_once ABSPATH . 'wp-admin/includes/file.php';
+				if ( ! empty( $_FILES['plugin_zip']['name'] ) ) {
+					require_once ABSPATH . 'wp-admin/includes/file.php';
 
-				// Override upload dir to save directly to wp-content/uploads/myplugin-api/
-				$override_upload_dir = function( $dirs ) {
-					$dirs['path']    = MYPLUGIN_API_STORAGE;
-					$dirs['url']     = MYPLUGIN_API_STORAGE_URL;
-					$dirs['subdir']  = '';
-					return $dirs;
-				};
+					// Override upload dir to save directly to wp-content/uploads/myplugin-api/
+					$override_upload_dir = function( $dirs ) {
+						$dirs['path']    = MYPLUGIN_API_STORAGE;
+						$dirs['url']     = MYPLUGIN_API_STORAGE_URL;
+						$dirs['subdir']  = '';
+						return $dirs;
+					};
 
-				add_filter( 'upload_dir', $override_upload_dir );
-				$upload = wp_handle_upload( $_FILES['plugin_zip'], array( 'test_form' => false ) );
-				remove_filter( 'upload_dir', $override_upload_dir );
+					add_filter( 'upload_dir', $override_upload_dir );
+					$upload = wp_handle_upload( $_FILES['plugin_zip'], array( 'test_form' => false ) );
+					remove_filter( 'upload_dir', $override_upload_dir );
 
-				if ( isset( $upload['error'] ) ) {
-					$args['myplugin_notice'] = 'upload_failed';
-					wp_safe_redirect( add_query_arg( $args, admin_url( 'admin.php' ) ) );
-					exit;
-				}
-
-				// If file didn't go to storage, move it there
-				if ( $upload['file'] && dirname( $upload['file'] ) !== rtrim( MYPLUGIN_API_STORAGE, '/' ) ) {
-					$new_path = MYPLUGIN_API_STORAGE . basename( $upload['file'] );
-					if ( file_exists( $new_path ) ) {
-						unlink( $new_path );
-					}
-					rename( $upload['file'], $new_path );
-					$upload['file'] = $new_path;
-				}
-
-				$ext = strtolower( pathinfo( $_FILES['plugin_zip']['name'], PATHINFO_EXTENSION ) );
-				if ( 'zip' === $ext ) {
-					if ( $existing && ! empty( $existing['download_path'] ) && file_exists( $existing['download_path'] ) ) {
-						unlink( $existing['download_path'] );
+					if ( isset( $upload['error'] ) ) {
+						$args['myplugin_notice'] = 'upload_failed';
+						wp_safe_redirect( add_query_arg( $args, admin_url( 'admin.php' ) ) );
+						exit;
 					}
 
-					$rename = MYPLUGIN_API_STORAGE . $new_slug . '-v' . $new_version . '.zip';
-
-					if ( file_exists( $upload['file'] ) ) {
-						if ( file_exists( $rename ) ) {
-							unlink( $rename );
+					// If file didn't go to storage, move it there
+					if ( $upload['file'] && dirname( $upload['file'] ) !== rtrim( MYPLUGIN_API_STORAGE, '/' ) ) {
+						$new_path = MYPLUGIN_API_STORAGE . basename( $upload['file'] );
+						if ( file_exists( $new_path ) ) {
+							unlink( $new_path );
 						}
-						rename( $upload['file'], $rename );
-						$update_data['download_path'] = $rename;
+						rename( $upload['file'], $new_path );
+						$upload['file'] = $new_path;
+					}
+
+					$ext = strtolower( pathinfo( $_FILES['plugin_zip']['name'], PATHINFO_EXTENSION ) );
+					if ( 'zip' === $ext ) {
+						if ( $existing && ! empty( $existing['download_path'] ) && file_exists( $existing['download_path'] ) ) {
+							unlink( $existing['download_path'] );
+						}
+
+						$rename = MYPLUGIN_API_STORAGE . $new_slug . '-v' . $new_version . '.zip';
+
+						if ( file_exists( $upload['file'] ) ) {
+							if ( file_exists( $rename ) ) {
+								unlink( $rename );
+							}
+							rename( $upload['file'], $rename );
+							$update_data['download_path'] = $rename;
+							// Store the attachment_id if we have one
+							if ( ! empty( $_POST['media_attachment_id'] ) ) {
+								$update_data['attachment_id'] = (int) $_POST['media_attachment_id'];
+							}
+						}
 					}
 				}
-			}
 
 			if ( ! empty( $update_data ) ) {
 				MyPlugin_Version_DB::update_version( $id, $update_data );
@@ -542,17 +552,16 @@ class MyPlugin_Admin {
 							<th>ID</th>
 							<th>Version</th>
 							<th>Slug</th>
-							<th>Changelog</th>
 							<th>File</th>
+							<th>Actions</th>
 							<th>Active</th>
 							<th>Downloads</th>
 							<th>Date</th>
-							<th>Actions</th>
 						</tr>
 					</thead>
 					<tbody>
 						<?php if ( empty( $versions ) ) : ?>
-							<tr><td colspan="10">No versions uploaded yet.</td></tr>
+							<tr><td colspan="9">No versions uploaded yet.</td></tr>
 						<?php else : ?>
 							<?php foreach ( $versions as $v ) : ?>
 								<tr>
@@ -560,28 +569,7 @@ class MyPlugin_Admin {
 									<td><?php echo esc_html( $v['id'] ); ?></td>
 									<td><?php echo esc_html( $v['version'] ); ?></td>
 									<td><?php echo esc_html( $v['slug'] ); ?></td>
-									<td><?php echo esc_html( wp_trim_words( $v['changelog'] ?? '', 10 ) ); ?></td>
 									<td><?php echo esc_html( basename( $v['download_path'] ?? '' ) ); ?></td>
-									<td><?php echo $v['is_active'] ? '<span class="myplugin-status-active">Active</span>' : '<span class="myplugin-status-inactive">Inactive</span>'; ?></td>
-									<td>
-										<?php
-										// Calculate downloads from analytics table
-										$download_count = 0;
-										if ( class_exists( 'MyPlugin_Analytics_DB' ) ) {
-											global $wpdb;
-											$analytics_table = $wpdb->prefix . 'myplugin_analytics';
-											$download_count = (int) $wpdb->get_var(
-												$wpdb->prepare(
-													"SELECT COUNT(*) FROM {$analytics_table} WHERE slug = %s AND version = %s AND request_type = 'download'",
-													$v['slug'],
-													$v['version']
-												)
-											);
-										}
-										echo esc_html( $download_count );
-										?>
-									</td>
-									<td><?php echo esc_html( $v['created_at'] ); ?></td>
 									<td>
 										<div class="myplugin-actions-dropdown">
 											<button type="button" class="button button-small myplugin-dropdown-toggle">Actions <span class="dashicons dashicons-arrow-down-alt2"></span></button>
@@ -607,14 +595,34 @@ class MyPlugin_Admin {
 													<input type="hidden" name="id" value="<?php echo (int) $v['id']; ?>" />
 													<button type="submit" class="myplugin-dropdown-item" onclick="return confirm('Delete this version?');">Delete</button>
 												</form>
+											</div>
 										</div>
-									</div>
-								</td>
-							</tr>
-						<?php endforeach; ?>
-					<?php endif; ?>
-				</tbody>
-		</table>
+									</td>
+									<td><?php echo $v['is_active'] ? '<span class="myplugin-status-active">Active</span>' : '<span class="myplugin-status-inactive">Inactive</span>'; ?></td>
+									<td>
+										<?php
+										// Calculate downloads from analytics table
+										$download_count = 0;
+										if ( class_exists( 'MyPlugin_Analytics_DB' ) ) {
+											global $wpdb;
+											$analytics_table = $wpdb->prefix . 'myplugin_analytics';
+											$download_count = (int) $wpdb->get_var(
+												$wpdb->prepare(
+													"SELECT COUNT(*) FROM {$analytics_table} WHERE slug = %s AND version = %s AND request_type = 'download'",
+													$v['slug'],
+													$v['version']
+												)
+											);
+										}
+										echo esc_html( $download_count );
+										?>
+									</td>
+									<td><?php echo esc_html( $v['created_at'] ); ?></td>
+								</tr>
+							<?php endforeach; ?>
+						<?php endif; ?>
+					</tbody>
+				</table>
 		</form>
 
 		<div id="myplugin-edit-form" style="display:none;">

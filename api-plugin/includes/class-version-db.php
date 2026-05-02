@@ -24,6 +24,7 @@ class MyPlugin_Version_DB {
 			slug VARCHAR(100) NOT NULL,
 			changelog TEXT,
 			download_path VARCHAR(500),
+			attachment_id BIGINT UNSIGNED DEFAULT 0,
 			download_count BIGINT UNSIGNED DEFAULT 0,
 			is_active TINYINT(1) DEFAULT 1,
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -49,13 +50,14 @@ class MyPlugin_Version_DB {
 		$wpdb->insert(
 			$table_name,
 			array(
-				'version'     => sanitize_text_field( $args['version'] ),
-				'slug'        => sanitize_text_field( $args['slug'] ),
-				'changelog'   => wp_kses_post( $args['changelog'] ?? '' ),
+				'version'       => sanitize_text_field( $args['version'] ),
+				'slug'          => sanitize_text_field( $args['slug'] ),
+				'changelog'     => wp_kses_post( $args['changelog'] ?? '' ),
 				'download_path' => sanitize_text_field( $args['download_path'] ?? '' ),
-				'is_active'   => (int) ( $args['is_active'] ?? 1 ),
+				'attachment_id' => (int) ( $args['attachment_id'] ?? 0 ),
+				'is_active'     => (int) ( $args['is_active'] ?? 1 ),
 			),
-			array( '%s', '%s', '%s', '%s', '%d' )
+			array( '%s', '%s', '%s', '%s', '%d', '%d' )
 		);
 
 		return $wpdb->insert_id;
@@ -82,6 +84,10 @@ class MyPlugin_Version_DB {
 		}
 		if ( isset( $args['is_active'] ) ) {
 			$data['is_active'] = (int) $args['is_active'];
+			$format[] = '%d';
+		}
+		if ( isset( $args['attachment_id'] ) ) {
+			$data['attachment_id'] = (int) $args['attachment_id'];
 			$format[] = '%d';
 		}
 
