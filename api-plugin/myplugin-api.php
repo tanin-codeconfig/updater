@@ -61,3 +61,79 @@ add_action('admin_init', array( 'MyPlugin_Admin', 'register_actions' ));
 add_action('admin_init', array( 'MyPlugin_Users_Admin', 'register_actions' ));
 add_action('admin_init', array( 'MyPlugin_Settings', 'register_settings' ));
 add_action('wp_ajax_myplugin_check_version', array( 'MyPlugin_Admin', 'ajax_check_version' ));
+
+// Headless Mode - block frontend access
+add_action('init', 'myplugin_headless_mode');
+function myplugin_headless_mode() {
+    $settings = MyPlugin_Settings::get_settings();
+
+    if (empty($settings['headless_enabled'])) {
+        return;
+    }
+
+    if (is_admin() || current_user_can('manage_options')) {
+        return;
+    }
+
+    $request_uri = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '';
+    $request_uri = parse_url($request_uri, PHP_URL_PATH);
+
+    $allowed_routes = ! empty($settings['headless_allowed_routes']) 
+        ? explode(',', $settings['headless_allowed_routes']) 
+        : array('/wp-json/', '/wp-admin/', '/xmlrpc.php');
+
+    $allowed_routes = array_map('trim', $allowed_routes);
+
+    foreach ($allowed_routes as $route) {
+        if (! empty($route) && strpos($request_uri, $route) === 0) {
+            return;
+        }
+    }
+
+    if (! empty($settings['headless_keep_feeds'])) {
+        $feed_paths = array('/feed/', '/rss/', '/atom/', '/rdf/');
+        foreach ($feed_paths as $feed) {
+            if (strpos($request_uri, $feed) !== false) {
+                return;
+            }
+        }
+    }
+
+    $behavior = $settings['headless_behavior'];
+
+    if ('404' === $behavior) {
+        header('HTTP/1.1 404 Not Found');
+        echo '<!DOCTYPE html>
+<html>
+<head><title>404 Not Found</title></head>
+<body>
+<h1>Not Found</h1>
+<p>The requested URL was not found on this server.</p>
+</body>
+</html>';
+        exit;
+    } elseif ('message' === $behavior) {
+        $message = ! empty($settings['headless_message']) 
+            ? $settings['headless_message'] 
+            : 'This site is running in headless mode.';
+        header('HTTP/1.1 200 OK');
+        header('Content-Type: text/html; charset=utf-8');
+        echo '<!DOCTYPE html>
+<html>
+<head><title>Headless Mode</title></head>
+<body>
+<h1>Headless Mode</h1>
+<p>' . esc_html($message) . '</p>
+</body>
+</html>';
+        exit;
+    } elseif ('redirect' === $behavior) {
+        $api_docs = get_site_url(null, '/wp-json/myplugin/v1');
+        wp_redirect($api_docs, 302);
+        exit;
+    } elseif ('custom_url' === $behavior) {
+        $custom_url = ! empty($settings['headless_redirect_url']) ? $settings['headless_redirect_url'] : get_site_url(null, '/wp-json/myplugin/v1');
+        wp_redirect($custom_url, 302);
+        exit;
+    }
+}
