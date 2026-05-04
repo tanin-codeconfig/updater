@@ -79,6 +79,9 @@ class CodeConfig_Updater_Admin
             return;
         }
 
+        // Debug: Log URL to console
+        wp_add_inline_script('jquery', 'console.log("CodeConfig: URL = ' . CODECONFIG_URL . '");');
+
         wp_enqueue_script(
             'codeconfig-plugin-admin-js',
             CODECONFIG_URL . 'assets/js/admin.js',
