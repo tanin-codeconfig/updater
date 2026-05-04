@@ -43,25 +43,27 @@ class CodeConfig
     {
         add_action('init', array($this, 'load_textdomain'));
         add_filter('plugin_action_links_' . CODECONFIG_BASENAME, array($this, 'add_plugin_links'));
-        register_activation_hook(__FILE__, array($this, 'activate'));
-        register_deactivation_hook(__FILE__, array($this, 'deactivate'));
     }
 
     private function load_classes()
     {
-        require_once CODECONFIG_PATH . 'includes/config.php';
         require_once CODECONFIG_PATH . 'includes/freemius.php';
 
         if (! codeconfig_is_pro()) {
             require_once CODECONFIG_PATH . 'includes/updater/index.php';
             require_once CODECONFIG_PATH . 'includes/class-ajax.php';
 
-            ccupd()->init();
+            ccupd(array(
+                'api_url'   => 'http://localhost:10078/wp-json/codeconfig/v1',
+                'slug'      => 'codeconfig-plugin',
+                'basename'  => 'codeconfig-plugin/codeconfig-plugin.php',
+                'version'   => '1.0.20',
+                'name'      => 'CodeConfig Plugin',
+                'show_admin_page' => false,
+            ));
+
             CodeConfig_Ajax::init();
         }
-
-        require_once CODECONFIG_PATH . 'includes/class-admin.php';
-        CodeConfig_Admin::init();
     }
 
     public function load_textdomain()
@@ -78,20 +80,6 @@ class CodeConfig
             );
         }
         return $links;
-    }
-
-    public function activate()
-    {
-        if (! codeconfig_is_pro()) {
-            ccupd()->activate();
-        }
-    }
-
-    public function deactivate()
-    {
-        if (! codeconfig_is_pro()) {
-            ccupd()->deactivate();
-        }
     }
 }
 

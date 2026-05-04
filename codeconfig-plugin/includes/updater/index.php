@@ -6,49 +6,135 @@ if (! defined('ABSPATH')) {
 
 if (! function_exists('ccupd')) {
 
-    function ccupd()
+    function ccupd($config = array())
     {
         global $ccupd;
 
         if (isset($ccupd) && $ccupd instanceof CodeConfig_Updater_Manager) {
+            if (! empty($config)) {
+                $ccupd->update_config($config);
+            }
             return $ccupd;
         }
 
         require_once __DIR__ . '/class-updater.php';
+        require_once CODECONFIG_PATH . 'includes/class-admin.php';
 
-        $ccupd = new CodeConfig_Updater_Manager();
+        $ccupd = new CodeConfig_Updater_Manager($config);
+
+        add_action('plugins_loaded', array($ccupd, 'init'));
+        add_action('activate_plugin', array($ccupd, 'on_activate'));
+        add_action('deactivate_plugin', array($ccupd, 'on_deactivate'));
 
         return $ccupd;
     }
+}
 
-    ccupd();
-    do_action('ccupd_loaded');
+if (! function_exists('ccupd_config')) {
+
+    function ccupd_config($key = '', $default = '')
+    {
+        $manager = CodeConfig_Updater_Manager::instance();
+        if ($manager) {
+            return $manager->get_config($key, $default);
+        }
+        return $default;
+    }
 }
 
 class CodeConfig_Updater_Manager
 {
     private static $instance = null;
+    private $config = array();
+
+    public function __construct($config = array())
+    {
+        $this->config = wp_parse_args($config, array(
+            'api_url'         => '',
+            'slug'            => '',
+            'basename'        => '',
+            'version'         => '1.0.0',
+            'name'            => 'CodeConfig Plugin',
+            'show_admin_page' => false,
+        ));
+
+        self::$instance = $this;
+    }
 
     public static function instance()
     {
-        if (is_null(self::$instance)) {
-            self::$instance = new self();
-        }
         return self::$instance;
+    }
+
+    public function update_config($config)
+    {
+        $this->config = wp_parse_args($config, $this->config);
+    }
+
+    public function get_config($key = '', $default = '')
+    {
+        if (empty($key)) {
+            return $this->config;
+        }
+        return isset($this->config[$key]) ? $this->config[$key] : $default;
     }
 
     public function init()
     {
+        global $ccupd_config;
+        $ccupd_config = $this->config;
+
+        if ($this->is_pro()) {
+            return;
+        }
+
         CodeConfig_Updater::init();
+
+        do_action('ccupd_loaded');
+    }
+
+    public function on_activate($plugin)
+    {
+        if ($this->is_pro()) {
+            return;
+        }
+
+        $basename = $this->get_config('basename', '');
+        if ($plugin === $basename) {
+            CodeConfig_Updater::activate();
+        }
+    }
+
+    public function on_deactivate($plugin)
+    {
+        if ($this->is_pro()) {
+            return;
+        }
+
+        $basename = $this->get_config('basename', '');
+        if ($plugin === $basename) {
+            CodeConfig_Updater::deactivate();
+        }
     }
 
     public function activate()
     {
+        if ($this->is_pro()) {
+            return;
+        }
         CodeConfig_Updater::activate();
     }
 
     public function deactivate()
     {
+        if ($this->is_pro()) {
+            return;
+        }
         CodeConfig_Updater::deactivate();
+    }
+
+    private function is_pro()
+    {
+        return defined('CODECONFIG_PRO_ACTIVE') && CODECONFIG_PRO_ACTIVE;
     }
 }

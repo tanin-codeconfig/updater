@@ -49,11 +49,13 @@ class CodeConfig_Updater
 
     public static function force_check_for_update()
     {
-        if (codeconfig_is_pro()) {
+        global $ccupd_config;
+
+        if (defined('CODECONFIG_PRO_ACTIVE') && CODECONFIG_PRO_ACTIVE) {
             return;
         }
 
-        $installed_version = codeconfig_config('version');
+        $installed_version = isset($ccupd_config['version']) ? $ccupd_config['version'] : '1.0.0';
         $data = CodeConfig_Ajax::check_api_for_version($installed_version);
 
         // Save result to options for AJAX handler
@@ -65,8 +67,8 @@ class CodeConfig_Updater
             update_option('codeconfig_api_status', 'error');
         }
 
-        $basename = codeconfig_config('basename');
-        $slug = codeconfig_config('slug');
+        $basename = isset($ccupd_config['basename']) ? $ccupd_config['basename'] : '';
+        $slug = isset($ccupd_config['slug']) ? $ccupd_config['slug'] : '';
 
         if (is_wp_error($data) || ! $data['update']) {
             $transient = get_site_transient('update_plugins');
@@ -100,7 +102,7 @@ class CodeConfig_Updater
 
     public static function allow_api_host($args, $url)
     {
-        $parsed = parse_url(codeconfig_config('api_url'));
+        $parsed = parse_url(ccupd_config('api_url'));
         $api_host = isset($parsed['host']) ? $parsed['host'] : '';
         $url_host = parse_url($url, PHP_URL_HOST);
 
@@ -121,9 +123,9 @@ class CodeConfig_Updater
             return $transient;
         }
 
-        $basename = codeconfig_config('basename');
-        $slug = codeconfig_config('slug');
-        $version = codeconfig_config('version');
+        $basename = ccupd_config('basename');
+        $slug = ccupd_config('slug');
+        $version = ccupd_config('version');
 
         $installed_version = isset($transient->checked[ $basename ])
             ? $transient->checked[ $basename ]
@@ -153,7 +155,7 @@ class CodeConfig_Updater
 
     public static function plugin_info($false, $action, $args)
     {
-        $slug = codeconfig_config('slug');
+        $slug = ccupd_config('slug');
 
         if ($action !== 'plugin_information' || $args->slug !== $slug) {
             return $false;
@@ -195,7 +197,7 @@ class CodeConfig_Updater
 
     public static function on_update_complete($upgrader, $hook_extra)
     {
-        $basename = codeconfig_config('basename');
+        $basename = ccupd_config('basename');
 
         if (empty($hook_extra['plugin']) || $hook_extra['plugin'] !== $basename) {
             return;

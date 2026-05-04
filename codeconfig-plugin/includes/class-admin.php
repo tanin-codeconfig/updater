@@ -38,7 +38,7 @@ class CodeConfig_Admin
 
     public static function add_menu()
     {
-        $plugin_name = codeconfig_config('name', 'CodeConfig Plugin');
+        $plugin_name = ccupd_config('name', 'CodeConfig Plugin');
         $menu_slug   = 'codeconfig-plugin-main';
 
         add_menu_page(
@@ -51,7 +51,7 @@ class CodeConfig_Admin
             31
         );
 
-        $show_admin_page = CodeConfig_Config::get_show_admin_page();
+        $show_admin_page = ccupd_config('show_admin_page', false);
 
         if ($show_admin_page) {
             add_submenu_page(
@@ -69,7 +69,7 @@ class CodeConfig_Admin
 
     public static function enqueue_assets($hook)
     {
-        $show_admin_page = CodeConfig_Config::get_show_admin_page();
+        $show_admin_page = ccupd_config('show_admin_page', false);
         $parent_slug = 'codeconfig-plugin-main';
 
         if ($show_admin_page) {
@@ -197,8 +197,8 @@ class CodeConfig_Admin
         require_once ABSPATH . 'wp-admin/includes/class-plugin-upgrader.php';
         require_once ABSPATH . 'wp-admin/includes/plugin.php';
 
-        $basename = codeconfig_config('basename');
-        $slug = codeconfig_config('slug');
+        $basename = ccupd_config('basename');
+        $slug = ccupd_config('slug');
 
         deactivate_plugins($basename);
 
@@ -224,7 +224,7 @@ class CodeConfig_Admin
             exit;
         }
 
-        $basename = codeconfig_config('basename');
+        $basename = ccupd_config('basename');
 
         activate_plugin($basename, '', false, true);
 
@@ -395,7 +395,7 @@ class CodeConfig_Admin
 				<tbody>
 					<tr>
 						<th>API URL</th>
-						<td><code><?php echo esc_html(codeconfig_config('api_url')); ?></code></td>
+						<td><code><?php echo esc_html(ccupd_config('api_url')); ?></code></td>
 					</tr>
 					<tr>
 						<th>Status</th>
