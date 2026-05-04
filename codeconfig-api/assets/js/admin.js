@@ -357,6 +357,23 @@
 			if ( e.target.id === 'codeconfig-select-media' || $( e.target ).closest( '#codeconfig-select-media' ).length ) {
 				return;
 			}
+			// Also don't trigger if clicking on the file input itself
+			if ( e.target.type === 'file' ) {
+				return;
+			}
+			e.preventDefault();
+			$( '#plugin_zip' ).trigger( 'click' );
+		});
+
+		// Also trigger on inner elements
+		dropZone.children().on( 'click', function( e ) {
+			if ( e.target.id === 'codeconfig-select-media' || $( e.target ).closest( '#codeconfig-select-media' ).length ) {
+				return;
+			}
+			if ( e.target.type === 'file' ) {
+				return;
+			}
+			e.preventDefault();
 			$( '#plugin_zip' ).trigger( 'click' );
 		});
 
