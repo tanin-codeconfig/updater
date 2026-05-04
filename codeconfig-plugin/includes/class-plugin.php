@@ -53,11 +53,10 @@ class CodeConfig
         require_once CODECONFIG_PATH . 'includes/freemius.php';
 
         if (! codeconfig_is_pro()) {
-            require_once CODECONFIG_PATH . 'includes/class-updater.php';
+            require_once CODECONFIG_PATH . 'includes/updater/index.php';
             require_once CODECONFIG_PATH . 'includes/class-ajax.php';
-            require_once CODECONFIG_PATH . 'includes/class-admin.php';
 
-            CodeConfig_Updater::init();
+            ccupd_fs()->init();
             CodeConfig_Ajax::init();
         }
 
@@ -84,14 +83,14 @@ class CodeConfig
     public function activate()
     {
         if (! codeconfig_is_pro()) {
-            CodeConfig_Updater::activate();
+            ccupd_fs()->activate();
         }
     }
 
     public function deactivate()
     {
         if (! codeconfig_is_pro()) {
-            CodeConfig_Updater::deactivate();
+            ccupd_fs()->deactivate();
         }
     }
 }

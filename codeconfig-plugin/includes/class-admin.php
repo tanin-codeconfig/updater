@@ -38,21 +38,47 @@ class CodeConfig_Admin
 
     public static function add_menu()
     {
+        $plugin_name = codeconfig_config('name', 'CodeConfig Plugin');
+        $menu_slug   = 'codeconfig-plugin-main';
+
         add_menu_page(
-            'CodeConfig Plugin — Update Status',
-            'CodeConfig Plugin',
+            $plugin_name,
+            $plugin_name,
             'manage_options',
-            'codeconfig-plugin-status',
-            array( __CLASS__, 'render_page' ),
+            $menu_slug,
+            '__return_null',
             'dashicons-update',
             31
         );
+
+        $show_admin_page = CodeConfig_Config::get_show_admin_page();
+
+        if ($show_admin_page) {
+            add_submenu_page(
+                $menu_slug,
+                __('Update Status', 'codeconfig-plugin'),
+                __('Update Status', 'codeconfig-plugin'),
+                'manage_options',
+                'codeconfig-plugin-status',
+                array( __CLASS__, 'render_page' )
+            );
+        }
+
+        remove_submenu_page($menu_slug, $menu_slug);
     }
 
     public static function enqueue_assets($hook)
     {
+        $show_admin_page = CodeConfig_Config::get_show_admin_page();
+        $parent_slug = 'codeconfig-plugin-main';
 
-        if ('toplevel_page_codeconfig-plugin-status' !== $hook && 'plugins.php' !== $hook) {
+        if ($show_admin_page) {
+            $expected_hook = 'toplevel_page_' . $parent_slug;
+        } else {
+            $expected_hook = 'toplevel_page_' . $parent_slug;
+        }
+
+        if ($expected_hook !== $hook && 'plugins.php' !== $hook) {
             return;
         }
 

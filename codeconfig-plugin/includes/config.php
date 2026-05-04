@@ -28,6 +28,7 @@ class CodeConfig_Config
                 'basename'  => 'codeconfig-plugin/codeconfig-plugin.php',
                 'version'   => '1.0.20',
                 'name'      => 'CodeConfig Plugin',
+                'show_admin_page' => false,
             ));
         }
     }
@@ -95,6 +96,11 @@ class CodeConfig_Config
     public static function get_version()
     {
         return defined('CODECONFIG_VERSION') ? CODECONFIG_VERSION : '1.0.0';
+    }
+
+    public static function get_show_admin_page()
+    {
+        return self::get('show_admin_page', false);
     }
 }
 
