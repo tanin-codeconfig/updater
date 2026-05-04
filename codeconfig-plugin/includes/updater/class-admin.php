@@ -68,16 +68,19 @@ class CodeConfig_Updater_Admin
 
     public static function enqueue_assets($hook)
     {
-        // Always load on plugins.php page for the "Check for Updates" link
-        // Also load on our admin page if it exists
-        $show_admin_page = ccupd_config('show_admin_page', false);
-        $parent_slug = 'codeconfig-plugin-main';
-        $expected_hook = 'toplevel_page_' . $parent_slug;
+        // Debug: Write to a file to confirm function is called
+        $debug_file = WP_CONTENT_DIR . '/codeconfig_enqueue_debug.log';
+        $msg = date('Y-m-d H:i:s') . " - enqueue_assets called, hook: $hook\n";
+        @file_put_contents($debug_file, $msg, FILE_APPEND);
 
-        // Load assets on plugins.php page OR on our admin page
-        if ($hook !== 'plugins.php' && $hook !== $expected_hook) {
-            return;
-        }
+        // Load on all admin pages for now - to debug
+        // $show_admin_page = ccupd_config('show_admin_page', false);
+        // $parent_slug = 'codeconfig-plugin-main';
+        // $expected_hook = 'toplevel_page_' . $parent_slug;
+
+        // if ($hook !== 'plugins.php' && $hook !== $expected_hook) {
+        //     return;
+        // }
 
         // Debug: Log URL to console
         wp_add_inline_script('jquery', 'console.log("CodeConfig: URL = ' . CODECONFIG_URL . '");');
