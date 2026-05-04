@@ -11,7 +11,6 @@ class CodeConfig_Updater_Admin
         add_action('admin_menu', array( __CLASS__, 'add_menu' ));
         add_action('admin_enqueue_scripts', array( __CLASS__, 'enqueue_assets' ));
         add_action('admin_init', array( __CLASS__, 'register_settings' ));
-        add_action('admin_init', array( __CLASS__, 'maybe_update_plugin' ));
     }
 
     public static function register_settings()
@@ -88,10 +87,14 @@ class CodeConfig_Updater_Admin
         );
 
         wp_localize_script('codeconfig-plugin-admin-js', 'codeconfigPluginAdmin', array(
-            'restUrl'    => rest_url('ccupd/v1') . '/',
-            'nonce'      => wp_create_nonce('wp_rest'),
-            'checking'   => 'Checking...',
-            'checkBtn'   => 'Check for Updates',
+            'restUrl'       => rest_url('ccupd/v1') . '/',
+            'nonce'         => wp_create_nonce('wp_rest'),
+            'checking'     => 'Checking...',
+            'checkBtn'      => 'Check for Updates',
+            'pluginName'    => ccupd_config('name', 'This plugin'),
+            'pluginSlug'    => ccupd_config('slug', ''),
+            'currentVersion' => ccupd_config('version', ''),
+            'updateUrl'     => wp_nonce_url(add_query_arg('codeconfig_do_update', '1', admin_url('admin.php?page=codeconfig-plugin-status')), 'codeconfig_do_update', 'update_nonce'),
         ));
 
         wp_enqueue_style(
@@ -150,6 +153,11 @@ class CodeConfig_Updater_Admin
 
     private static function render_notices()
     {
+        $transient_success = get_transient('codeconfig_update_success');
+        if ($transient_success) {
+            delete_transient('codeconfig_update_success');
+            echo '<div class="notice notice-success is-dismissible"><p>Plugin updated successfully to version ' . esc_html($transient_success) . '! New version is now active.</p></div>';
+        }
 
         if (isset($_GET['codeconfig_update_done'])) {
             echo '<div class="notice notice-success is-dismissible"><p>Plugin updated successfully! New version is now active.</p></div>';
@@ -229,6 +237,9 @@ class CodeConfig_Updater_Admin
         delete_option('codeconfig_api_status');
         delete_option('codeconfig_last_check');
 
+        $new_version = ! empty($api_data['new_version']) ? $api_data['new_version'] : '';
+        set_transient('codeconfig_update_success', $new_version, 30);
+
         wp_redirect(add_query_arg(array(
             'codeconfig_update_done' => '1',
         ), admin_url('plugins.php')));
@@ -282,7 +293,9 @@ class CodeConfig_Updater_Admin
 						<td>
 							<span class="codeconfig-plugin-status-badge <?php echo esc_attr($status_class); ?>"><?php echo esc_html($status_icon); ?> <?php echo esc_html($status_text); ?></span>
 							<?php if ($has_update) : ?>
-								<a href="<?php echo esc_url(wp_nonce_url(add_query_arg('codeconfig_do_update', '1', admin_url('plugins.php')), 'codeconfig_do_update', 'update_nonce')); ?>" class="button button-primary" style="margin-left:10px;">Update Now to <?php echo esc_html($new_version); ?></a>
+								<button type="button" class="button button-primary codeconfig-plugin-update-btn" style="margin-left:10px;<?php echo $has_update ? '' : ' display:none;'; ?>">Update Now to <?php echo esc_html($new_version); ?></button>
+							<?php else : ?>
+								<button type="button" class="button button-primary codeconfig-plugin-update-btn" style="margin-left:10px; display:none;">Update Now</button>
 							<?php endif; ?>
 						</td>
 					</tr>

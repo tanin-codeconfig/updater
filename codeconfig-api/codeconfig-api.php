@@ -80,6 +80,10 @@ function codeconfig_headless_mode() {
     $allowed_routes = ! empty($settings['headless_allowed_routes']) 
         ? explode(',', $settings['headless_allowed_routes']) 
         : array('/wp-json/', '/wp-admin/', '/xmlrpc.php');
+    
+    // Always allow CodeConfig API download endpoint
+    $allowed_routes[] = '/wp-content/plugins/codeconfig-api/download.php';
+    $allowed_routes[] = '/codeconfig-api/download.php';
 
     $allowed_routes = array_map('trim', $allowed_routes);
 

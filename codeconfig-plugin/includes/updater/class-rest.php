@@ -36,6 +36,14 @@ class CodeConfig_REST
                 return current_user_can('update_plugins');
             },
         ));
+
+        register_rest_route('ccupd/v1', '/update', array(
+            'methods'             => 'POST',
+            'callback'            => array(__CLASS__, 'handle_update'),
+            'permission_callback' => function() {
+                return current_user_can('update_plugins');
+            },
+        ));
     }
 
     public static function handle_check(WP_REST_Request $request)
@@ -67,6 +75,7 @@ class CodeConfig_REST
 
         update_option('codeconfig_api_status', 'connected');
         update_option('codeconfig_last_check', time());
+        update_option('codeconfig_check_result', $result);
 
         return new WP_REST_Response(array(
             'update_available' => ! empty($result['update']),
@@ -221,5 +230,72 @@ class CodeConfig_REST
         delete_option('codeconfig_last_check');
         delete_option('codeconfig_check_result');
         delete_option('codeconfig_api_status');
+    }
+
+    public static function handle_update(WP_REST_Request $request)
+    {
+        if (ccupd_config('is_pro', false)) {
+            return new WP_REST_Response(array(
+                'success' => false,
+                'message' => 'Updates are managed by Freemius.',
+            ), 400);
+        }
+
+        $api_data = self::check_api();
+
+        if (is_wp_error($api_data) || empty($api_data['update'])) {
+            return new WP_REST_Response(array(
+                'success' => false,
+                'message' => 'No update available or API error.',
+            ), 400);
+        }
+
+        delete_site_transient('update_plugins');
+
+        require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
+        require_once ABSPATH . 'wp-admin/includes/class-plugin-upgrader.php';
+        require_once ABSPATH . 'wp-admin/includes/plugin.php';
+
+        $basename = ccupd_config('basename');
+        $slug = ccupd_config('slug');
+
+        deactivate_plugins($basename, false, true);
+
+        $skin     = new WP_Ajax_Upgrader_Skin();
+        $upgrader = new Plugin_Upgrader($skin);
+
+        $result = $upgrader->run(array(
+            'package'           => $api_data['package'],
+            'destination'       => WP_PLUGIN_DIR . '/' . $slug,
+            'clear_destination' => true,
+            'clear_working'     => true,
+            'hook_extra'        => array(
+                'plugin' => $basename,
+            ),
+            'incompatible_archive' => false,
+        ));
+
+        if (is_wp_error($result)) {
+            activate_plugin($basename, '', false, true);
+            return new WP_REST_Response(array(
+                'success' => false,
+                'message' => $result->get_error_message(),
+            ), 400);
+        }
+
+        activate_plugin($basename, '', false, true);
+
+        delete_site_transient('update_plugins');
+        delete_option('codeconfig_check_result');
+        delete_option('codeconfig_api_status');
+        delete_option('codeconfig_last_check');
+
+        $new_version = ! empty($api_data['new_version']) ? $api_data['new_version'] : '';
+
+        return new WP_REST_Response(array(
+            'success'      => true,
+            'new_version' => $new_version,
+            'message'     => 'Plugin updated successfully to version ' . $new_version . '!',
+        ), 200);
     }
 }
