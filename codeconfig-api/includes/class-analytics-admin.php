@@ -8,7 +8,7 @@ class CodeConfig_Analytics_Admin {
 	public static function add_menu() {
 		add_submenu_page(
 			'codeconfig-api',
-			'MyPlugin Analytics',
+			'CodeConfig Analytics',
 			'Analytics',
 			'manage_options',
 			'codeconfig-analytics',
@@ -37,7 +37,7 @@ class CodeConfig_Analytics_Admin {
 		$stats = CodeConfig_Analytics_DB::get_stats( array( 'start_date' => $start ) );
 		?>
 		<div class="wrap">
-			<h1>MyPlugin Analytics</h1>
+			<h1>CodeConfig Analytics</h1>
 
 			<form method="get" action="" style="margin-bottom:20px;">
 				<input type="hidden" name="page" value="codeconfig-analytics" />

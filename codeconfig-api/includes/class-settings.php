@@ -11,7 +11,7 @@ class CodeConfig_Settings {
 	public static function add_menu() {
 		add_submenu_page(
 			'codeconfig-api',
-			'MyPlugin Settings',
+			'CodeConfig Settings',
 			'Settings',
 			'manage_options',
 			'codeconfig-settings',
@@ -258,7 +258,7 @@ class CodeConfig_Settings {
 	public static function render_page() {
 		?>
 		<div class="wrap">
-			<h1>MyPlugin Settings</h1>
+			<h1>CodeConfig Settings</h1>
 
 			<form method="post" action="options.php">
 				<?php

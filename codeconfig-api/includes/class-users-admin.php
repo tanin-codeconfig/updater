@@ -8,7 +8,7 @@ class CodeConfig_Users_Admin {
 	public static function add_menu() {
 		add_submenu_page(
 			'codeconfig-api',
-			'MyPlugin Users',
+			'CodeConfig Users',
 			'Users',
 			'manage_options',
 			'codeconfig-users',
@@ -50,11 +50,11 @@ class CodeConfig_Users_Admin {
 			} else {
 				foreach ( $bulk_ids as $id ) {
 					if ( 'bulk_delete' === $action ) {
-						MyPlugin_Users_DB::delete_user( $id );
+						CodeConfig_Users_DB::delete_user( $id );
 					} elseif ( 'bulk_activate' === $action ) {
-						MyPlugin_Users_DB::update_user( $id, array( 'is_active' => 1 ) );
+						CodeConfig_Users_DB::update_user( $id, array( 'is_active' => 1 ) );
 					} elseif ( 'bulk_deactivate' === $action ) {
-						MyPlugin_Users_DB::update_user( $id, array( 'is_active' => 0 ) );
+						CodeConfig_Users_DB::update_user( $id, array( 'is_active' => 0 ) );
 					}
 				}
 				$args['codeconfig_users_notice'] = 'bulk_' . str_replace( 'bulk_', '', $action );
@@ -80,7 +80,7 @@ class CodeConfig_Users_Admin {
 					$name = self::generate_name_from_domain( $domain );
 				}
 
-				MyPlugin_Users_DB::insert_user( array(
+				CodeConfig_Users_DB::insert_user( array(
 					'name'      => $name,
 					'email'     => $email,
 					'domain'    => $domain,
@@ -92,19 +92,19 @@ class CodeConfig_Users_Admin {
 
 		if ( 'activate' === $action ) {
 			$id = (int) $_POST['id'];
-			MyPlugin_Users_DB::update_user( $id, array( 'is_active' => 1 ) );
+			CodeConfig_Users_DB::update_user( $id, array( 'is_active' => 1 ) );
 			$args['codeconfig_users_notice'] = 'user_activated';
 		}
 
 		if ( 'deactivate' === $action ) {
 			$id = (int) $_POST['id'];
-			MyPlugin_Users_DB::update_user( $id, array( 'is_active' => 0 ) );
+			CodeConfig_Users_DB::update_user( $id, array( 'is_active' => 0 ) );
 			$args['codeconfig_users_notice'] = 'user_deactivated';
 		}
 
 		if ( 'delete_user' === $action ) {
 			$id = (int) $_POST['id'];
-			MyPlugin_Users_DB::delete_user( $id );
+			CodeConfig_Users_DB::delete_user( $id );
 			$args['codeconfig_users_notice'] = 'user_deleted';
 		}
 
@@ -117,7 +117,7 @@ class CodeConfig_Users_Admin {
 			if ( empty( $name ) || empty( $email ) ) {
 				$args['codeconfig_users_notice'] = 'missing_fields';
 			} else {
-				MyPlugin_Users_DB::update_user( $id, array(
+				CodeConfig_Users_DB::update_user( $id, array(
 					'name'   => $name,
 					'email'  => $email,
 					'domain' => $domain,
@@ -128,8 +128,8 @@ class CodeConfig_Users_Admin {
 
 		if ( 'regenerate_key' === $action ) {
 			$id = (int) $_POST['id'];
-			$new_key = MyPlugin_Users_DB::generate_api_key();
-			MyPlugin_Users_DB::update_user( $id, array( 'api_key' => $new_key ) );
+			$new_key = CodeConfig_Users_DB::generate_api_key();
+			CodeConfig_Users_DB::update_user( $id, array( 'api_key' => $new_key ) );
 			$args['codeconfig_users_notice'] = 'key_regenerated';
 		}
 
@@ -156,15 +156,15 @@ class CodeConfig_Users_Admin {
 			'order'     => 'DESC',
 		);
 
-		$users       = MyPlugin_Users_DB::get_users_filtered( $filter_args );
-		$total_users = MyPlugin_Users_DB::get_users_count( $filter_args );
+		$users       = CodeConfig_Users_DB::get_users_filtered( $filter_args );
+		$total_users = CodeConfig_Users_DB::get_users_count( $filter_args );
 		$total_pages = ceil( $total_users / $per_page );
-		$all_domains = MyPlugin_Users_DB::get_all_domains();
+		$all_domains = CodeConfig_Users_DB::get_all_domains();
 
 		self::maybe_show_notice();
 		?>
 		<div class="wrap">
-			<h1>MyPlugin — Access Users</h1>
+			<h1>CodeConfig — Access Users</h1>
 
 			<h2>Add New User</h2>
 			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
@@ -219,7 +219,7 @@ class CodeConfig_Users_Admin {
 
 			<?php
 			$edit_id = isset( $_GET['edit'] ) ? (int) $_GET['edit'] : 0;
-			$edit_user = $edit_id ? MyPlugin_Users_DB::get_user( $edit_id ) : null;
+			$edit_user = $edit_id ? CodeConfig_Users_DB::get_user( $edit_id ) : null;
 			if ( $edit_user ) :
 			?>
 			<div id="codeconfig-edit-user-form" style="background:#f9f9f9;padding:15px;margin-bottom:20px;border:1px solid #ccc;">
@@ -414,7 +414,7 @@ class CodeConfig_Users_Admin {
 			wp_die( 'Permission denied.' );
 		}
 
-		$users = MyPlugin_Users_DB::get_all_users();
+		$users = CodeConfig_Users_DB::get_all_users();
 
 		if ( empty( $users ) ) {
 			wp_die( 'No users to export.' );

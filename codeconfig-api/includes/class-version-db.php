@@ -104,7 +104,7 @@ class CodeConfig_Version_DB {
 		);
 	}
 
-	public static function get_active_version( $slug = 'my-plugin' ) {
+	public static function get_active_version( $slug = 'codeconfig-plugin' ) {
 		global $wpdb;
 		$table_name = self::get_table_name();
 

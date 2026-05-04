@@ -19,7 +19,7 @@ class CodeConfig_Routes {
 					'sanitize_callback' => 'sanitize_text_field',
 				),
 				'slug' => array(
-					'default'     => 'my-plugin',
+					'default'     => 'codeconfig-plugin',
 					'sanitize_callback' => 'sanitize_text_field',
 				),
 				'api_key' => array(
@@ -35,7 +35,7 @@ class CodeConfig_Routes {
 			'permission_callback' => array( 'CodeConfig_Routes', 'public_access' ),
 			'args'                => array(
 				'slug' => array(
-					'default'     => 'my-plugin',
+					'default'     => 'codeconfig-plugin',
 					'sanitize_callback' => 'sanitize_text_field',
 				),
 			),

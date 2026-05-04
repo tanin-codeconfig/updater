@@ -3,15 +3,15 @@
 
 	$( document ).ready( function() {
 
-		var versionForm = $( '#myplugin-add-version-form' );
+		var versionForm = $( '#codeconfig-add-version-form' );
 
 		if ( versionForm.length ) {
 
 			var versionInput = $( '#version' );
 			var slugInput = $( '#slug' );
 			var fileInput = $( '#plugin_zip' );
-			var statusDiv = $( '#myplugin-detect-status' );
-			var mediaBtn = $( '#myplugin-select-media' );
+			var statusDiv = $( '#codeconfig-detect-status' );
+			var mediaBtn = $( '#codeconfig-select-media' );
 
 			versionForm.on( 'submit', function( e ) {
 				var version = versionInput.val();
@@ -23,14 +23,14 @@
 
 				e.preventDefault();
 
-				$.post( mypluginAdmin.ajaxUrl, {
-					action:  'myplugin_check_version',
-					nonce:   mypluginAdmin.nonce,
+				$.post( codeconfigAdmin.ajaxUrl, {
+					action:  'codeconfig_check_version',
+					nonce:   codeconfigAdmin.nonce,
 					version: version,
 					slug:    slug,
 				}, function( response ) {
 					if ( response.success && response.data.exists ) {
-						if ( confirm( mypluginAdmin.confirmUpdate ) ) {
+						if ( confirm( codeconfigAdmin.confirmUpdate ) ) {
 							submitForm();
 						}
 					} else {
@@ -62,7 +62,7 @@
 					return;
 				}
 
-				statusDiv.html( '<span class="spinner is-active"></span> ' + mypluginAdmin.detecting );
+				statusDiv.html( '<span class="spinner is-active"></span> ' + codeconfigAdmin.detecting );
 
 				var reader = new FileReader();
 
@@ -114,11 +114,11 @@
 				frame.on( 'select', function() {
 					var attachment = frame.state().get( 'selection' ).first().toJSON();
 
-					statusDiv.html( '<span class="spinner is-active"></span> ' + mypluginAdmin.detecting );
+					statusDiv.html( '<span class="spinner is-active"></span> ' + codeconfigAdmin.detecting );
 
-					$.post( mypluginAdmin.ajaxUrl, {
-						action: 'myplugin_parse_media_zip',
-						nonce:  mypluginAdmin.mediaNonce,
+					$.post( codeconfigAdmin.ajaxUrl, {
+						action: 'codeconfig_parse_media_zip',
+						nonce:  codeconfigAdmin.mediaNonce,
 						attachment_id: attachment.id,
 					}, function( response ) {
 						if ( response.success ) {
@@ -135,20 +135,20 @@
 				frame.open();
 			});
 
-			$( '.myplugin-edit-toggle' ).on( 'click', function() {
-				var wrapper = $( this ).closest( '.myplugin-field-wrapper' );
+			$( '.codeconfig-edit-toggle' ).on( 'click', function() {
+				var wrapper = $( this ).closest( '.codeconfig-field-wrapper' );
 				var input = wrapper.find( 'input' );
 
-				input.prop( 'readonly', false ).removeClass( 'myplugin-auto-filled' );
+				input.prop( 'readonly', false ).removeClass( 'codeconfig-auto-filled' );
 				$( this ).hide();
-				wrapper.find( '.myplugin-detected-badge' ).hide();
+				wrapper.find( '.codeconfig-detected-badge' ).hide();
 				input.focus();
 			});
 
-			$( document ).on( 'click', '.myplugin-edit-btn', function() {
+			$( document ).on( 'click', '.codeconfig-edit-btn', function() {
 				var btn = $( this );
 				var id = btn.data( 'id' );
-				var data = mypluginAdmin.versions && mypluginAdmin.versions[ id ];
+				var data = codeconfigAdmin.versions && codeconfigAdmin.versions[ id ];
 
 				if ( ! data ) {
 					return;
@@ -160,11 +160,11 @@
 				$( '#edit_changelog' ).val( data.changelog );
 				$( '#edit_zip' ).val( '' );
 
-				tb_show( 'Edit Version', '#TB_inline?height=400&width=500&inlineId=myplugin-edit-form' );
+				tb_show( 'Edit Version', '#TB_inline?height=400&width=500&inlineId=codeconfig-edit-form' );
 			});
 
 			// Single action buttons (activate/deactivate/delete)
-			$( document ).on( 'click', '.myplugin-single-action-btn', function() {
+			$( document ).on( 'click', '.codeconfig-single-action-btn', function() {
 				var btn = $( this );
 				var action = btn.data( 'action' );
 				var id = btn.data( 'id' );
@@ -177,10 +177,10 @@
 
 				$( '#single-action-type' ).val( action );
 				$( '#single-action-id' ).val( id );
-				$( '#myplugin-single-action-form' ).submit();
+				$( '#codeconfig-single-action-form' ).submit();
 			});
 
-			$( document ).on( 'click', '#myplugin-cancel-edit', function() {
+			$( document ).on( 'click', '#codeconfig-cancel-edit', function() {
 				tb_remove();
 			});
 
@@ -233,7 +233,7 @@
 			}
 
 			function autoFillFields( slug, version, name ) {
-				var label = mypluginAdmin.detected;
+				var label = codeconfigAdmin.detected;
 
 				if ( name ) {
 					label = name + ' v' + ( version || '?' );
@@ -253,25 +253,25 @@
 			}
 
 			function lockField( input, badgeText ) {
-				var wrapper = input.closest( '.myplugin-field-wrapper' );
-				var badge = wrapper.find( '.myplugin-detected-badge' );
-				var toggle = wrapper.find( '.myplugin-edit-toggle' );
+				var wrapper = input.closest( '.codeconfig-field-wrapper' );
+				var badge = wrapper.find( '.codeconfig-detected-badge' );
+				var toggle = wrapper.find( '.codeconfig-edit-toggle' );
 
-				input.prop( 'readonly', true ).addClass( 'myplugin-auto-filled' );
-				badge.text( mypluginAdmin.detected ).show();
-				toggle.text( mypluginAdmin.edit ).show();
+				input.prop( 'readonly', true ).addClass( 'codeconfig-auto-filled' );
+				badge.text( codeconfigAdmin.detected ).show();
+				toggle.text( codeconfigAdmin.edit ).show();
 			}
 
 			function serverParseZip( file ) {
-				statusDiv.html( '<span class="spinner is-active"></span> ' + mypluginAdmin.detecting );
+				statusDiv.html( '<span class="spinner is-active"></span> ' + codeconfigAdmin.detecting );
 
 				var formData = new FormData();
-				formData.append( 'action', 'myplugin_parse_zip' );
-				formData.append( 'nonce', mypluginAdmin.nonce );
+				formData.append( 'action', 'codeconfig_parse_zip' );
+				formData.append( 'nonce', codeconfigAdmin.nonce );
 				formData.append( 'zip_file', file );
 
 				$.ajax({
-					url: mypluginAdmin.ajaxUrl,
+					url: codeconfigAdmin.ajaxUrl,
 					type: 'POST',
 					data: formData,
 					processData: false,
@@ -291,20 +291,20 @@
 		}
 
 	// Make entire metabox header clickable to toggle open/close
-	$( '.myplugin-upload-metabox .postbox-header' ).css( 'cursor', 'pointer' );
+	$( '.codeconfig-upload-metabox .postbox-header' ).css( 'cursor', 'pointer' );
 
 	// Disable WordPress postbox.js for our custom metabox to avoid conflicts
 	$( document ).ready( function() {
-		$( '.myplugin-upload-metabox' ).removeClass( 'postbox' );
+		$( '.codeconfig-upload-metabox' ).removeClass( 'postbox' );
 	});
 
-	$( document ).on( 'click', '.myplugin-upload-metabox .postbox-header', function( e ) {
+	$( document ).on( 'click', '.codeconfig-upload-metabox .postbox-header', function( e ) {
 		// Don't toggle if clicking interactive elements
 		if ( $( e.target ).is( 'button, input, select, textarea, a' ) ) {
 			return;
 		}
 
-		var postbox = $( this ).closest( '.myplugin-upload-metabox' );
+		var postbox = $( this ).closest( '.codeconfig-upload-metabox' );
 		var button = postbox.find( '.handlediv' );
 		var expanded = button.attr( 'aria-expanded' ) === 'true';
 
@@ -313,7 +313,7 @@
 	});
 
 		// Drag and drop functionality
-		var dropZone = $( '#myplugin-drop-zone' );
+		var dropZone = $( '#codeconfig-drop-zone' );
 
 		dropZone.on( 'dragenter dragover', function( e ) {
 			e.preventDefault();
@@ -354,7 +354,7 @@
 		// Confirm bulk action
 		window.confirmBulkAction = function() {
 			var action = $( '#bulk-action-selector' ).val();
-			var checked = $( '#myplugin-table-form input[name="bulk_ids[]"]:checked' ).length;
+			var checked = $( '#codeconfig-table-form input[name="bulk_ids[]"]:checked' ).length;
 
 			if ( ! action ) {
 				alert( 'Please select an action.' );
@@ -373,13 +373,13 @@
 			}
 
 			$( '#bulk-action-type' ).val( action );
-			$( '#myplugin-table-form' ).submit();
+			$( '#codeconfig-table-form' ).submit();
 			return true;
 		};
 
 		// Select all checkbox
 		$( '#cb-select-all' ).on( 'click', function() {
-			$( '#myplugin-table-form input[name="bulk_ids[]"]' ).prop( 'checked', this.checked );
+			$( '#codeconfig-table-form input[name="bulk_ids[]"]' ).prop( 'checked', this.checked );
 		});
 	});
 })( jQuery );

@@ -8,8 +8,8 @@ class CodeConfig_Admin
     public static function add_menu()
     {
         add_menu_page(
-            'MyPlugin Versions',
-            'MyPlugin API',
+            'CodeConfig Versions',
+            'CodeConfig API',
             'manage_options',
             'codeconfig-api',
             array( __CLASS__, 'render_page' ),
@@ -35,14 +35,14 @@ class CodeConfig_Admin
 
         wp_enqueue_style(
             'codeconfig-admin-css',
-            MYPLUGIN_API_URL . 'assets/css/admin.css',
+            CODECONFIG_API_URL . 'assets/css/admin.css',
             array(),
-            MYPLUGIN_API_VERSION
+            CODECONFIG_API_VERSION
         );
 
         wp_enqueue_script(
             'codeconfig-jszip',
-            MYPLUGIN_API_URL . 'assets/js/jszip.min.js',
+            CODECONFIG_API_URL . 'assets/js/jszip.min.js',
             array(),
             '3.10.1',
             true
@@ -51,9 +51,9 @@ class CodeConfig_Admin
         wp_enqueue_media();
         wp_enqueue_script(
             'codeconfig-admin-js',
-            MYPLUGIN_API_URL . 'assets/js/admin.js',
+            CODECONFIG_API_URL . 'assets/js/admin.js',
             array( 'jquery', 'media-views', 'codeconfig-jszip', 'thickbox' ),
-            MYPLUGIN_API_VERSION,
+            CODECONFIG_API_VERSION,
             true
         );
 
@@ -90,7 +90,7 @@ class CodeConfig_Admin
         check_ajax_referer('codeconfig_admin_nonce', 'nonce');
 
         $version = sanitize_text_field($_POST['version'] ?? '');
-        $slug    = sanitize_text_field($_POST['slug'] ?? 'my-plugin');
+        $slug    = sanitize_text_field($_POST['slug'] ?? 'codeconfig-plugin');
 
         $existing = CodeConfig_Version_DB::get_existing_version($slug, $version);
 
@@ -222,8 +222,8 @@ class CodeConfig_Admin
             if (! $has_file && ! $has_attachment) {
                 $args['codeconfig_notice'] = 'upload_error';
             } else {
-                if (! is_dir(MYPLUGIN_API_STORAGE)) {
-                    wp_mkdir_p(MYPLUGIN_API_STORAGE);
+                if (! is_dir(CODECONFIG_API_STORAGE)) {
+                    wp_mkdir_p(CODECONFIG_API_STORAGE);
                 }
 
                 $upload_file = self::handle_file_upload($has_file, $has_attachment, $attachment_id);
@@ -254,7 +254,7 @@ class CodeConfig_Admin
                     exit;
                 }
 
-                $rename = MYPLUGIN_API_STORAGE . $slug . '-v' . $version . '.zip';
+                $rename = CODECONFIG_API_STORAGE . $slug . '-v' . $version . '.zip';
 
                 if (file_exists($upload_file) && $upload_file !== $rename) {
                     if (file_exists($rename)) {
@@ -350,8 +350,8 @@ class CodeConfig_Admin
                 require_once ABSPATH . 'wp-admin/includes/file.php';
 
                 $override_upload_dir = function ($dirs) {
-                    $dirs['path'] = MYPLUGIN_API_STORAGE;
-                    $dirs['url']  = MYPLUGIN_API_STORAGE_URL;
+                    $dirs['path'] = CODECONFIG_API_STORAGE;
+                    $dirs['url']  = CODECONFIG_API_STORAGE_URL;
                     $dirs['subdir']  = '';
                     return $dirs;
                 };
@@ -373,7 +373,7 @@ class CodeConfig_Admin
                         unlink($existing['download_path']);
                     }
 
-                    $rename = MYPLUGIN_API_STORAGE . $new_slug . '-v' . $new_version . '.zip';
+                    $rename = CODECONFIG_API_STORAGE . $new_slug . '-v' . $new_version . '.zip';
 
                     if (file_exists($upload['file'])) {
                         if (file_exists($rename)) {
@@ -408,7 +408,7 @@ class CodeConfig_Admin
         self::maybe_show_notice();
         ?>
 		<div class="wrap">
-			<h1>MyPlugin Update Manager</h1>
+			<h1>CodeConfig Update Manager</h1>
 
 			<div class="codeconfig-upload-metabox closed">
 				<div class="postbox-header">
@@ -454,7 +454,7 @@ class CodeConfig_Admin
 							<div class="codeconfig-field-row">
 								<label for="slug" class="codeconfig-field-label">Plugin Slug</label>
 								<div class="codeconfig-field-wrapper" id="slug-wrapper">
-									<input type="text" id="slug" name="slug" class="regular-text" placeholder="e.g. my-plugin" />
+									<input type="text" id="slug" name="slug" class="regular-text" placeholder="e.g. codeconfig-plugin" />
 									<span class="codeconfig-detected-badge" style="display:none;"></span>
 									<button type="button" class="codeconfig-edit-toggle" style="display:none;"><?php esc_html_e('Edit'); ?></button>
 								</div>
@@ -629,8 +629,8 @@ class CodeConfig_Admin
             require_once ABSPATH . 'wp-admin/includes/file.php';
 
             $override_upload_dir = function ($dirs) {
-                $dirs['path']   = MYPLUGIN_API_STORAGE;
-                $dirs['url']    = MYPLUGIN_API_STORAGE_URL;
+                $dirs['path']   = CODECONFIG_API_STORAGE;
+                $dirs['url']    = CODECONFIG_API_STORAGE_URL;
                 $dirs['subdir'] = '';
                 return $dirs;
             };
@@ -649,7 +649,7 @@ class CodeConfig_Admin
         if ($has_attachment) {
             $source_path = get_attached_file($attachment_id);
             if ($source_path && file_exists($source_path)) {
-                $copied_file = MYPLUGIN_API_STORAGE . basename($source_path);
+                $copied_file = CODECONFIG_API_STORAGE . basename($source_path);
                 copy($source_path, $copied_file);
                 return $copied_file;
             }

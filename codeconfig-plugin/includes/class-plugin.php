@@ -67,15 +67,15 @@ class CodeConfig
 
     public function load_textdomain()
     {
-        load_plugin_textdomain('my-plugin', false, dirname(CODECONFIG_BASENAME) . '/languages/');
+        load_plugin_textdomain('codeconfig-plugin', false, dirname(CODECONFIG_BASENAME) . '/languages/');
     }
 
     public function add_plugin_links($links)
     {
         if (! codeconfig_is_pro()) {
             $links['check_update'] = sprintf(
-                '<a href="#" id="my-plugin-row-check" style="color:#d63638;">%s</a>',
-                esc_html__('Check for Updates', 'my-plugin')
+                '<a href="#" id="codeconfig-plugin-row-check" style="color:#d63638;">%s</a>',
+                esc_html__('Check for Updates', 'codeconfig-plugin')
             );
         }
         return $links;

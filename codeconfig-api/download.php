@@ -8,7 +8,7 @@ require_once CODECONFIG_API_PATH . 'includes/class-users-db.php';
 require_once CODECONFIG_API_PATH . 'includes/class-analytics-db.php';
 
 $token = isset( $_GET['token'] ) ? sanitize_text_field( $_GET['token'] ) : '';
-$slug  = isset( $_GET['slug'] ) ? sanitize_text_field( $_GET['slug'] ) : 'my-plugin';
+$slug  = isset( $_GET['slug'] ) ? sanitize_text_field( $_GET['slug'] ) : 'codeconfig-plugin';
 $key   = isset( $_GET['api_key'] ) ? sanitize_text_field( $_GET['api_key'] ) : '';
 
 if ( empty( $token ) ) {
@@ -26,13 +26,13 @@ if ( ! $transient || $transient['slug'] !== $slug ) {
 $stored_key = $transient['api_key'] ?? '';
 
 if ( $stored_key ) {
-	$user = MyPlugin_Users_DB::get_user_by_api_key( $stored_key );
+	$user = CodeConfig_Users_DB::get_user_by_api_key( $stored_key );
 	if ( ! $user ) {
 		status_header( 403 );
 		die( 'API key invalid or user deactivated.' );
 	}
 } elseif ( $key ) {
-	$user = MyPlugin_Users_DB::get_user_by_api_key( $key );
+	$user = CodeConfig_Users_DB::get_user_by_api_key( $key );
 	if ( ! $user ) {
 		status_header( 403 );
 		die( 'Invalid API key or user deactivated.' );
@@ -41,7 +41,7 @@ if ( $stored_key ) {
 
 delete_transient( 'codeconfig_dl_' . $token );
 
-$latest = MyPlugin_Version_DB::get_active_version( $slug );
+$latest = CodeConfig_Version_DB::get_active_version( $slug );
 
 if ( ! $latest || empty( $latest['download_path'] ) ) {
 	status_header( 404 );
@@ -49,12 +49,12 @@ if ( ! $latest || empty( $latest['download_path'] ) ) {
 }
 
 // Log the download
-if ( class_exists( 'MyPlugin_Analytics_DB' ) ) {
+if ( class_exists( 'CodeConfig_Analytics_DB' ) ) {
     $log_user_id = isset( $user ) && $user ? $user['id'] : null;
     $log_api_key = $stored_key ? $stored_key : ( $key ? $key : '' );
     $log_domain = $transient['domain'] ?? '';
     
-    MyPlugin_Analytics_DB::log_request( array(
+    CodeConfig_Analytics_DB::log_request( array(
         'user_id'      => $log_user_id,
         'api_key'      => $log_api_key,
         'slug'         => $slug,
@@ -65,8 +65,8 @@ if ( class_exists( 'MyPlugin_Analytics_DB' ) ) {
 }
 
 // Increment download count in versions table
-if ( class_exists( 'MyPlugin_Version_DB' ) && ! empty( $latest['version'] ) ) {
-    MyPlugin_Version_DB::increment_download_count( $slug, $latest['version'] );
+if ( class_exists( 'CodeConfig_Version_DB' ) && ! empty( $latest['version'] ) ) {
+    CodeConfig_Version_DB::increment_download_count( $slug, $latest['version'] );
 }
 
 if ( ! $latest || empty( $latest['download_path'] ) ) {

@@ -84,7 +84,7 @@ class CodeConfig_Download {
 		if ( ! file_exists( $file_path ) ) {
 			$slug    = $latest['slug'];
 			$version = $latest['version'];
-			$file_path = MYPLUGIN_API_STORAGE . $slug . '-v' . $version . '.zip';
+			$file_path = CODECONFIG_API_STORAGE . $slug . '-v' . $version . '.zip';
 		}
 
 		if ( ! file_exists( $file_path ) ) {

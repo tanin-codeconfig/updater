@@ -3,30 +3,30 @@
 
 	$( document ).ready( function() {
 
-		var checkBtn = $( '#my-plugin-check-btn' );
-		var refreshBtn = $( '#my-plugin-refresh-btn' );
-		var testBtn = $( '#my-plugin-test-btn' );
+		var checkBtn = $( '#codeconfig-plugin-check-btn' );
+		var refreshBtn = $( '#codeconfig-plugin-refresh-btn' );
+		var testBtn = $( '#codeconfig-plugin-test-btn' );
 
 		if ( checkBtn.length ) {
 			checkBtn.on( 'click', function() {
 				var btn = $( this );
-				var resultDiv = $( '#my-plugin-check-result' );
+				var resultDiv = $( '#codeconfig-plugin-check-result' );
 
-				btn.prop( 'disabled', true ).html( '<span class="spinner is-active"></span> ' + myPluginAdmin.checking );
+				btn.prop( 'disabled', true ).html( '<span class="spinner is-active"></span> ' + codeconfigPluginAdmin.checking );
 				resultDiv.hide().removeClass( 'notice-success notice-error notice-warning' );
 
-				$.post( myPluginAdmin.ajaxUrl, {
-					action: 'my_plugin_manual_check',
-					nonce:  myPluginAdmin.nonce,
+				$.post( codeconfigPluginAdmin.ajaxUrl, {
+					action: 'codeconfig_manual_check',
+					nonce:  codeconfigPluginAdmin.nonce,
 				}, function( response ) {
 					if ( response.success ) {
 						window.location.reload();
 					} else {
-						btn.prop( 'disabled', false ).html( '<span class="dashicons dashicons-update" style="margin-top:3px;"></span> ' + myPluginAdmin.checkBtn );
+						btn.prop( 'disabled', false ).html( '<span class="dashicons dashicons-update" style="margin-top:3px;"></span> ' + codeconfigPluginAdmin.checkBtn );
 						resultDiv.addClass( 'notice-error' ).html( '<p>' + ( response.data.message || 'Check failed.' ) + '</p>' ).show();
 					}
 				}).fail( function() {
-					btn.prop( 'disabled', false ).html( '<span class="dashicons dashicons-update" style="margin-top:3px;"></span> ' + myPluginAdmin.checkBtn );
+					btn.prop( 'disabled', false ).html( '<span class="dashicons dashicons-update" style="margin-top:3px;"></span> ' + codeconfigPluginAdmin.checkBtn );
 					resultDiv.addClass( 'notice-error' ).html( '<p>Request failed. Try again.</p>' ).show();
 				});
 			});
@@ -35,13 +35,13 @@
 		if ( refreshBtn.length ) {
 			refreshBtn.on( 'click', function() {
 				var btn = $( this );
-				var resultDiv = $( '#my-plugin-check-result' );
+				var resultDiv = $( '#codeconfig-plugin-check-result' );
 
 				btn.prop( 'disabled', true ).text( 'Clearing...' );
 
-				$.post( myPluginAdmin.ajaxUrl, {
-					action: 'my_plugin_force_refresh',
-					nonce:  myPluginAdmin.nonce,
+				$.post( codeconfigPluginAdmin.ajaxUrl, {
+					action: 'codeconfig_force_refresh',
+					nonce:  codeconfigPluginAdmin.nonce,
 				}, function( response ) {
 					btn.prop( 'disabled', false ).text( 'Force Refresh' );
 
@@ -58,13 +58,13 @@
 		if ( testBtn.length ) {
 			testBtn.on( 'click', function() {
 				var btn = $( this );
-				var resultDiv = $( '#my-plugin-test-result' );
+				var resultDiv = $( '#codeconfig-plugin-test-result' );
 
 				btn.prop( 'disabled', true ).text( 'Testing...' );
 
-				$.post( myPluginAdmin.ajaxUrl, {
-					action: 'my_plugin_test_connection',
-					nonce:  myPluginAdmin.nonce,
+				$.post( codeconfigPluginAdmin.ajaxUrl, {
+					action: 'codeconfig_test_connection',
+					nonce:  codeconfigPluginAdmin.nonce,
 				}, function( response ) {
 					btn.prop( 'disabled', false ).text( 'Test Connection' );
 
@@ -79,7 +79,7 @@
 			});
 		}
 
-		var pluginRowBtn = $( '#my-plugin-row-check' );
+		var pluginRowBtn = $( '#codeconfig-plugin-row-check' );
 		if ( pluginRowBtn.length ) {
 			pluginRowBtn.on( 'click', function( e ) {
 				e.preventDefault();
@@ -89,9 +89,9 @@
 
 				btn.html( '<span class="spinner is-active"></span> Checking...' ).addClass( 'disabled' ).css( 'pointer-events', 'none' );
 
-				$.post( myPluginAdmin.ajaxUrl, {
-					action: 'my_plugin_manual_check',
-					nonce:  myPluginAdmin.nonce,
+				$.post( codeconfigPluginAdmin.ajaxUrl, {
+					action: 'codeconfig_manual_check',
+					nonce:  codeconfigPluginAdmin.nonce,
 				}, function( response ) {
 					if ( response.success ) {
 						window.location.reload();

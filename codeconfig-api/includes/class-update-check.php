@@ -175,7 +175,7 @@ class CodeConfig_Update_Check {
 
 	private static function get_download_url( $token, $slug, $api_key = '' ) {
 
-		$plugin_dir = basename( MYPLUGIN_API_PATH );
+		$plugin_dir = basename( CODECONFIG_API_PATH );
 		$site_url   = untrailingslashit( get_site_url() );
 
 		$download_url = sprintf( '%s/wp-content/plugins/%s/download.php?token=%s&slug=%s',

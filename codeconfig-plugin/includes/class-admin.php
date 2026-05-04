@@ -16,9 +16,9 @@ class CodeConfig_Admin
 
     public static function register_settings()
     {
-        register_setting('my-plugin-settings', 'codeconfig_api_key');
-        register_setting('my-plugin-settings', 'codeconfig_name');
-        register_setting('my-plugin-settings', 'codeconfig_email');
+        register_setting('codeconfig-plugin-settings', 'codeconfig_api_key');
+        register_setting('codeconfig-plugin-settings', 'codeconfig_name');
+        register_setting('codeconfig-plugin-settings', 'codeconfig_email');
     }
 
     public static function add_plugin_action_links($links)
@@ -29,8 +29,8 @@ class CodeConfig_Admin
         }
 
         $links['check_update'] = sprintf(
-            '<a href="#" id="my-plugin-row-check" style="color:#d63638;">%s</a>',
-            esc_html__('Check for Updates', 'my-plugin')
+            '<a href="#" id="codeconfig-plugin-row-check" style="color:#d63638;">%s</a>',
+            esc_html__('Check for Updates', 'codeconfig-plugin')
         );
 
         return $links;
@@ -39,10 +39,10 @@ class CodeConfig_Admin
     public static function add_menu()
     {
         add_menu_page(
-            'My Plugin — Update Status',
-            'My Plugin',
+            'CodeConfig Plugin — Update Status',
+            'CodeConfig Plugin',
             'manage_options',
-            'my-plugin-status',
+            'codeconfig-plugin-status',
             array( __CLASS__, 'render_page' ),
             'dashicons-update',
             31
@@ -52,19 +52,19 @@ class CodeConfig_Admin
     public static function enqueue_assets($hook)
     {
 
-        if ('toplevel_page_my-plugin-status' !== $hook && 'plugins.php' !== $hook) {
+        if ('toplevel_page_codeconfig-plugin-status' !== $hook && 'plugins.php' !== $hook) {
             return;
         }
 
         wp_enqueue_script(
-            'my-plugin-admin-js',
+            'codeconfig-plugin-admin-js',
             CODECONFIG_URL . 'assets/js/admin.js',
             array( 'jquery' ),
             CODECONFIG_VERSION,
             true
         );
 
-        wp_localize_script('my-plugin-admin-js', 'myPluginAdmin', array(
+        wp_localize_script('codeconfig-plugin-admin-js', 'codeconfigPluginAdmin', array(
             'ajaxUrl'    => admin_url('admin-ajax.php'),
             'nonce'      => wp_create_nonce('codeconfig_check_nonce'),
             'checking'   => 'Checking...',
@@ -72,7 +72,7 @@ class CodeConfig_Admin
         ));
 
         wp_enqueue_style(
-            'my-plugin-admin-css',
+            'codeconfig-plugin-admin-css',
             CODECONFIG_URL . 'assets/css/admin.css',
             array(),
             CODECONFIG_VERSION
@@ -91,7 +91,7 @@ class CodeConfig_Admin
         self::maybe_update_plugin();
         self::render_notices();
         ?>
-		<div class="wrap my-plugin-status-wrap">
+		<div class="wrap codeconfig-plugin-status-wrap">
 			<h1>My Plugin — Update Status</h1>
 
 			<?php self::render_status_card($last_check, $api_status, $is_pro, $api_data); ?>
@@ -159,7 +159,7 @@ class CodeConfig_Admin
 
         if (is_wp_error($api_data) || empty($api_data['update'])) {
             wp_redirect(add_query_arg(array(
-                'page'                   => 'my-plugin-status',
+                'page'                   => 'codeconfig-plugin-status',
                 'codeconfig_update_error' => 'No update available or API error.',
             ), admin_url('admin.php')));
             exit;
@@ -192,7 +192,7 @@ class CodeConfig_Admin
         if (is_wp_error($result)) {
             activate_plugin($basename, '', false, true);
             wp_redirect(add_query_arg(array(
-                'page'                   => 'my-plugin-status',
+                'page'                   => 'codeconfig-plugin-status',
                 'codeconfig_update_error' => $result->get_error_message(),
             ), admin_url('admin.php')));
             exit;
@@ -208,7 +208,7 @@ class CodeConfig_Admin
         delete_option('codeconfig_last_check');
 
         wp_redirect(add_query_arg(array(
-            'page'                 => 'my-plugin-status',
+            'page'                 => 'codeconfig-plugin-status',
             'codeconfig_update_done' => '1',
         ), admin_url('admin.php')));
         exit;
@@ -242,7 +242,7 @@ class CodeConfig_Admin
         $has_update  = ! $is_pro && ! empty($api_data['update']);
         $new_version = $api_data['new_version'] ?? '';
         ?>
-		<div class="card my-plugin-status-card <?php echo esc_attr($status_class); ?>">
+		<div class="card codeconfig-plugin-status-card <?php echo esc_attr($status_class); ?>">
 			<h2>Current Status</h2>
 			<table class="widefat striped">
 				<tbody>
@@ -259,9 +259,9 @@ class CodeConfig_Admin
 					<tr>
 						<th>Status</th>
 						<td>
-							<span class="my-plugin-status-badge <?php echo esc_attr($status_class); ?>"><?php echo esc_html($status_icon); ?> <?php echo esc_html($status_text); ?></span>
+							<span class="codeconfig-plugin-status-badge <?php echo esc_attr($status_class); ?>"><?php echo esc_html($status_icon); ?> <?php echo esc_html($status_text); ?></span>
 							<?php if ($has_update) : ?>
-								<a href="<?php echo esc_url(wp_nonce_url(add_query_arg('codeconfig_do_update', '1', admin_url('admin.php?page=my-plugin-status')), 'codeconfig_do_update', 'update_nonce')); ?>" class="button button-primary" style="margin-left:10px;">Update Now to <?php echo esc_html($new_version); ?></a>
+								<a href="<?php echo esc_url(wp_nonce_url(add_query_arg('codeconfig_do_update', '1', admin_url('admin.php?page=codeconfig-plugin-status')), 'codeconfig_do_update', 'update_nonce')); ?>" class="button button-primary" style="margin-left:10px;">Update Now to <?php echo esc_html($new_version); ?></a>
 							<?php endif; ?>
 						</td>
 					</tr>
@@ -298,25 +298,25 @@ class CodeConfig_Admin
         $name         = get_option('codeconfig_name', '');
         $email        = get_option('codeconfig_email', '');
         ?>
-		<div class="card my-plugin-actions-card">
+		<div class="card codeconfig-plugin-actions-card">
 			<h2>Actions</h2>
 			<p>
-				<button type="button" id="my-plugin-check-btn" class="button button-secondary">
+				<button type="button" id="codeconfig-plugin-check-btn" class="button button-secondary">
 					<span class="dashicons dashicons-update" style="margin-top:3px;"></span>
 					Check for Updates
 				</button>
-				<button type="button" id="my-plugin-refresh-btn" class="button button-secondary">
+				<button type="button" id="codeconfig-plugin-refresh-btn" class="button button-secondary">
 					Force Refresh
 				</button>
 			</p>
-			<div id="my-plugin-check-result" class="notice inline" style="display:none;"></div>
+			<div id="codeconfig-plugin-check-result" class="notice inline" style="display:none;"></div>
 		</div>
 
-		<div class="card my-plugin-api-key-card">
+		<div class="card codeconfig-plugin-api-key-card">
 			<h2>API Settings</h2>
 			<p>Enter the API key from your server admin panel to enable authenticated updates. Optionally provide your name and email for better user identification.</p>
 			<form method="post" action="options.php">
-				<?php settings_fields('my-plugin-settings'); ?>
+				<?php settings_fields('codeconfig-plugin-settings'); ?>
 				<table class="form-table">
 					<tr>
 						<th><label for="codeconfig_name">Name (optional)</label></th>
@@ -336,7 +336,7 @@ class CodeConfig_Admin
 						<th><label for="codeconfig_api_key">API Key</label></th>
 						<td>
 							<input type="text" id="codeconfig_api_key" name="codeconfig_api_key" class="regular-text" value="<?php echo esc_attr($api_key); ?>" placeholder="Paste your API key here" />
-							<p class="description">Get this key from MyPlugin API → Users → Copy. If empty, a new user will be created automatically.</p>
+							<p class="description">Get this key from CodeConfig API → Users → Copy. If empty, a new user will be created automatically.</p>
 						</td>
 					</tr>
 				</table>
@@ -363,7 +363,7 @@ class CodeConfig_Admin
                 break;
         }
         ?>
-		<div class="card my-plugin-connection-card">
+		<div class="card codeconfig-plugin-connection-card">
 			<h2>API Connection</h2>
 			<table class="widefat striped">
 				<tbody>
@@ -373,16 +373,16 @@ class CodeConfig_Admin
 					</tr>
 					<tr>
 						<th>Status</th>
-						<td><span class="my-plugin-status-badge <?php echo esc_attr($status_class); ?>"><?php echo esc_html($status_label); ?></span></td>
+						<td><span class="codeconfig-plugin-status-badge <?php echo esc_attr($status_class); ?>"><?php echo esc_html($status_label); ?></span></td>
 					</tr>
 				</tbody>
 			</table>
 			<p style="margin-top:15px;">
-				<button type="button" id="my-plugin-test-btn" class="button button-secondary">
+				<button type="button" id="codeconfig-plugin-test-btn" class="button button-secondary">
 					Test Connection
 				</button>
 			</p>
-			<div id="my-plugin-test-result" class="notice inline" style="display:none;"></div>
+			<div id="codeconfig-plugin-test-result" class="notice inline" style="display:none;"></div>
 		</div>
 		<?php
     }
@@ -394,9 +394,9 @@ class CodeConfig_Admin
             return;
         }
         ?>
-		<div class="card my-plugin-changelog-card">
+		<div class="card codeconfig-plugin-changelog-card">
 			<h2>Latest Changelog</h2>
-			<div class="my-plugin-changelog">
+			<div class="codeconfig-plugin-changelog">
 				<?php echo wpautop(esc_html($api_data['changelog'])); ?>
 			</div>
 		</div>
@@ -406,7 +406,7 @@ class CodeConfig_Admin
     private static function render_pro_notice()
     {
         ?>
-		<div class="card my-plugin-pro-card">
+		<div class="card codeconfig-plugin-pro-card">
 			<h2>Freemius License</h2>
 			<div class="notice notice-success inline">
 				<p>Updates are managed by Freemius. No action needed.</p>
