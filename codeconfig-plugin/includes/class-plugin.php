@@ -50,6 +50,12 @@ class CodeConfig
             require_once CODECONFIG_PATH . 'includes/freemius.php';
         }
 
+        if (! function_exists('codeconfig_is_pro')) {
+            function codeconfig_is_pro() {
+                return defined('CODECONFIG_PRO_ACTIVE') && CODECONFIG_PRO_ACTIVE;
+            }
+        }
+
         if (! codeconfig_is_pro()) {
             if (file_exists(CODECONFIG_PATH . 'includes/updater/index.php')) {
                 require_once CODECONFIG_PATH . 'includes/updater/index.php';
