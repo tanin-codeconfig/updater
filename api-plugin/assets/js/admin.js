@@ -163,6 +163,23 @@
 				tb_show( 'Edit Version', '#TB_inline?height=400&width=500&inlineId=myplugin-edit-form' );
 			});
 
+			// Single action buttons (activate/deactivate/delete)
+			$( document ).on( 'click', '.myplugin-single-action-btn', function() {
+				var btn = $( this );
+				var action = btn.data( 'action' );
+				var id = btn.data( 'id' );
+
+				if ( action === 'delete' ) {
+					if ( ! confirm( 'Delete this version?' ) ) {
+						return;
+					}
+				}
+
+				$( '#single-action-type' ).val( action );
+				$( '#single-action-id' ).val( id );
+				$( '#myplugin-single-action-form' ).submit();
+			});
+
 			$( document ).on( 'click', '#myplugin-cancel-edit', function() {
 				tb_remove();
 			});
@@ -273,17 +290,27 @@
 			}
 		}
 
-		// Make metabox collapsible
-		$( document ).on( 'click', '.myplugin-upload-metabox .handlediv, .myplugin-upload-metabox .handle', function( e ) {
-			e.preventDefault();
-			var postbox = $( this ).closest( '.postbox' );
-			var inside = postbox.find( '.inside' );
-			var expanded = postbox.find( '.handlediv' ).attr( 'aria-expanded' ) === 'true';
+	// Make entire metabox header clickable to toggle open/close
+	$( '.myplugin-upload-metabox .postbox-header' ).css( 'cursor', 'pointer' );
 
-			postbox.find( '.handlediv' ).attr( 'aria-expanded', ! expanded );
-			postbox.toggleClass( 'closed' );
-			inside.slideToggle( 200 );
-		});
+	// Disable WordPress postbox.js for our custom metabox to avoid conflicts
+	$( document ).ready( function() {
+		$( '.myplugin-upload-metabox' ).removeClass( 'postbox' );
+	});
+
+	$( document ).on( 'click', '.myplugin-upload-metabox .postbox-header', function( e ) {
+		// Don't toggle if clicking interactive elements
+		if ( $( e.target ).is( 'button, input, select, textarea, a' ) ) {
+			return;
+		}
+
+		var postbox = $( this ).closest( '.myplugin-upload-metabox' );
+		var button = postbox.find( '.handlediv' );
+		var expanded = button.attr( 'aria-expanded' ) === 'true';
+
+		button.attr( 'aria-expanded', ! expanded );
+		postbox.toggleClass( 'closed' );
+	});
 
 		// Drag and drop functionality
 		var dropZone = $( '#myplugin-drop-zone' );
@@ -327,7 +354,7 @@
 		// Confirm bulk action
 		window.confirmBulkAction = function() {
 			var action = $( '#bulk-action-selector' ).val();
-			var checked = $( 'input[name="bulk_ids[]"]:checked' ).length;
+			var checked = $( '#myplugin-table-form input[name="bulk_ids[]"]:checked' ).length;
 
 			if ( ! action ) {
 				alert( 'Please select an action.' );
@@ -339,18 +366,20 @@
 				return false;
 			}
 
-			$( '#bulk-action-type' ).val( action );
-
 			if ( action === 'delete' ) {
-				return confirm( 'Are you sure you want to delete the selected items?' );
+				if ( ! confirm( 'Are you sure you want to delete the selected items?' ) ) {
+					return false;
+				}
 			}
 
+			$( '#bulk-action-type' ).val( action );
+			$( '#myplugin-table-form' ).submit();
 			return true;
 		};
 
 		// Select all checkbox
 		$( '#cb-select-all' ).on( 'click', function() {
-			$( 'input[name="bulk_ids[]"]' ).prop( 'checked', this.checked );
+			$( '#myplugin-table-form input[name="bulk_ids[]"]' ).prop( 'checked', this.checked );
 		});
 	});
 })( jQuery );
