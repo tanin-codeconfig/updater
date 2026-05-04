@@ -32,7 +32,7 @@ class CodeConfig
             define('CODECONFIG_PATH', plugin_dir_path(__DIR__));
         }
         if (! defined('CODECONFIG_URL')) {
-            define('CODECONFIG_URL', plugin_dir_url(__DIR__));
+            define('CODECONFIG_URL', plugin_dir_url(__DIR__ . '/..'));
         }
         if (! defined('CODECONFIG_BASENAME')) {
             define('CODECONFIG_BASENAME', 'codeconfig-plugin/codeconfig-plugin.php');
@@ -46,8 +46,8 @@ class CodeConfig
 
     private function load_classes()
     {
-        if (file_exists(CODECONFIG_PATH . 'includes/freemius.php')) {
-            require_once CODECONFIG_PATH . 'includes/freemius.php';
+        if (file_exists(CODECONFIG_PATH . 'freemius.php')) {
+            require_once CODECONFIG_PATH . 'freemius.php';
         }
 
         if (! function_exists('codeconfig_is_pro')) {
@@ -57,7 +57,7 @@ class CodeConfig
         }
 
         if (! codeconfig_is_pro()) {
-            $updater_path = CODECONFIG_PATH . 'includes/updater/index.php';
+            $updater_path = CODECONFIG_PATH . 'updater/index.php';
             
             if (file_exists($updater_path)) {
                 require_once $updater_path;
