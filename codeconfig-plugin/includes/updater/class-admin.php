@@ -11,6 +11,7 @@ class CodeConfig_Updater_Admin
         add_action('admin_menu', array( __CLASS__, 'add_menu' ));
         add_action('admin_enqueue_scripts', array( __CLASS__, 'enqueue_assets' ));
         add_action('admin_init', array( __CLASS__, 'register_settings' ));
+        add_action('admin_init', array( __CLASS__, 'maybe_update_plugin' ));
     }
 
     public static function register_settings()
@@ -45,7 +46,7 @@ class CodeConfig_Updater_Admin
         }
 
         $menu_slug = ccupd_config('slug', 'codeconfig-plugin') . '-status';
-        
+
         if (! empty($menu_config['parent_slug'])) {
             add_submenu_page(
                 $menu_config['parent_slug'],
@@ -358,7 +359,6 @@ class CodeConfig_Updater_Admin
 						<th><label for="codeconfig_api_key">API Key</label></th>
 						<td>
 							<input type="text" id="codeconfig_api_key" name="codeconfig_api_key" class="regular-text" value="<?php echo esc_attr($api_key); ?>" placeholder="Paste your API key here" />
-							<p class="description">Get this key from CodeConfig API → Users → Copy. If empty, a new user will be created automatically.</p>
 						</td>
 					</tr>
 				</table>
