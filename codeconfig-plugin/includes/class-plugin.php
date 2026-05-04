@@ -70,15 +70,15 @@ class CodeConfig
                     'is_pro'          => defined('CODECONFIG_PRO_ACTIVE') && CODECONFIG_PRO_ACTIVE,
                     'menu'           => array(
                         'parent_slug' => 'options-general.php',
-                        'page_title'  => __('CodeConfig Plugin Updates', 'codeconfig-plugin'),
-                        'menu_title'  => __('CodeConfig Updates', 'codeconfig-plugin'),
+                        'page_title'  => 'CodeConfig Plugin Updates',
+                        'menu_title'  => 'CodeConfig Updates',
                     ),
                 ));
             }
         }
     }
 
-    }
+}
 
 function CodeConfig()
 {
