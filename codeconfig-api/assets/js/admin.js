@@ -362,7 +362,8 @@
 				return;
 			}
 			e.preventDefault();
-			$( '#plugin_zip' ).trigger( 'click' );
+			e.stopPropagation();
+			document.getElementById( 'plugin_zip' ).click();
 		});
 
 		// Also trigger on inner elements
@@ -374,7 +375,8 @@
 				return;
 			}
 			e.preventDefault();
-			$( '#plugin_zip' ).trigger( 'click' );
+			e.stopPropagation();
+			document.getElementById( 'plugin_zip' ).click();
 		});
 
 		// Confirm bulk action
