@@ -56,7 +56,7 @@ class CodeConfig
             require_once CODECONFIG_PATH . 'includes/updater/index.php';
             require_once CODECONFIG_PATH . 'includes/class-ajax.php';
 
-            ccupd_fs()->init();
+            ccupd()->init();
             CodeConfig_Ajax::init();
         }
 
@@ -83,14 +83,14 @@ class CodeConfig
     public function activate()
     {
         if (! codeconfig_is_pro()) {
-            ccupd_fs()->activate();
+            ccupd()->activate();
         }
     }
 
     public function deactivate()
     {
         if (! codeconfig_is_pro()) {
-            ccupd_fs()->deactivate();
+            ccupd()->deactivate();
         }
     }
 }

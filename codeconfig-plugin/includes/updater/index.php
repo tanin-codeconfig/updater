@@ -4,24 +4,24 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
-if (! function_exists('ccupd_fs')) {
+if (! function_exists('ccupd')) {
 
-    function ccupd_fs()
+    function ccupd()
     {
-        global $ccupd_fs;
+        global $ccupd;
 
-        if (isset($ccupd_fs) && $ccupd_fs instanceof CodeConfig_Updater_Manager) {
-            return $ccupd_fs;
+        if (isset($ccupd) && $ccupd instanceof CodeConfig_Updater_Manager) {
+            return $ccupd;
         }
 
         require_once __DIR__ . '/class-updater.php';
 
-        $ccupd_fs = new CodeConfig_Updater_Manager();
+        $ccupd = new CodeConfig_Updater_Manager();
 
-        return $ccupd_fs;
+        return $ccupd;
     }
 
-    ccupd_fs();
+    ccupd();
     do_action('ccupd_loaded');
 }
 
