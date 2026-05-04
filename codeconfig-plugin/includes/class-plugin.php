@@ -51,7 +51,6 @@ class CodeConfig
 
         if (! codeconfig_is_pro()) {
             require_once CODECONFIG_PATH . 'includes/updater/index.php';
-            require_once CODECONFIG_PATH . 'includes/class-ajax.php';
 
             ccupd(array(
                 'api_url'   => 'http://localhost:10078/wp-json/codeconfig/v1',
@@ -61,8 +60,6 @@ class CodeConfig
                 'name'      => 'CodeConfig Plugin',
                 'show_admin_page' => false,
             ));
-
-            CodeConfig_Ajax::init();
         }
     }
 

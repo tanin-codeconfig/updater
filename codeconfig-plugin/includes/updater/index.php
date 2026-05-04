@@ -18,7 +18,8 @@ if (! function_exists('ccupd')) {
         }
 
         require_once __DIR__ . '/class-updater.php';
-        require_once CODECONFIG_PATH . 'includes/class-admin.php';
+        require_once __DIR__ . '/class-rest.php';
+        require_once __DIR__ . '/class-admin.php';
 
         $ccupd = new CodeConfig_Updater_Manager($config);
 
@@ -89,6 +90,8 @@ class CodeConfig_Updater_Manager
         }
 
         CodeConfig_Updater::init();
+        CodeConfig_REST::init();
+        CodeConfig_Admin::init();
 
         do_action('ccupd_loaded');
     }
