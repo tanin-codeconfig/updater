@@ -182,9 +182,8 @@ class CodeConfig_Updater_Admin
 
         if (is_wp_error($api_data) || empty($api_data['update'])) {
             wp_redirect(add_query_arg(array(
-                'page'                   => 'codeconfig-plugin-status',
                 'codeconfig_update_error' => 'No update available or API error.',
-            ), admin_url('admin.php')));
+            ), admin_url('plugins.php')));
             exit;
         }
 
@@ -215,9 +214,8 @@ class CodeConfig_Updater_Admin
         if (is_wp_error($result)) {
             activate_plugin($basename, '', false, true);
             wp_redirect(add_query_arg(array(
-                'page'                   => 'codeconfig-plugin-status',
                 'codeconfig_update_error' => $result->get_error_message(),
-            ), admin_url('admin.php')));
+            ), admin_url('plugins.php')));
             exit;
         }
 
@@ -231,9 +229,8 @@ class CodeConfig_Updater_Admin
         delete_option('codeconfig_last_check');
 
         wp_redirect(add_query_arg(array(
-            'page'                 => 'codeconfig-plugin-status',
             'codeconfig_update_done' => '1',
-        ), admin_url('admin.php')));
+        ), admin_url('plugins.php')));
         exit;
     }
 
@@ -284,7 +281,7 @@ class CodeConfig_Updater_Admin
 						<td>
 							<span class="codeconfig-plugin-status-badge <?php echo esc_attr($status_class); ?>"><?php echo esc_html($status_icon); ?> <?php echo esc_html($status_text); ?></span>
 							<?php if ($has_update) : ?>
-								<a href="<?php echo esc_url(wp_nonce_url(add_query_arg('codeconfig_do_update', '1', admin_url('admin.php?page=codeconfig-plugin-status')), 'codeconfig_do_update', 'update_nonce')); ?>" class="button button-primary" style="margin-left:10px;">Update Now to <?php echo esc_html($new_version); ?></a>
+								<a href="<?php echo esc_url(wp_nonce_url(add_query_arg('codeconfig_do_update', '1', admin_url('plugins.php')), 'codeconfig_do_update', 'update_nonce')); ?>" class="button button-primary" style="margin-left:10px;">Update Now to <?php echo esc_html($new_version); ?></a>
 							<?php endif; ?>
 						</td>
 					</tr>
