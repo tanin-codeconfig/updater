@@ -29,13 +29,13 @@ class CodeConfig
             define('CODECONFIG_VERSION', '1.0.20');
         }
         if (! defined('CODECONFIG_PATH')) {
-            define('CODECONFIG_PATH', plugin_dir_path(__FILE__));
+            define('CODECONFIG_PATH', plugin_dir_path(__DIR__ . '/..'));
         }
         if (! defined('CODECONFIG_URL')) {
-            define('CODECONFIG_URL', plugin_dir_url(__FILE__));
+            define('CODECONFIG_URL', plugin_dir_url(__DIR__ . '/..'));
         }
         if (! defined('CODECONFIG_BASENAME')) {
-            define('CODECONFIG_BASENAME', plugin_basename(__FILE__));
+            define('CODECONFIG_BASENAME', 'codeconfig-plugin/codeconfig-plugin.php');
         }
     }
 
