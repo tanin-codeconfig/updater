@@ -42,18 +42,17 @@ class CodeConfig
     private function init_hooks()
     {
         add_action('init', array($this, 'load_textdomain'));
-        add_filter('plugin_action_links_' . CODECONFIG_BASENAME, array($this, 'add_plugin_links'));
     }
 
     private function load_classes()
     {
-        if (file_exists(CODECONFIG_PATH . 'freemius.php')) {
-            require_once CODECONFIG_PATH . 'freemius.php';
+        if (file_exists(CODECONFIG_PATH . 'includes/freemius.php')) {
+            require_once CODECONFIG_PATH . 'includes/freemius.php';
         }
 
         if (! codeconfig_is_pro()) {
-            if (file_exists(CODECONFIG_PATH . 'updater/index.php')) {
-                require_once CODECONFIG_PATH . 'updater/index.php';
+            if (file_exists(CODECONFIG_PATH . 'includes/updater/index.php')) {
+                require_once CODECONFIG_PATH . 'includes/updater/index.php';
             }
 
             ccupd(array(
@@ -70,17 +69,6 @@ class CodeConfig
     public function load_textdomain()
     {
         load_plugin_textdomain('codeconfig-plugin', false, dirname(CODECONFIG_BASENAME) . '/languages/');
-    }
-
-    public function add_plugin_links($links)
-    {
-        if (! codeconfig_is_pro()) {
-            $links['check_update'] = sprintf(
-                '<a href="#" id="codeconfig-plugin-row-check" style="color:#d63638;">%s</a>',
-                esc_html__('Check for Updates', 'codeconfig-plugin')
-            );
-        }
-        return $links;
     }
 }
 
