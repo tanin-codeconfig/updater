@@ -209,6 +209,7 @@ class CodeConfig_Updater_Admin
             'hook_extra'        => array(
                 'plugin' => $basename,
             ),
+            'incompatible_archive' => false,
         ));
 
         if (is_wp_error($result)) {
