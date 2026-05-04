@@ -38,7 +38,7 @@ class CodeConfig
 
     private function init_hooks()
     {
-        add_action('init', array($this, 'load_textdomain'), 20);
+        // No hooks needed
     }
 
     private function load_classes()
@@ -78,11 +78,7 @@ class CodeConfig
         }
     }
 
-    public function load_textdomain()
-    {
-        load_plugin_textdomain('codeconfig-plugin', false, dirname(CODECONFIG_BASENAME) . '/languages/');
     }
-}
 
 function CodeConfig()
 {
