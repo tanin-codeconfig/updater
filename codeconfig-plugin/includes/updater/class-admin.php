@@ -73,9 +73,18 @@ class CodeConfig_Updater_Admin
             return;
         }
 
+        // Use uploads folder if assets exist there, otherwise use plugin folder
+        $upload_dir = wp_upload_dir();
+        $assets_url = $upload_dir['baseurl'] . '/codeconfig-plugin/';
+        
+        // Check if uploads assets exist, fallback to plugin folder
+        if (! file_exists($upload_dir['basedir'] . '/codeconfig-plugin/assets/js/admin.js')) {
+            $assets_url = plugin_dir_url(dirname(__DIR__) . '/..') . 'includes/assets/';
+        }
+
         wp_enqueue_script(
             'codeconfig-plugin-admin-js',
-            CODECONFIG_URL . 'assets/js/admin.js',
+            $assets_url . 'assets/js/admin.js',
             array( 'jquery' ),
             CODECONFIG_VERSION,
             true
@@ -92,7 +101,7 @@ class CodeConfig_Updater_Admin
 
         wp_enqueue_style(
             'codeconfig-plugin-admin-css',
-            CODECONFIG_URL . 'assets/css/admin.css',
+            $assets_url . 'assets/css/admin.css',
             array(),
             CODECONFIG_VERSION
         );
