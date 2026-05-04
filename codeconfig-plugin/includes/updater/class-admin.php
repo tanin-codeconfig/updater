@@ -90,11 +90,13 @@ class CodeConfig_Updater_Admin
         );
 
         wp_localize_script('codeconfig-plugin-admin-js', 'codeconfigPluginAdmin', array(
-            'restUrl'    => rest_url('ccupd/v1'),
+            'restUrl'    => rest_url('ccupd/v1') . '/',
             'nonce'      => wp_create_nonce('wp_rest'),
             'checking'   => 'Checking...',
             'checkBtn'   => 'Check for Updates',
         ));
+
+        
 
         wp_enqueue_style(
             'codeconfig-plugin-admin-css',

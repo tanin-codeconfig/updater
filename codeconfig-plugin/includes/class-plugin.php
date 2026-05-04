@@ -69,7 +69,7 @@ class CodeConfig
                     'basename'        => 'codeconfig-plugin/codeconfig-plugin.php',
                     'version'         => '1.0.20',
                     'name'            => 'CodeConfig Plugin',
-                    'show_admin_page' => false,
+                    'show_admin_page' => true,
                 ));
             }
         }
