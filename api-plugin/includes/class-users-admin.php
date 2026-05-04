@@ -20,6 +20,14 @@ class MyPlugin_Users_Admin {
 		add_action( 'admin_post_myplugin_users_action', array( __CLASS__, 'handle_form_submit' ) );
 	}
 
+	private static function generate_name_from_domain( $domain ) {
+		$parsed = wp_parse_url( $domain );
+		$host   = isset( $parsed['host'] ) ? $parsed['host'] : $domain;
+		$host   = preg_replace( '/^www\./', '', $host );
+		$name   = ucwords( sanitize_title( str_replace( array( '-', '_', '.' ), ' ', $host ) ) );
+		return $name;
+	}
+
 	public static function handle_form_submit() {
 
 		if ( ! check_admin_referer( 'myplugin_users_action', 'myplugin_users_nonce' ) ) {
@@ -33,14 +41,45 @@ class MyPlugin_Users_Admin {
 		$action = sanitize_text_field( $_POST['myplugin_users_action'] );
 		$args   = array( 'page' => 'myplugin-users' );
 
+		if ( in_array( $action, array( 'bulk_activate', 'bulk_deactivate', 'bulk_delete' ), true ) && isset( $_POST['bulk_ids'] ) ) {
+			$bulk_ids = array_map( 'intval', (array) $_POST['bulk_ids'] );
+			$bulk_ids = array_filter( $bulk_ids );
+
+			if ( empty( $bulk_ids ) ) {
+				$args['myplugin_users_notice'] = 'no_items_selected';
+			} else {
+				foreach ( $bulk_ids as $id ) {
+					if ( 'bulk_delete' === $action ) {
+						MyPlugin_Users_DB::delete_user( $id );
+					} elseif ( 'bulk_activate' === $action ) {
+						MyPlugin_Users_DB::update_user( $id, array( 'is_active' => 1 ) );
+					} elseif ( 'bulk_deactivate' === $action ) {
+						MyPlugin_Users_DB::update_user( $id, array( 'is_active' => 0 ) );
+					}
+				}
+				$args['myplugin_users_notice'] = 'bulk_' . str_replace( 'bulk_', '', $action );
+			}
+			wp_safe_redirect( add_query_arg( $args, admin_url( 'admin.php' ) ) );
+			exit;
+		}
+
+		if ( 'export_csv' === $action ) {
+			self::export_csv();
+			exit;
+		}
+
 		if ( 'add_user' === $action ) {
-			$name   = sanitize_text_field( $_POST['name'] );
-			$email  = sanitize_email( $_POST['email'] );
+			$name   = isset( $_POST['name'] ) ? sanitize_text_field( $_POST['name'] ) : '';
+			$email  = isset( $_POST['email'] ) ? sanitize_email( $_POST['email'] ) : '';
 			$domain = isset( $_POST['domain'] ) ? esc_url_raw( $_POST['domain'] ) : '';
 
-			if ( empty( $name ) || empty( $email ) ) {
-				$args['myplugin_users_notice'] = 'missing_fields';
+			if ( empty( $domain ) ) {
+				$args['myplugin_users_notice'] = 'missing_domain';
 			} else {
+				if ( empty( $name ) && ! empty( $domain ) ) {
+					$name = self::generate_name_from_domain( $domain );
+				}
+
 				MyPlugin_Users_DB::insert_user( array(
 					'name'      => $name,
 					'email'     => $email,
@@ -102,6 +141,7 @@ class MyPlugin_Users_Admin {
 
 		$search    = isset( $_GET['s'] ) ? sanitize_text_field( $_GET['s'] ) : '';
 		$is_active = isset( $_GET['is_active'] ) ? sanitize_text_field( $_GET['is_active'] ) : '';
+		$domain    = isset( $_GET['domain'] ) ? sanitize_text_field( $_GET['domain'] ) : '';
 		$paged     = isset( $_GET['paged'] ) ? max( 1, (int) $_GET['paged'] ) : 1;
 		$per_page  = 20;
 		$offset    = ( $paged - 1 ) * $per_page;
@@ -109,6 +149,7 @@ class MyPlugin_Users_Admin {
 		$filter_args = array(
 			'search'    => $search,
 			'is_active' => '' !== $is_active ? (int) $is_active : null,
+			'domain'    => $domain,
 			'limit'     => $per_page,
 			'offset'    => $offset,
 			'orderby'   => 'created_at',
@@ -118,6 +159,7 @@ class MyPlugin_Users_Admin {
 		$users       = MyPlugin_Users_DB::get_users_filtered( $filter_args );
 		$total_users = MyPlugin_Users_DB::get_users_count( $filter_args );
 		$total_pages = ceil( $total_users / $per_page );
+		$all_domains = MyPlugin_Users_DB::get_all_domains();
 
 		self::maybe_show_notice();
 		?>
@@ -132,16 +174,16 @@ class MyPlugin_Users_Admin {
 
 				<table class="form-table">
 					<tr>
-						<th><label for="user_name">Name</label></th>
-						<td><input type="text" id="user_name" name="name" class="regular-text" required placeholder="Client or site name" /></td>
+						<th><label for="user_domain">Domain</label></th>
+						<td><input type="url" id="user_domain" name="domain" class="regular-text" placeholder="https://client-site.com" required /></td>
 					</tr>
 					<tr>
-						<th><label for="user_email">Email</label></th>
-						<td><input type="email" id="user_email" name="email" class="regular-text" required /></td>
+						<th><label for="user_name">Name (optional)</label></th>
+						<td><input type="text" id="user_name" name="name" class="regular-text" placeholder="If empty, will be generated from domain" /></td>
 					</tr>
 					<tr>
-						<th><label for="user_domain">Domain (optional)</label></th>
-						<td><input type="url" id="user_domain" name="domain" class="regular-text" placeholder="https://client-site.com" /></td>
+						<th><label for="user_email">Email (optional)</label></th>
+						<td><input type="email" id="user_email" name="email" class="regular-text" placeholder="Leave empty if not available" /></td>
 					</tr>
 				</table>
 
@@ -156,14 +198,20 @@ class MyPlugin_Users_Admin {
 				<input type="hidden" name="page" value="myplugin-users" />
 				<p class="search-box">
 					<label for="user-search">Search Users:</label>
-					<input type="search" id="user-search" name="s" value="<?php echo esc_attr( $search ); ?>" placeholder="Name or email..." />
+					<input type="search" id="user-search" name="s" value="<?php echo esc_attr( $search ); ?>" placeholder="Name, email, or domain..." />
+					<select name="domain" style="margin-left:10px;">
+						<option value="">All Domains</option>
+						<?php foreach ( $all_domains as $d ) : ?>
+							<option value="<?php echo esc_attr( $d ); ?>" <?php selected( $domain, $d ); ?>><?php echo esc_html( $d ); ?></option>
+						<?php endforeach; ?>
+					</select>
 					<select name="is_active" style="margin-left:10px;">
 						<option value="">All Statuses</option>
 						<option value="1" <?php selected( $is_active, '1' ); ?>>Active</option>
 						<option value="0" <?php selected( $is_active, '0' ); ?>>Inactive</option>
 					</select>
 					<button type="submit" class="button">Filter</button>
-					<?php if ( $search || '' !== $is_active ) : ?>
+					<?php if ( $search || '' !== $is_active || $domain ) : ?>
 						<a href="<?php echo esc_url( admin_url( 'admin.php?page=myplugin-users' ) ); ?>" class="button">Clear</a>
 					<?php endif; ?>
 				</p>
@@ -202,25 +250,55 @@ class MyPlugin_Users_Admin {
 				</form>
 			</div>
 			<?php endif; ?>
-			<table class="wp-list-table widefat fixed striped">
-				<thead>
-					<tr>
-						<th>ID</th>
-						<th>Name</th>
-						<th>Email</th>
-						<th>API Key</th>
-						<th>Domain</th>
-						<th>Status</th>
-						<th>Created</th>
-						<th>Actions</th>
-					</tr>
-				</thead>
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" id="myplugin-users-table-form">
+				<?php wp_nonce_field( 'myplugin_users_action', 'myplugin_users_nonce' ); ?>
+				<input type="hidden" name="action" value="myplugin_users_action" />
+				<input type="hidden" name="myplugin_users_action" id="bulk-action-type" value="" />
+
+				<div class="tablenav top">
+					<div class="alignleft actions bulkactions">
+						<label for="bulk-action-selector-top" class="screen-reader-text">Select bulk action</label>
+						<select name="myplugin_users_action" id="bulk-action-selector-top">
+							<option value="">Bulk Actions</option>
+							<option value="bulk_activate">Activate</option>
+							<option value="bulk_deactivate">Deactivate</option>
+							<option value="bulk_delete">Delete</option>
+						</select>
+						<button type="submit" class="button action" onclick="return confirmBulkAction();">Apply</button>
+					</div>
+					<div class="alignright">
+						<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display:inline;">
+							<?php wp_nonce_field( 'myplugin_users_action', 'myplugin_users_nonce' ); ?>
+							<input type="hidden" name="action" value="myplugin_users_action" />
+							<input type="hidden" name="myplugin_users_action" value="export_csv" />
+							<button type="submit" class="button">Export CSV</button>
+						</form>
+					</div>
+					<br class="clear" />
+				</div>
+
+				<table class="wp-list-table widefat fixed striped">
+					<thead>
+						<tr>
+							<th class="check-column"><input type="checkbox" id="cb-select-all" /></th>
+							<th>ID</th>
+							<th>Name</th>
+							<th>Email</th>
+							<th>API Key</th>
+							<th>Domain</th>
+							<th>Status</th>
+							<th>Created</th>
+							<th>Last Used</th>
+							<th>Actions</th>
+						</tr>
+					</thead>
 				<tbody>
 					<?php if ( empty( $users ) ) : ?>
-						<tr><td colspan="8">No users added yet.</td></tr>
+						<tr><td colspan="10">No users added yet.</td></tr>
 					<?php else : ?>
 						<?php foreach ( $users as $u ) : ?>
 							<tr>
+								<th scope="row" class="check-column"><input type="checkbox" name="bulk_ids[]" value="<?php echo (int) $u['id']; ?>" /></th>
 								<td><?php echo esc_html( $u['id'] ); ?></td>
 								<td><?php echo esc_html( $u['name'] ); ?></td>
 								<td><?php echo esc_html( $u['email'] ); ?></td>
@@ -231,6 +309,7 @@ class MyPlugin_Users_Admin {
 								<td><?php echo esc_html( $u['domain'] ?? '—' ); ?></td>
 								<td><?php echo $u['is_active'] ? '<span class="myplugin-status-active">Active</span>' : '<span class="myplugin-status-inactive">Inactive</span>'; ?></td>
 								<td><?php echo esc_html( $u['created_at'] ); ?></td>
+								<td><?php echo $u['last_used_at'] ? esc_html( $u['last_used_at'] ) : '—'; ?></td>
 								<td>
 									<a href="<?php echo esc_url( admin_url( 'admin.php?page=myplugin-users&edit=' . (int) $u['id'] ) ); ?>" class="button button-small">Edit</a>
 									<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display:inline;">
@@ -285,6 +364,7 @@ class MyPlugin_Users_Admin {
 				</div>
 			</div>
 			<?php endif; ?>
+			</form>
 		</div>
 
 		<script>
@@ -304,9 +384,64 @@ class MyPlugin_Users_Admin {
 					alert( 'API key copied!' );
 				}
 			} );
+
+			$( '#cb-select-all' ).on( 'change', function() {
+				$( 'input[name="bulk_ids[]"]' ).prop( 'checked', $( this ).prop( 'checked' ) );
+			} );
 		} );
+
+		function confirmBulkAction() {
+			var action = document.getElementById( 'bulk-action-selector-top' ).value;
+			if ( ! action ) {
+				return false;
+			}
+			var checked = document.querySelectorAll( 'input[name="bulk_ids[]"]:checked' );
+			if ( checked.length === 0 ) {
+				alert( 'Please select at least one user.' );
+				return false;
+			}
+			if ( 'bulk_delete' === action ) {
+				return confirm( 'Are you sure you want to delete the selected users?' );
+			}
+			return true;
+		}
 		</script>
 		<?php
+	}
+
+	private static function export_csv() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( 'Permission denied.' );
+		}
+
+		$users = MyPlugin_Users_DB::get_all_users();
+
+		if ( empty( $users ) ) {
+			wp_die( 'No users to export.' );
+		}
+
+		header( 'Content-Type: text/csv; charset=utf-8' );
+		header( 'Content-Disposition: attachment; filename=myplugin-users-' . date( 'Y-m-d' ) . '.csv' );
+
+		$output = fopen( 'php://output', 'w' );
+
+		fputcsv( $output, array( 'ID', 'Name', 'Email', 'API Key', 'Domain', 'Status', 'Created', 'Last Used' ) );
+
+		foreach ( $users as $user ) {
+			fputcsv( $output, array(
+				$user['id'],
+				$user['name'],
+				$user['email'],
+				$user['api_key'],
+				$user['domain'] ?? '',
+				$user['is_active'] ? 'Active' : 'Inactive',
+				$user['created_at'],
+				$user['last_used_at'] ?? '',
+			) );
+		}
+
+		fclose( $output );
+		exit;
 	}
 
 	private static function maybe_show_notice() {
@@ -347,6 +482,26 @@ class MyPlugin_Users_Admin {
 			case 'missing_fields':
 				$type    = 'error';
 				$message = 'Name and email are required.';
+				break;
+			case 'missing_domain':
+				$type    = 'error';
+				$message = 'Domain is required.';
+				break;
+			case 'no_items_selected':
+				$type    = 'error';
+				$message = 'Please select at least one user.';
+				break;
+			case 'bulk_activate':
+				$type    = 'success';
+				$message = 'Selected users activated.';
+				break;
+			case 'bulk_deactivate':
+				$type    = 'success';
+				$message = 'Selected users deactivated.';
+				break;
+			case 'bulk_delete':
+				$type    = 'success';
+				$message = 'Selected users deleted.';
 				break;
 		}
 

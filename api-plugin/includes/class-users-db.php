@@ -189,8 +189,9 @@ class MyPlugin_Users_DB {
 		$values = array();
 
 		if ( ! empty( $args['search'] ) ) {
-			$where[] = '(name LIKE %s OR email LIKE %s)';
+			$where[] = '(name LIKE %s OR email LIKE %s OR domain LIKE %s)';
 			$search = '%' . $wpdb->esc_like( $args['search'] ) . '%';
+			$values[] = $search;
 			$values[] = $search;
 			$values[] = $search;
 		}
@@ -198,6 +199,11 @@ class MyPlugin_Users_DB {
 		if ( isset( $args['is_active'] ) && '' !== $args['is_active'] ) {
 			$where[] = 'is_active = %d';
 			$values[] = (int) $args['is_active'];
+		}
+
+		if ( ! empty( $args['domain'] ) ) {
+			$where[] = 'domain = %s';
+			$values[] = esc_url_raw( $args['domain'] );
 		}
 
 		$orderby = 'created_at';
@@ -237,8 +243,9 @@ class MyPlugin_Users_DB {
 		$values = array();
 
 		if ( ! empty( $args['search'] ) ) {
-			$where[] = '(name LIKE %s OR email LIKE %s)';
+			$where[] = '(name LIKE %s OR email LIKE %s OR domain LIKE %s)';
 			$search = '%' . $wpdb->esc_like( $args['search'] ) . '%';
+			$values[] = $search;
 			$values[] = $search;
 			$values[] = $search;
 		}
@@ -248,6 +255,11 @@ class MyPlugin_Users_DB {
 			$values[] = (int) $args['is_active'];
 		}
 
+		if ( ! empty( $args['domain'] ) ) {
+			$where[] = 'domain = %s';
+			$values[] = esc_url_raw( $args['domain'] );
+		}
+
 		$sql = "SELECT COUNT(*) FROM {$table_name} WHERE " . implode( ' AND ', $where );
 
 		if ( ! empty( $values ) ) {
@@ -255,5 +267,27 @@ class MyPlugin_Users_DB {
 		}
 
 		return (int) $wpdb->get_var( $sql );
+	}
+
+	public static function get_all_domains() {
+		global $wpdb;
+		$table_name = self::get_table_name();
+
+		return $wpdb->get_col(
+			"SELECT DISTINCT domain FROM {$table_name} WHERE domain != '' ORDER BY domain ASC"
+		);
+	}
+
+	public static function get_user_by_domain( $domain ) {
+		global $wpdb;
+		$table_name = self::get_table_name();
+
+		return $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT * FROM {$table_name} WHERE domain = %s LIMIT 1",
+				esc_url_raw( $domain )
+			),
+			ARRAY_A
+		);
 	}
 }

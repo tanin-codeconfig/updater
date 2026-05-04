@@ -89,6 +89,16 @@ class MyPlugin_Ajax
             $params['api_key'] = $api_key;
         }
 
+        $name = get_option('my_plugin_name', '');
+        $email = get_option('my_plugin_email', '');
+
+        if (! empty($name)) {
+            $params['name'] = $name;
+        }
+        if (! empty($email)) {
+            $params['email'] = $email;
+        }
+
         $response = wp_remote_get(add_query_arg($params, $api_url), array(
             'timeout' => 15,
         ));
@@ -113,10 +123,16 @@ class MyPlugin_Ajax
         $data = json_decode($body, true);
 
         if (! $data || ! $data['success']) {
+            $message = ! empty($data['message']) ? $data['message'] : 'Invalid response from update server.';
             return new WP_Error(
                 'api_error',
-                'Invalid response from update server.'
+                $message
             );
+        }
+
+        if (! empty($data['user_created']) && ! empty($data['api_key'])) {
+            my_plugin_update_api_key($data['api_key']);
+            do_action('my_plugin_api_key_updated', $data['api_key']);
         }
 
         return $data;

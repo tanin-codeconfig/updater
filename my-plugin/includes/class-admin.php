@@ -17,6 +17,8 @@ class MyPlugin_Admin
     public static function register_settings()
     {
         register_setting('my-plugin-settings', 'my_plugin_api_key');
+        register_setting('my-plugin-settings', 'my_plugin_name');
+        register_setting('my-plugin-settings', 'my_plugin_email');
     }
 
     public static function add_plugin_action_links($links)
@@ -288,6 +290,8 @@ class MyPlugin_Admin
     private static function render_actions($api_data = array())
     {
         $api_key      = get_option('my_plugin_api_key', '');
+        $name         = get_option('my_plugin_name', '');
+        $email        = get_option('my_plugin_email', '');
         ?>
 		<div class="card my-plugin-actions-card">
 			<h2>Actions</h2>
@@ -304,20 +308,34 @@ class MyPlugin_Admin
 		</div>
 
 		<div class="card my-plugin-api-key-card">
-			<h2>API Key</h2>
-			<p>Enter the API key from your server admin panel to enable authenticated updates.</p>
+			<h2>API Settings</h2>
+			<p>Enter the API key from your server admin panel to enable authenticated updates. Optionally provide your name and email for better user identification.</p>
 			<form method="post" action="options.php">
 				<?php settings_fields('my-plugin-settings'); ?>
 				<table class="form-table">
 					<tr>
+						<th><label for="my_plugin_name">Name (optional)</label></th>
+						<td>
+							<input type="text" id="my_plugin_name" name="my_plugin_name" class="regular-text" value="<?php echo esc_attr($name); ?>" placeholder="Your name or site name" />
+							<p class="description">This helps identify your site on the API server.</p>
+						</td>
+					</tr>
+					<tr>
+						<th><label for="my_plugin_email">Email (optional)</label></th>
+						<td>
+							<input type="email" id="my_plugin_email" name="my_plugin_email" class="regular-text" value="<?php echo esc_attr($email); ?>" placeholder="your@email.com" />
+							<p class="description">Your contact email for update notifications.</p>
+						</td>
+					</tr>
+					<tr>
 						<th><label for="my_plugin_api_key">API Key</label></th>
 						<td>
 							<input type="text" id="my_plugin_api_key" name="my_plugin_api_key" class="regular-text" value="<?php echo esc_attr($api_key); ?>" placeholder="Paste your API key here" />
-							<p class="description">Get this key from MyPlugin API → Users → Copy</p>
+							<p class="description">Get this key from MyPlugin API → Users → Copy. If empty, a new user will be created automatically.</p>
 						</td>
 					</tr>
 				</table>
-				<?php submit_button('Save API Key'); ?>
+				<?php submit_button('Save Settings'); ?>
 			</form>
 		</div>
 		<?php

@@ -31,6 +31,7 @@ require_once MYPLUGIN_API_PATH . 'includes/class-download.php';
 require_once MYPLUGIN_API_PATH . 'includes/class-zip-parser.php';
 require_once MYPLUGIN_API_PATH . 'includes/class-admin.php';
 require_once MYPLUGIN_API_PATH . 'includes/class-users-admin.php';
+require_once MYPLUGIN_API_PATH . 'includes/class-settings.php';
 
 register_activation_hook(__FILE__, array( 'MyPlugin_Version_DB', 'create_table' ));
 register_activation_hook(__FILE__, array( 'MyPlugin_Users_DB', 'create_table' ));
@@ -54,7 +55,9 @@ add_action('rest_api_init', array( 'MyPlugin_Routes', 'register_routes' ));
 add_action('admin_menu', array( 'MyPlugin_Admin', 'add_menu' ));
 add_action('admin_menu', array( 'MyPlugin_Users_Admin', 'add_menu' ));
 add_action('admin_menu', array( 'MyPlugin_Analytics_Admin', 'add_menu' ));
+add_action('admin_menu', array( 'MyPlugin_Settings', 'add_menu' ));
 add_action('admin_enqueue_scripts', array( 'MyPlugin_Admin', 'enqueue_assets' ));
 add_action('admin_init', array( 'MyPlugin_Admin', 'register_actions' ));
 add_action('admin_init', array( 'MyPlugin_Users_Admin', 'register_actions' ));
+add_action('admin_init', array( 'MyPlugin_Settings', 'register_settings' ));
 add_action('wp_ajax_myplugin_check_version', array( 'MyPlugin_Admin', 'ajax_check_version' ));
