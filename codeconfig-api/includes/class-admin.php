@@ -57,7 +57,7 @@ class CodeConfig_Admin
             true
         );
 
-        wp_enqueue_style('thickblock');
+        wp_enqueue_style('thickbox');
 
         $selected_slug = isset($_GET['filter_slug']) ? sanitize_text_field($_GET['filter_slug']) : 'all';
         $versions      = $selected_slug === 'all' ? CodeConfig_Version_DB::get_all_versions() : CodeConfig_Version_DB::get_all_versions($selected_slug);

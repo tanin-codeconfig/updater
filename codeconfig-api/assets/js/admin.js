@@ -161,23 +161,8 @@
 				$( '#edit_changelog' ).val( data.changelog );
 				$( '#edit_zip' ).val( '' );
 
-				// Make sure the form is visible for thickbox
-				$( '#codeconfig-edit-form' ).css( 'display', 'block' );
-				
-				if ( typeof tb_show === 'function' ) {
-					tb_show( 'Edit Version', '#TB_inline?height=450&width=550&inlineId=codeconfig-edit-form' );
-				} else {
-					// Fallback: show form manually
-					$( '#codeconfig-edit-form' ).dialog({
-						title: 'Edit Version',
-						width: 550,
-						height: 450,
-						modal: true,
-						close: function() {
-							$( this ).dialog( 'destroy' ).hide();
-						}
-					});
-				}
+				// Use thickbox to show the edit form as popup
+				tb_show( 'Edit Version', '#TB_inline?height=450&width=550&inlineId=codeconfig-edit-form' );
 			});
 
 			// Single action buttons (activate/deactivate/delete)
