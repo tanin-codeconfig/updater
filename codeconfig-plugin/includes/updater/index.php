@@ -17,9 +17,15 @@ if (! function_exists('ccupd')) {
             return $ccupd;
         }
 
-        require_once __DIR__ . '/class-updater.php';
-        require_once __DIR__ . '/class-rest.php';
-        require_once __DIR__ . '/class-admin.php';
+        if (! class_exists('CodeConfig_Updater')) {
+            require_once __DIR__ . '/class-updater.php';
+        }
+        if (! class_exists('CodeConfig_REST')) {
+            require_once __DIR__ . '/class-rest.php';
+        }
+        if (! class_exists('CodeConfig_Admin')) {
+            require_once __DIR__ . '/class-admin.php';
+        }
 
         $ccupd = new CodeConfig_Updater_Manager($config);
 
