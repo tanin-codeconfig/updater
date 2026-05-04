@@ -4,6 +4,17 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
+// Define local constants if not defined by main plugin (for isolation)
+if (! defined('CODECONFIG_BASENAME')) {
+    define('CODECONFIG_BASENAME', 'codeconfig-plugin/codeconfig-plugin.php');
+}
+if (! defined('CODECONFIG_VERSION')) {
+    define('CODECONFIG_VERSION', '1.0.20');
+}
+if (! defined('CODECONFIG_PRO_ACTIVE')) {
+    define('CODECONFIG_PRO_ACTIVE', false);
+}
+
 if (! function_exists('ccupd')) {
 
     function ccupd($config = array())

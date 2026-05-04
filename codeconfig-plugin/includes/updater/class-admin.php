@@ -66,27 +66,21 @@ class CodeConfig_Updater_Admin
         remove_submenu_page($menu_slug, $menu_slug);
     }
 
-    public static function enqueue_assets($hook)
+public static function enqueue_assets($hook)
     {
         // Load on plugins.php page AND all codeconfig plugin admin pages
         if (strpos($hook, 'codeconfig') === false && $hook !== 'plugins.php') {
             return;
         }
 
-        // Use uploads folder if assets exist there, otherwise use plugin folder
-        $upload_dir = wp_upload_dir();
-        $assets_url = $upload_dir['baseurl'] . '/codeconfig-plugin/includes/updater/';
-        
-        // Check if uploads assets exist, fallback to plugin folder
-        if (! file_exists($upload_dir['basedir'] . '/codeconfig-plugin/includes/updater/assets/js/admin.js')) {
-            $assets_url = plugin_dir_url(dirname(__DIR__)) . 'assets/';
-        }
+        // Use native WordPress function - get updater folder URL
+        $assets_url = plugin_dir_url(__DIR__) . 'assets/';
 
         wp_enqueue_script(
             'codeconfig-plugin-admin-js',
-            $assets_url . 'assets/js/admin.js',
+            $assets_url . 'js/admin.js',
             array( 'jquery' ),
-            CODECONFIG_VERSION,
+            '1.0.0',
             true
         );
 
@@ -97,13 +91,11 @@ class CodeConfig_Updater_Admin
             'checkBtn'   => 'Check for Updates',
         ));
 
-        
-
         wp_enqueue_style(
             'codeconfig-plugin-admin-css',
-            $assets_url . 'assets/css/admin.css',
+            $assets_url . 'css/admin.css',
             array(),
-            CODECONFIG_VERSION
+            '1.0.0'
         );
     }
 
