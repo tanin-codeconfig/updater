@@ -1,11 +1,11 @@
 <?php
-define( 'MYPLUGIN_API_PATH', rtrim( dirname( __FILE__ ), '/' ) . '/' );
+define( 'CODECONFIG_API_PATH', rtrim( dirname( __FILE__ ), '/' ) . '/' );
 
 require_once __DIR__ . '/../../../wp-load.php';
 
-require_once MYPLUGIN_API_PATH . 'includes/class-version-db.php';
-require_once MYPLUGIN_API_PATH . 'includes/class-users-db.php';
-require_once MYPLUGIN_API_PATH . 'includes/class-analytics-db.php';
+require_once CODECONFIG_API_PATH . 'includes/class-version-db.php';
+require_once CODECONFIG_API_PATH . 'includes/class-users-db.php';
+require_once CODECONFIG_API_PATH . 'includes/class-analytics-db.php';
 
 $token = isset( $_GET['token'] ) ? sanitize_text_field( $_GET['token'] ) : '';
 $slug  = isset( $_GET['slug'] ) ? sanitize_text_field( $_GET['slug'] ) : 'my-plugin';
@@ -16,7 +16,7 @@ if ( empty( $token ) ) {
 	die( 'Missing download token.' );
 }
 
-$transient = get_transient( 'myplugin_dl_' . $token );
+$transient = get_transient( 'codeconfig_dl_' . $token );
 
 if ( ! $transient || $transient['slug'] !== $slug ) {
 	status_header( 403 );
@@ -39,7 +39,7 @@ if ( $stored_key ) {
 	}
 }
 
-delete_transient( 'myplugin_dl_' . $token );
+delete_transient( 'codeconfig_dl_' . $token );
 
 $latest = MyPlugin_Version_DB::get_active_version( $slug );
 
@@ -76,8 +76,8 @@ if ( ! $latest || empty( $latest['download_path'] ) ) {
 
 $possible_paths = array(
 	$latest['download_path'],
-	MYPLUGIN_API_STORAGE . $latest['slug'] . '-v' . $latest['version'] . '.zip',
-	MYPLUGIN_API_STORAGE . basename( $latest['download_path'] ),
+	CODECONFIG_API_STORAGE . $latest['slug'] . '-v' . $latest['version'] . '.zip',
+	CODECONFIG_API_STORAGE . basename( $latest['download_path'] ),
 );
 
 $file_path = null;

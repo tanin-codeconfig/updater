@@ -3,9 +3,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-class MyPlugin_Users_DB {
+class CodeConfig_Users_DB {
 
-	const TABLE_NAME = 'myplugin_users';
+	const TABLE_NAME = 'codeconfig_users';
 
 	public static function get_table_name() {
 		global $wpdb;

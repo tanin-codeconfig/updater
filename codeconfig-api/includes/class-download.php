@@ -3,7 +3,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-class MyPlugin_Download {
+class CodeConfig_Download {
 
 	public static function handle( $request ) {
 
@@ -11,7 +11,7 @@ class MyPlugin_Download {
 		$slug  = $request->get_param( 'slug' );
 		$key   = $request->get_param( 'api_key' );
 
-		$transient = get_transient( 'myplugin_dl_' . $token );
+		$transient = get_transient( 'codeconfig_dl_' . $token );
 
 		if ( ! $transient || $transient['slug'] !== $slug ) {
 			return new WP_REST_Response( array(
@@ -20,14 +20,14 @@ class MyPlugin_Download {
 			), 403 );
 		}
 
-		delete_transient( 'myplugin_dl_' . $token );
+		delete_transient( 'codeconfig_dl_' . $token );
 
 		$stored_key = $transient['api_key'] ?? '';
 
 		$user_id = null;
 
 		if ( $stored_key ) {
-			$user = MyPlugin_Users_DB::get_user_by_api_key( $stored_key );
+			$user = CodeConfig_Users_DB::get_user_by_api_key( $stored_key );
 
 			if ( ! $user ) {
 				return new WP_REST_Response( array(
@@ -37,9 +37,9 @@ class MyPlugin_Download {
 			}
 
 			$user_id = $user['id'];
-			MyPlugin_Users_DB::update_last_used( $user['id'] );
+			CodeConfig_Users_DB::update_last_used( $user['id'] );
 		} elseif ( $key ) {
-			$user = MyPlugin_Users_DB::get_user_by_api_key( $key );
+			$user = CodeConfig_Users_DB::get_user_by_api_key( $key );
 
 			if ( ! $user ) {
 				return new WP_REST_Response( array(
@@ -49,13 +49,13 @@ class MyPlugin_Download {
 			}
 
 			$user_id = $user['id'];
-			MyPlugin_Users_DB::update_last_used( $user['id'] );
+			CodeConfig_Users_DB::update_last_used( $user['id'] );
 		}
 
-		$latest = MyPlugin_Version_DB::get_active_version( $slug );
+		$latest = CodeConfig_Version_DB::get_active_version( $slug );
 		$domain = $transient['domain'] ?? '';
 
-		MyPlugin_Analytics_DB::log_request( array(
+		CodeConfig_Analytics_DB::log_request( array(
 			'user_id'      => $user_id,
 			'api_key'       => $key ? $key : $stored_key,
 			'slug'          => $slug,
@@ -66,10 +66,10 @@ class MyPlugin_Download {
 
 		// Increment download count
 		if ( $latest && ! empty( $latest['version'] ) ) {
-			MyPlugin_Version_DB::increment_download_count( $slug, $latest['version'] );
+			CodeConfig_Version_DB::increment_download_count( $slug, $latest['version'] );
 		}
 
-		$latest = MyPlugin_Version_DB::get_active_version( $slug );
+		$latest = CodeConfig_Version_DB::get_active_version( $slug );
 
 		if ( ! $latest || empty( $latest['download_path'] ) ) {
 			return new WP_REST_Response( array(

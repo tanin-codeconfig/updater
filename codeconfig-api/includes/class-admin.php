@@ -3,7 +3,7 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
-class MyPlugin_Admin
+class CodeConfig_Admin
 {
     public static function add_menu()
     {
@@ -11,37 +11,37 @@ class MyPlugin_Admin
             'MyPlugin Versions',
             'MyPlugin API',
             'manage_options',
-            'myplugin-api',
+            'codeconfig-api',
             array( __CLASS__, 'render_page' ),
             'dashicons-update',
             30
         );
 
         add_submenu_page(
-            'myplugin-api',
+            'codeconfig-api',
             'Latest Version URLs',
             'Latest URLs',
             'manage_options',
-            'myplugin-latest-urls',
+            'codeconfig-latest-urls',
             array( __CLASS__, 'render_latest_urls_page' )
         );
     }
 
     public static function enqueue_assets($hook)
     {
-        if ('toplevel_page_myplugin-api' !== $hook) {
+        if ('toplevel_page_codeconfig-api' !== $hook) {
             return;
         }
 
         wp_enqueue_style(
-            'myplugin-admin-css',
+            'codeconfig-admin-css',
             MYPLUGIN_API_URL . 'assets/css/admin.css',
             array(),
             MYPLUGIN_API_VERSION
         );
 
         wp_enqueue_script(
-            'myplugin-jszip',
+            'codeconfig-jszip',
             MYPLUGIN_API_URL . 'assets/js/jszip.min.js',
             array(),
             '3.10.1',
@@ -50,9 +50,9 @@ class MyPlugin_Admin
 
         wp_enqueue_media();
         wp_enqueue_script(
-            'myplugin-admin-js',
+            'codeconfig-admin-js',
             MYPLUGIN_API_URL . 'assets/js/admin.js',
-            array( 'jquery', 'media-views', 'myplugin-jszip', 'thickbox' ),
+            array( 'jquery', 'media-views', 'codeconfig-jszip', 'thickbox' ),
             MYPLUGIN_API_VERSION,
             true
         );
@@ -60,7 +60,7 @@ class MyPlugin_Admin
         wp_enqueue_style('thickblock');
 
         $selected_slug = isset($_GET['filter_slug']) ? sanitize_text_field($_GET['filter_slug']) : 'all';
-        $versions      = $selected_slug === 'all' ? MyPlugin_Version_DB::get_all_versions() : MyPlugin_Version_DB::get_all_versions($selected_slug);
+        $versions      = $selected_slug === 'all' ? CodeConfig_Version_DB::get_all_versions() : CodeConfig_Version_DB::get_all_versions($selected_slug);
 
         $versions_data = array();
         foreach ($versions as $v) {
@@ -71,9 +71,9 @@ class MyPlugin_Admin
             );
         }
 
-        wp_localize_script('myplugin-admin-js', 'mypluginAdmin', array(
+        wp_localize_script('codeconfig-admin-js', 'codeconfigAdmin', array(
             'ajaxUrl'        => admin_url('admin-ajax.php'),
-            'nonce'         => wp_create_nonce('myplugin_admin_nonce'),
+            'nonce'         => wp_create_nonce('codeconfig_admin_nonce'),
             'mediaNonce'    => wp_create_nonce('media_nonce'),
             'confirmUpdate' => 'This version already exists. Do you want to update it?',
             'detecting'     => 'Detecting...',
@@ -87,12 +87,12 @@ class MyPlugin_Admin
     public static function ajax_check_version()
     {
 
-        check_ajax_referer('myplugin_admin_nonce', 'nonce');
+        check_ajax_referer('codeconfig_admin_nonce', 'nonce');
 
         $version = sanitize_text_field($_POST['version'] ?? '');
         $slug    = sanitize_text_field($_POST['slug'] ?? 'my-plugin');
 
-        $existing = MyPlugin_Version_DB::get_existing_version($slug, $version);
+        $existing = CodeConfig_Version_DB::get_existing_version($slug, $version);
 
         wp_send_json_success(array(
             'exists' => $existing ? true : false,
@@ -103,7 +103,7 @@ class MyPlugin_Admin
     public static function ajax_parse_zip()
     {
 
-        check_ajax_referer('myplugin_admin_nonce', 'nonce');
+        check_ajax_referer('codeconfig_admin_nonce', 'nonce');
 
         if (! current_user_can('manage_options')) {
             wp_send_json_error(array( 'message' => 'Permission denied.' ));
@@ -113,7 +113,7 @@ class MyPlugin_Admin
             wp_send_json_error(array( 'message' => 'No file uploaded.' ));
         }
 
-        $result = MyPlugin_Zip_Parser::parse($_FILES['zip_file']['tmp_name']);
+        $result = CodeConfig_Zip_Parser::parse($_FILES['zip_file']['tmp_name']);
 
         if (! $result) {
             wp_send_json_error(array( 'message' => 'Could not parse ZIP file.' ));
@@ -143,7 +143,7 @@ class MyPlugin_Admin
             wp_send_json_error(array( 'message' => 'File not found.' ));
         }
 
-        $result = MyPlugin_Zip_Parser::parse($file_path);
+        $result = CodeConfig_Zip_Parser::parse($file_path);
 
         if (! $result) {
             wp_send_json_error(array( 'message' => 'Could not parse ZIP file.' ));
@@ -154,15 +154,15 @@ class MyPlugin_Admin
 
     public static function register_actions()
     {
-        add_action('admin_post_myplugin_versions_action', array( __CLASS__, 'handle_form_submit' ));
-        add_action('wp_ajax_myplugin_parse_zip', array( __CLASS__, 'ajax_parse_zip' ));
-        add_action('wp_ajax_myplugin_parse_media_zip', array( __CLASS__, 'ajax_parse_media_zip' ));
+        add_action('admin_post_codeconfig_versions_action', array( __CLASS__, 'handle_form_submit' ));
+        add_action('wp_ajax_codeconfig_parse_zip', array( __CLASS__, 'ajax_parse_zip' ));
+        add_action('wp_ajax_codeconfig_parse_media_zip', array( __CLASS__, 'ajax_parse_media_zip' ));
     }
 
     public static function handle_form_submit()
     {
 
-        if (! check_admin_referer('myplugin_admin_action', 'myplugin_nonce')) {
+        if (! check_admin_referer('codeconfig_admin_action', 'codeconfig_nonce')) {
             wp_die('Security check failed.');
         }
 
@@ -173,8 +173,8 @@ class MyPlugin_Admin
         // Prevent browser from caching POST requests
         nocache_headers();
 
-        $action = sanitize_text_field($_POST['myplugin_action']);
-        $args   = array( 'page' => 'myplugin-api' );
+        $action = sanitize_text_field($_POST['codeconfig_action']);
+        $args   = array( 'page' => 'codeconfig-api' );
 
         // Handle bulk actions
         if (in_array($action, array( 'activate', 'deactivate', 'delete' ), true) && isset($_POST['bulk_ids'])) {
@@ -182,7 +182,7 @@ class MyPlugin_Admin
             $bulk_ids = array_filter($bulk_ids);
 
             if (empty($bulk_ids)) {
-                $args['myplugin_notice'] = 'no_items_selected';
+                $args['codeconfig_notice'] = 'no_items_selected';
                 nocache_headers();
                 wp_redirect(add_query_arg($args, admin_url('admin.php')), 303);
                 exit;
@@ -190,7 +190,7 @@ class MyPlugin_Admin
 
             foreach ($bulk_ids as $id) {
                 if ('delete' === $action) {
-                    $version = MyPlugin_Version_DB::get_existing_version_by_id($id);
+                    $version = CodeConfig_Version_DB::get_existing_version_by_id($id);
                     if ($version && ! empty($version['download_path']) && file_exists($version['download_path'])) {
                         unlink($version['download_path']);
                     }
@@ -198,13 +198,13 @@ class MyPlugin_Admin
                     if ($version && ! empty($version['attachment_id'])) {
                         wp_delete_attachment((int) $version['attachment_id'], true);
                     }
-                    MyPlugin_Version_DB::delete_version($id);
+                    CodeConfig_Version_DB::delete_version($id);
                 } else {
-                    MyPlugin_Version_DB::update_version($id, array( 'is_active' => 'activate' === $action ? 1 : 0 ));
+                    CodeConfig_Version_DB::update_version($id, array( 'is_active' => 'activate' === $action ? 1 : 0 ));
                 }
             }
 
-            $args['myplugin_notice'] = 'bulk_' . $action;
+            $args['codeconfig_notice'] = 'bulk_' . $action;
             nocache_headers();
             wp_redirect(add_query_arg($args, admin_url('admin.php')), 303);
             exit;
@@ -220,7 +220,7 @@ class MyPlugin_Admin
             $has_attachment = $attachment_id > 0;
 
             if (! $has_file && ! $has_attachment) {
-                $args['myplugin_notice'] = 'upload_error';
+                $args['codeconfig_notice'] = 'upload_error';
             } else {
                 if (! is_dir(MYPLUGIN_API_STORAGE)) {
                     wp_mkdir_p(MYPLUGIN_API_STORAGE);
@@ -229,14 +229,14 @@ class MyPlugin_Admin
                 $upload_file = self::handle_file_upload($has_file, $has_attachment, $attachment_id);
 
                 if (! $upload_file) {
-                    $args['myplugin_notice'] = $has_file ? 'upload_failed' : 'upload_error';
+                    $args['codeconfig_notice'] = $has_file ? 'upload_failed' : 'upload_error';
                     nocache_headers();
                     wp_redirect(add_query_arg($args, admin_url('admin.php')), 303);
                     exit;
                 }
 
                 if (empty($version) || empty($slug)) {
-                    $parsed = MyPlugin_Zip_Parser::parse($upload_file);
+                    $parsed = CodeConfig_Zip_Parser::parse($upload_file);
                     if ($parsed) {
                         if (empty($slug)) {
                             $slug = sanitize_text_field($parsed['slug']);
@@ -248,7 +248,7 @@ class MyPlugin_Admin
                 }
 
                 if (empty($slug) || empty($version)) {
-                    $args['myplugin_notice'] = 'parse_failed';
+                    $args['codeconfig_notice'] = 'parse_failed';
                     nocache_headers();
                     wp_redirect(add_query_arg($args, admin_url('admin.php')), 303);
                     exit;
@@ -265,21 +265,21 @@ class MyPlugin_Admin
                     $rename = $upload_file;
                 }
 
-                $existing = MyPlugin_Version_DB::get_existing_version($slug, $version);
+                $existing = CodeConfig_Version_DB::get_existing_version($slug, $version);
 
                 if ($existing) {
                     if (! empty($existing['download_path']) && file_exists($existing['download_path'])) {
                         unlink($existing['download_path']);
                     }
-                    MyPlugin_Version_DB::update_version($existing['id'], array(
+                    CodeConfig_Version_DB::update_version($existing['id'], array(
                         'changelog'      => $changelog,
                         'download_path'  => $rename,
                         'is_active'      => 0,
                         'attachment_id'  => $attachment_id,
                     ));
-                    $args['myplugin_notice'] = 'updated';
+                    $args['codeconfig_notice'] = 'updated';
                 } else {
-                    MyPlugin_Version_DB::insert_version(array(
+                    CodeConfig_Version_DB::insert_version(array(
                         'version'        => $version,
                         'slug'           => $slug,
                         'changelog'      => $changelog,
@@ -287,7 +287,7 @@ class MyPlugin_Admin
                         'attachment_id'  => $attachment_id,
                         'is_active'      => 0,
                     ));
-                    $args['myplugin_notice'] = 'success';
+                    $args['codeconfig_notice'] = 'success';
                 }
                 $args['version'] = $version;
             }
@@ -295,19 +295,19 @@ class MyPlugin_Admin
 
         if ('activate' === $action) {
             $id = (int) $_POST['id'];
-            MyPlugin_Version_DB::update_version($id, array( 'is_active' => 1 ));
-            $args['myplugin_notice'] = 'activated';
+            CodeConfig_Version_DB::update_version($id, array( 'is_active' => 1 ));
+            $args['codeconfig_notice'] = 'activated';
         }
 
         if ('deactivate' === $action) {
             $id = (int) $_POST['id'];
-            MyPlugin_Version_DB::update_version($id, array( 'is_active' => 0 ));
-            $args['myplugin_notice'] = 'deactivated';
+            CodeConfig_Version_DB::update_version($id, array( 'is_active' => 0 ));
+            $args['codeconfig_notice'] = 'deactivated';
         }
 
         if ('delete' === $action) {
             $id = (int) $_POST['id'];
-            $version = MyPlugin_Version_DB::get_existing_version_by_id($id);
+            $version = CodeConfig_Version_DB::get_existing_version_by_id($id);
             if ($version && ! empty($version['download_path']) && file_exists($version['download_path'])) {
                 unlink($version['download_path']);
             }
@@ -315,8 +315,8 @@ class MyPlugin_Admin
             if ($version && ! empty($version['attachment_id'])) {
                 wp_delete_attachment((int) $version['attachment_id'], true);
             }
-            MyPlugin_Version_DB::delete_version($id);
-            $args['myplugin_notice'] = 'deleted';
+            CodeConfig_Version_DB::delete_version($id);
+            $args['codeconfig_notice'] = 'deleted';
         }
 
         if ('edit' === $action) {
@@ -325,7 +325,7 @@ class MyPlugin_Admin
             $new_slug = sanitize_text_field($_POST['slug']);
             $new_changelog = wp_kses_post($_POST['changelog'] ?? '');
 
-            $existing = MyPlugin_Version_DB::get_existing_version_by_id($id);
+            $existing = CodeConfig_Version_DB::get_existing_version_by_id($id);
 
             if (empty($new_slug) && $existing) {
                 $new_slug = $existing['slug'];
@@ -361,7 +361,7 @@ class MyPlugin_Admin
                 remove_filter('upload_dir', $override_upload_dir);
 
                 if (isset($upload['error'])) {
-                    $args['myplugin_notice'] = 'upload_failed';
+                    $args['codeconfig_notice'] = 'upload_failed';
                     nocache_headers();
                     wp_redirect(add_query_arg($args, admin_url('admin.php')), 303);
                     exit;
@@ -386,10 +386,10 @@ class MyPlugin_Admin
             }
 
             if (! empty($update_data)) {
-                MyPlugin_Version_DB::update_version($id, $update_data);
+                CodeConfig_Version_DB::update_version($id, $update_data);
             }
 
-            $args['myplugin_notice'] = 'updated';
+            $args['codeconfig_notice'] = 'updated';
             $args['version'] = $new_version;
         }
 
@@ -402,66 +402,66 @@ class MyPlugin_Admin
     {
 
         $selected_slug = isset($_GET['filter_slug']) ? sanitize_text_field($_GET['filter_slug']) : 'all';
-        $versions      = $selected_slug === 'all' ? MyPlugin_Version_DB::get_all_versions() : MyPlugin_Version_DB::get_all_versions($selected_slug);
-        $all_slugs     = MyPlugin_Version_DB::get_unique_slugs();
+        $versions      = $selected_slug === 'all' ? CodeConfig_Version_DB::get_all_versions() : CodeConfig_Version_DB::get_all_versions($selected_slug);
+        $all_slugs     = CodeConfig_Version_DB::get_unique_slugs();
 
         self::maybe_show_notice();
         ?>
 		<div class="wrap">
 			<h1>MyPlugin Update Manager</h1>
 
-			<div class="myplugin-upload-metabox closed">
+			<div class="codeconfig-upload-metabox closed">
 				<div class="postbox-header">
 					<h2 class="handle"><span>Add New Version</span></h2>
 					<div class="handle-actions">
-						<button type="button" class="handlediv myplugin-toggle-btn" aria-expanded="false">
+						<button type="button" class="handlediv codeconfig-toggle-btn" aria-expanded="false">
 							<span class="screen-reader-text">Toggle panel: Add New Version</span>
 							<span class="toggle-indicator" aria-hidden="true"></span>
 						</button>
 					</div>
 				</div>
 				<div class="inside">
-					<form id="myplugin-add-version-form" method="post" enctype="multipart/form-data" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
-						<?php wp_nonce_field('myplugin_admin_action', 'myplugin_nonce'); ?>
-						<input type="hidden" name="action" value="myplugin_versions_action" />
-						<input type="hidden" name="myplugin_action" value="add_version" />
+					<form id="codeconfig-add-version-form" method="post" enctype="multipart/form-data" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+						<?php wp_nonce_field('codeconfig_admin_action', 'codeconfig_nonce'); ?>
+						<input type="hidden" name="action" value="codeconfig_versions_action" />
+						<input type="hidden" name="codeconfig_action" value="add_version" />
 						<input type="hidden" id="media_attachment_id" name="media_attachment_id" value="" />
 
-					<div class="myplugin-upload-grid">
-						<div class="myplugin-upload-zone myplugin-drop-zone" id="myplugin-drop-zone">
-							<div class="myplugin-drop-zone-inner">
+					<div class="codeconfig-upload-grid">
+						<div class="codeconfig-upload-zone codeconfig-drop-zone" id="codeconfig-drop-zone">
+							<div class="codeconfig-drop-zone-inner">
 								<span class="dashicons dashicons-upload"></span>
-								<p class="myplugin-drop-text">Drag & Drop your ZIP file here</p>
-								<p class="myplugin-drop-or">- OR -</p>
+								<p class="codeconfig-drop-text">Drag & Drop your ZIP file here</p>
+								<p class="codeconfig-drop-or">- OR -</p>
 								<input type="file" id="plugin_zip" name="plugin_zip" accept=".zip" />
 							</div>
-							<button type="button" id="myplugin-select-media" class="myplugin-text-link">
+							<button type="button" id="codeconfig-select-media" class="codeconfig-text-link">
 								Select from Media Library
 							</button>
-							<div id="myplugin-detect-status" class="myplugin-detect-status"></div>
+							<div id="codeconfig-detect-status" class="codeconfig-detect-status"></div>
 						</div>
 
-						<div class="myplugin-upload-fields">
-							<div class="myplugin-field-row">
-								<label for="version" class="myplugin-field-label">Version</label>
-								<div class="myplugin-field-wrapper" id="version-wrapper">
+						<div class="codeconfig-upload-fields">
+							<div class="codeconfig-field-row">
+								<label for="version" class="codeconfig-field-label">Version</label>
+								<div class="codeconfig-field-wrapper" id="version-wrapper">
 									<input type="text" id="version" name="version" class="regular-text" placeholder="e.g. 1.1.0" />
-									<span class="myplugin-detected-badge" style="display:none;"></span>
-									<button type="button" class="myplugin-edit-toggle" style="display:none;"><?php esc_html_e('Edit'); ?></button>
+									<span class="codeconfig-detected-badge" style="display:none;"></span>
+									<button type="button" class="codeconfig-edit-toggle" style="display:none;"><?php esc_html_e('Edit'); ?></button>
 								</div>
 							</div>
 
-							<div class="myplugin-field-row">
-								<label for="slug" class="myplugin-field-label">Plugin Slug</label>
-								<div class="myplugin-field-wrapper" id="slug-wrapper">
+							<div class="codeconfig-field-row">
+								<label for="slug" class="codeconfig-field-label">Plugin Slug</label>
+								<div class="codeconfig-field-wrapper" id="slug-wrapper">
 									<input type="text" id="slug" name="slug" class="regular-text" placeholder="e.g. my-plugin" />
-									<span class="myplugin-detected-badge" style="display:none;"></span>
-									<button type="button" class="myplugin-edit-toggle" style="display:none;"><?php esc_html_e('Edit'); ?></button>
+									<span class="codeconfig-detected-badge" style="display:none;"></span>
+									<button type="button" class="codeconfig-edit-toggle" style="display:none;"><?php esc_html_e('Edit'); ?></button>
 								</div>
 							</div>
 
-							<div class="myplugin-field-row">
-								<label for="changelog" class="myplugin-field-label">Changelog</label>
+							<div class="codeconfig-field-row">
+								<label for="changelog" class="codeconfig-field-label">Changelog</label>
 								<textarea id="changelog" name="changelog" rows="4" class="large-text" placeholder="What's new in this version..."></textarea>
 							</div>
 						</div>
@@ -474,12 +474,12 @@ class MyPlugin_Admin
 
 	<hr />
 
-	<div class="myplugin-section-header">
+	<div class="codeconfig-section-header">
 		<h2>Version History</h2>
 	</div>
 
-	<div class="myplugin-table-controls">
-		<div class="myplugin-bulk-actions-top">
+	<div class="codeconfig-table-controls">
+		<div class="codeconfig-bulk-actions-top">
 			<div class="bulkactions">
 				<label for="bulk-action-selector" class="screen-reader-text">Select bulk action</label>
 				<select name="bulk_action" id="bulk-action-selector">
@@ -492,8 +492,8 @@ class MyPlugin_Admin
 			</div>
 		</div>
 
-		<form method="get" class="myplugin-filter-form">
-			<input type="hidden" name="page" value="myplugin-api" />
+		<form method="get" class="codeconfig-filter-form">
+			<input type="hidden" name="page" value="codeconfig-api" />
 			<label for="filter_slug">Filter by Plugin:</label>
 			<select name="filter_slug" id="filter_slug" onchange="this.form.submit()">
 				<option value="all"<?php selected($selected_slug, "all"); ?>>All Plugins</option>
@@ -502,15 +502,15 @@ class MyPlugin_Admin
 				<?php endforeach; ?>
 			</select>
 			<?php if ($selected_slug !== 'all') : ?>
-				<a href="<?php echo esc_url(admin_url('admin.php?page=myplugin-api')); ?>" class="button">Clear</a>
+				<a href="<?php echo esc_url(admin_url('admin.php?page=codeconfig-api')); ?>" class="button">Clear</a>
 			<?php endif; ?>
 		</form>
 	</div>
 
-	<form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" id="myplugin-table-form">
-		<?php wp_nonce_field('myplugin_admin_action', 'myplugin_nonce'); ?>
-		<input type="hidden" name="action" value="myplugin_versions_action" />
-		<input type="hidden" name="myplugin_action" id="bulk-action-type" value="" />
+	<form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" id="codeconfig-table-form">
+		<?php wp_nonce_field('codeconfig_admin_action', 'codeconfig_nonce'); ?>
+		<input type="hidden" name="action" value="codeconfig_versions_action" />
+		<input type="hidden" name="codeconfig_action" id="bulk-action-type" value="" />
 
 		<table class="wp-list-table widefat striped">
 			<thead>
@@ -536,24 +536,24 @@ class MyPlugin_Admin
 							<td>
 								<?php echo esc_html(basename($v['download_path'] ?? '')); ?>
 								<div class="row-actions">
-									<button type="button" class="button-link myplugin-edit-btn" data-id="<?php echo (int) $v['id']; ?>" data-version="<?php echo esc_attr($v['version']); ?>" data-slug="<?php echo esc_attr($v['slug']); ?>">Edit</button>
+									<button type="button" class="button-link codeconfig-edit-btn" data-id="<?php echo (int) $v['id']; ?>" data-version="<?php echo esc_attr($v['version']); ?>" data-slug="<?php echo esc_attr($v['slug']); ?>">Edit</button>
 									|
-									<button type="button" class="button-link myplugin-single-action-btn" data-action="<?php echo $v['is_active'] ? 'deactivate' : 'activate'; ?>" data-id="<?php echo (int) $v['id']; ?>">
+									<button type="button" class="button-link codeconfig-single-action-btn" data-action="<?php echo $v['is_active'] ? 'deactivate' : 'activate'; ?>" data-id="<?php echo (int) $v['id']; ?>">
 										<?php echo $v['is_active'] ? 'Deactivate' : 'Activate'; ?>
 									</button>
 									|
-									<button type="button" class="button-link myplugin-single-action-btn" data-action="delete" data-id="<?php echo (int) $v['id']; ?>">Delete</button>
+									<button type="button" class="button-link codeconfig-single-action-btn" data-action="delete" data-id="<?php echo (int) $v['id']; ?>">Delete</button>
 								</div>
 							</td>
 							<td><?php echo esc_html($v['version']); ?></td>
 							<td><?php echo esc_html($v['slug']); ?></td>
-							<td><?php echo $v['is_active'] ? '<span class="myplugin-status-active">Active</span>' : '<span class="myplugin-status-inactive">Inactive</span>'; ?></td>
+							<td><?php echo $v['is_active'] ? '<span class="codeconfig-status-active">Active</span>' : '<span class="codeconfig-status-inactive">Inactive</span>'; ?></td>
 							<td>
 								<?php
                                 $download_count = 0;
-                                if (class_exists('MyPlugin_Analytics_DB')) {
+                                if (class_exists('CodeConfig_Analytics_DB')) {
                                     global $wpdb;
-                                    $analytics_table = $wpdb->prefix . 'myplugin_analytics';
+                                    $analytics_table = $wpdb->prefix . 'codeconfig_analytics';
                                     $download_count = (int) $wpdb->get_var(
                                         $wpdb->prepare(
                                             "SELECT COUNT(*) FROM {$analytics_table} WHERE slug = %s AND version = %s AND request_type = 'download'",
@@ -573,19 +573,19 @@ class MyPlugin_Admin
 		</table>
 	</form>
 
-	<form id="myplugin-single-action-form" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="display:none;">
-		<?php wp_nonce_field('myplugin_admin_action', 'myplugin_nonce'); ?>
-		<input type="hidden" name="action" value="myplugin_versions_action" />
-		<input type="hidden" name="myplugin_action" id="single-action-type" value="" />
+	<form id="codeconfig-single-action-form" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="display:none;">
+		<?php wp_nonce_field('codeconfig_admin_action', 'codeconfig_nonce'); ?>
+		<input type="hidden" name="action" value="codeconfig_versions_action" />
+		<input type="hidden" name="codeconfig_action" id="single-action-type" value="" />
 		<input type="hidden" name="id" id="single-action-id" value="" />
 	</form>
-	<div id="myplugin-edit-form" style="display:none;">
+	<div id="codeconfig-edit-form" style="display:none;">
 		<div class="card">
 			<h3>Edit Version</h3>
-			<form id="myplugin-edit-version-form" method="post" enctype="multipart/form-data" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
-				<?php wp_nonce_field('myplugin_admin_action', 'myplugin_nonce'); ?>
-				<input type="hidden" name="action" value="myplugin_versions_action" />
-				<input type="hidden" name="myplugin_action" value="edit" />
+			<form id="codeconfig-edit-version-form" method="post" enctype="multipart/form-data" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+				<?php wp_nonce_field('codeconfig_admin_action', 'codeconfig_nonce'); ?>
+				<input type="hidden" name="action" value="codeconfig_versions_action" />
+				<input type="hidden" name="codeconfig_action" value="edit" />
 				<input type="hidden" id="edit_id" name="id" value="" />
 
 				<table class="form-table">
@@ -609,7 +609,7 @@ class MyPlugin_Admin
 
 				<p>
 					<?php submit_button('Save Changes', 'primary', 'submit', false); ?>
-					<button type="button" id="myplugin-cancel-edit" class="button">Cancel</button>
+					<button type="button" id="codeconfig-cancel-edit" class="button">Cancel</button>
 				</p>
 			</form>
 		</div>
@@ -661,11 +661,11 @@ class MyPlugin_Admin
     private static function maybe_show_notice()
     {
 
-        if (! isset($_GET['myplugin_notice'])) {
+        if (! isset($_GET['codeconfig_notice'])) {
             return;
         }
 
-        $notice  = sanitize_text_field($_GET['myplugin_notice']);
+        $notice  = sanitize_text_field($_GET['codeconfig_notice']);
         $type    = 'info';
         $message = '';
 
@@ -742,7 +742,7 @@ class MyPlugin_Admin
 			<p>Share these URLs - they always point to the latest active version for each plugin:</p>
 
 			<?php
-            $all_slugs = MyPlugin_Version_DB::get_unique_slugs();
+            $all_slugs = CodeConfig_Version_DB::get_unique_slugs();
         $site_url = untrailingslashit(get_site_url());
 
         if (empty($all_slugs)) : ?>
@@ -760,9 +760,9 @@ class MyPlugin_Admin
 					<tbody>
 						<?php foreach ($all_slugs as $slug) : ?>
 							<?php
-                        $latest = MyPlugin_Version_DB::get_active_version($slug);
+                        $latest = CodeConfig_Version_DB::get_active_version($slug);
 						    $version = $latest ? $latest['version'] : 'N/A';
-						    $url = $site_url . '/wp-json/myplugin/v1/latest-download?slug=' . urlencode($slug);
+						    $url = $site_url . '/wp-json/codeconfig/v1/latest-download?slug=' . urlencode($slug);
 						    ?>
 							<tr>
 								<td><strong><?php echo esc_html($slug); ?></strong></td>

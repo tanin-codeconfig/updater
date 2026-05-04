@@ -3,9 +3,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-class MyPlugin_Version_DB {
+class CodeConfig_Version_DB {
 
-	const TABLE_NAME = 'myplugin_versions';
+	const TABLE_NAME = 'codeconfig_versions';
 
 	public static function get_table_name() {
 		global $wpdb;

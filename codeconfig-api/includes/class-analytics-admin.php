@@ -3,15 +3,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-class MyPlugin_Analytics_Admin {
+class CodeConfig_Analytics_Admin {
 
 	public static function add_menu() {
 		add_submenu_page(
-			'myplugin-api',
+			'codeconfig-api',
 			'MyPlugin Analytics',
 			'Analytics',
 			'manage_options',
-			'myplugin-analytics',
+			'codeconfig-analytics',
 			array( __CLASS__, 'render_page' )
 		);
 	}
@@ -34,13 +34,13 @@ class MyPlugin_Analytics_Admin {
 				break;
 		}
 
-		$stats = MyPlugin_Analytics_DB::get_stats( array( 'start_date' => $start ) );
+		$stats = CodeConfig_Analytics_DB::get_stats( array( 'start_date' => $start ) );
 		?>
 		<div class="wrap">
 			<h1>MyPlugin Analytics</h1>
 
 			<form method="get" action="" style="margin-bottom:20px;">
-				<input type="hidden" name="page" value="myplugin-analytics" />
+				<input type="hidden" name="page" value="codeconfig-analytics" />
 				<select name="range" onchange="this.form.submit()">
 					<option value="today" <?php selected( $range, 'today' ); ?>>Today</option>
 					<option value="7days" <?php selected( $range, '7days' ); ?>>Last 7 Days</option>

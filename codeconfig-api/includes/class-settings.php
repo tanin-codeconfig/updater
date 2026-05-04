@@ -3,18 +3,18 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-class MyPlugin_Settings {
+class CodeConfig_Settings {
 
-	const OPTION_GROUP = 'myplugin_settings_group';
-	const OPTION_NAME  = 'myplugin_settings';
+	const OPTION_GROUP = 'codeconfig_settings_group';
+	const OPTION_NAME  = 'codeconfig_settings';
 
 	public static function add_menu() {
 		add_submenu_page(
-			'myplugin-api',
+			'codeconfig-api',
 			'MyPlugin Settings',
 			'Settings',
 			'manage_options',
-			'myplugin-settings',
+			'codeconfig-settings',
 			array( __CLASS__, 'render_page' )
 		);
 	}
@@ -29,18 +29,18 @@ class MyPlugin_Settings {
 		);
 
 		add_settings_section(
-			'myplugin_general_section',
+			'codeconfig_general_section',
 			'General Settings',
 			'__return_empty_string',
-			'myplugin-settings'
+			'codeconfig-settings'
 		);
 
 		add_settings_field(
 			'auto_create_users',
 			'Auto-create users on update check',
 			array( __CLASS__, 'render_checkbox' ),
-			'myplugin-settings',
-			'myplugin_general_section',
+			'codeconfig-settings',
+			'codeconfig_general_section',
 			array(
 				'label_for' => 'auto_create_users',
 				'description' => 'Automatically create a user when a new domain makes an update check request.',
@@ -51,8 +51,8 @@ class MyPlugin_Settings {
 			'new_user_default_status',
 			'Default status for new users',
 			array( __CLASS__, 'render_select' ),
-			'myplugin-settings',
-			'myplugin_general_section',
+			'codeconfig-settings',
+			'codeconfig_general_section',
 			array(
 				'label_for' => 'new_user_default_status',
 				'options'   => array(
@@ -67,8 +67,8 @@ class MyPlugin_Settings {
 			'require_name',
 			'Require name field',
 			array( __CLASS__, 'render_checkbox' ),
-			'myplugin-settings',
-			'myplugin_general_section',
+			'codeconfig-settings',
+			'codeconfig_general_section',
 			array(
 				'label_for' => 'require_name',
 				'description' => 'Make name a required field when auto-creating users.',
@@ -79,8 +79,8 @@ class MyPlugin_Settings {
 			'require_email',
 			'Require email field',
 			array( __CLASS__, 'render_checkbox' ),
-			'myplugin-settings',
-			'myplugin_general_section',
+			'codeconfig-settings',
+			'codeconfig_general_section',
 			array(
 				'label_for' => 'require_email',
 				'description' => 'Make email a required field when auto-creating users.',
@@ -88,18 +88,18 @@ class MyPlugin_Settings {
 		);
 
 		add_settings_section(
-			'myplugin_headless_section',
+			'codeconfig_headless_section',
 			'Headless Mode',
 			'__return_empty_string',
-			'myplugin-settings'
+			'codeconfig-settings'
 		);
 
 		add_settings_field(
 			'headless_enabled',
 			'Enable Headless Mode',
 			array( __CLASS__, 'render_checkbox' ),
-			'myplugin-settings',
-			'myplugin_headless_section',
+			'codeconfig-settings',
+			'codeconfig_headless_section',
 			array(
 				'label_for' => 'headless_enabled',
 				'description' => 'Disable WordPress frontend. Only API and admin panel will be accessible.',
@@ -110,8 +110,8 @@ class MyPlugin_Settings {
 			'headless_behavior',
 			'Frontend Behavior',
 			array( __CLASS__, 'render_select' ),
-			'myplugin-settings',
-			'myplugin_headless_section',
+			'codeconfig-settings',
+			'codeconfig_headless_section',
 			array(
 				'label_for' => 'headless_behavior',
 				'options'   => array(
@@ -128,8 +128,8 @@ class MyPlugin_Settings {
 			'headless_redirect_url',
 			'Custom Redirect URL',
 			array( __CLASS__, 'render_text_input' ),
-			'myplugin-settings',
-			'myplugin_headless_section',
+			'codeconfig-settings',
+			'codeconfig_headless_section',
 			array(
 				'label_for'   => 'headless_redirect_url',
 				'placeholder' => 'https://your-api-docs.com',
@@ -142,8 +142,8 @@ class MyPlugin_Settings {
 			'headless_message',
 			'Custom Message',
 			array( __CLASS__, 'render_text_input' ),
-			'myplugin-settings',
-			'myplugin_headless_section',
+			'codeconfig-settings',
+			'codeconfig_headless_section',
 			array(
 				'label_for'   => 'headless_message',
 				'placeholder' => 'This site is running in headless mode.',
@@ -156,8 +156,8 @@ class MyPlugin_Settings {
 			'headless_allowed_routes',
 			'Allowed Routes',
 			array( __CLASS__, 'render_text_input' ),
-			'myplugin-settings',
-			'myplugin_headless_section',
+			'codeconfig-settings',
+			'codeconfig_headless_section',
 			array(
 				'label_for' => 'headless_allowed_routes',
 				'placeholder' => '/wp-json/, /wp-admin/, /xmlrpc.php',
@@ -169,8 +169,8 @@ class MyPlugin_Settings {
 			'headless_keep_feeds',
 			'Keep RSS/Atom Feeds',
 			array( __CLASS__, 'render_checkbox' ),
-			'myplugin-settings',
-			'myplugin_headless_section',
+			'codeconfig-settings',
+			'codeconfig_headless_section',
 			array(
 				'label_for' => 'headless_keep_feeds',
 				'description' => 'Allow RSS and Atom feeds to remain accessible.',
@@ -238,7 +238,7 @@ class MyPlugin_Settings {
 		$conditional_class = '';
 		$show_if = isset( $args['show_if'] ) ? $args['show_if'] : '';
 		if ( ! empty( $show_if ) ) {
-			$conditional_class = 'myplugin-conditional-field';
+			$conditional_class = 'codeconfig-conditional-field';
 		}
 		?>
 		<input
@@ -263,7 +263,7 @@ class MyPlugin_Settings {
 			<form method="post" action="options.php">
 				<?php
 				settings_fields( self::OPTION_GROUP );
-				do_settings_sections( 'myplugin-settings' );
+				do_settings_sections( 'codeconfig-settings' );
 				submit_button( 'Save Settings' );
 				?>
 			</form>
@@ -314,5 +314,10 @@ class MyPlugin_Settings {
 		$options = get_option( self::OPTION_NAME, array() );
 
 		return wp_parse_args( $options, $defaults );
+	}
+
+	public static function is_headless_mode() {
+		$settings = self::get_settings();
+		return ! empty( $settings['headless_enabled'] );
 	}
 }

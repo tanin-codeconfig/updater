@@ -3,9 +3,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-class MyPlugin_Analytics_DB {
+class CodeConfig_Analytics_DB {
 
-	const TABLE_NAME = 'myplugin_analytics';
+	const TABLE_NAME = 'codeconfig_analytics';
 
 	public static function get_table_name() {
 		global $wpdb;
@@ -153,7 +153,7 @@ class MyPlugin_Analytics_DB {
 			),
  		'recent_activity' => $wpdb->get_results(
 				$wpdb->prepare(
-					"SELECT a.*, u.name as user_name FROM {$table_name} a LEFT JOIN {$wpdb->prefix}myplugin_users u ON a.user_id = u.id WHERE {$where_sql} ORDER BY a.created_at DESC LIMIT 20",
+					"SELECT a.*, u.name as user_name FROM {$table_name} a LEFT JOIN {$wpdb->prefix}codeconfig_users u ON a.user_id = u.id WHERE {$where_sql} ORDER BY a.created_at DESC LIMIT 20",
 					$values
 				),
 				ARRAY_A

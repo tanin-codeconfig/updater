@@ -3,7 +3,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-class MyPlugin_Update_Check {
+class CodeConfig_Update_Check {
 
 	public static function handle( $request ) {
 
@@ -21,13 +21,13 @@ class MyPlugin_Update_Check {
 			), 400 );
 		}
 
-		$settings = MyPlugin_Settings::get_settings();
+		$settings = CodeConfig_Settings::get_settings();
 		$auto_create = ! empty( $settings['auto_create_users'] );
 		$user_id = null;
 		$new_user_created = false;
 
 		if ( $key ) {
-			$user = MyPlugin_Users_DB::get_user_by_api_key( $key );
+			$user = CodeConfig_Users_DB::get_user_by_api_key( $key );
 
 			if ( ! $user ) {
 				return new WP_REST_Response( array(
@@ -37,13 +37,13 @@ class MyPlugin_Update_Check {
 			}
 
 			$user_id = $user['id'];
-			MyPlugin_Users_DB::update_last_used( $user['id'] );
+			CodeConfig_Users_DB::update_last_used( $user['id'] );
 		} else {
-			$existing_user = MyPlugin_Users_DB::get_user_by_domain( $domain );
+			$existing_user = CodeConfig_Users_DB::get_user_by_domain( $domain );
 
 			if ( $existing_user ) {
 				if ( ! empty( $existing_user['is_active'] ) ) {
-					MyPlugin_Users_DB::update_last_used( $existing_user['id'] );
+					CodeConfig_Users_DB::update_last_used( $existing_user['id'] );
 					$key = $existing_user['api_key'];
 					$user_id = $existing_user['id'];
 				} else {
@@ -74,14 +74,14 @@ class MyPlugin_Update_Check {
 					$name = self::generate_name_from_domain( $domain );
 				}
 
-				$new_user_id = MyPlugin_Users_DB::insert_user( array(
+				$new_user_id = CodeConfig_Users_DB::insert_user( array(
 					'name'      => $name,
 					'email'     => $email,
 					'domain'    => $domain,
 					'is_active' => $settings['new_user_default_status'] ?? 1,
 				) );
 
-				$new_user = MyPlugin_Users_DB::get_user( $new_user_id );
+				$new_user = CodeConfig_Users_DB::get_user( $new_user_id );
 
 				if ( $new_user ) {
 					$user_id = $new_user['id'];
@@ -96,7 +96,7 @@ class MyPlugin_Update_Check {
 			}
 		}
 
-		MyPlugin_Analytics_DB::log_request( array(
+		CodeConfig_Analytics_DB::log_request( array(
 			'user_id'      => $user_id,
 			'api_key'       => $key,
 			'slug'          => $slug,
@@ -105,7 +105,7 @@ class MyPlugin_Update_Check {
 			'domain'        => $domain,
 		) );
 
-		$latest = MyPlugin_Version_DB::get_active_version( $slug );
+		$latest = CodeConfig_Version_DB::get_active_version( $slug );
 
 		if ( ! $latest ) {
 			return new WP_REST_Response( array(
@@ -134,7 +134,7 @@ class MyPlugin_Update_Check {
 
 		$download_url = self::get_download_url( $token, $slug, $key );
 
-		$download_count = MyPlugin_Version_DB::get_download_count( $slug, $latest['version'] );
+		$download_count = CodeConfig_Version_DB::get_download_count( $slug, $latest['version'] );
 
 		$response = array(
 			'success'     => true,
@@ -160,7 +160,7 @@ class MyPlugin_Update_Check {
 		$token = wp_generate_password( 32, false );
 
 		set_transient(
-			'myplugin_dl_' . $token,
+			'codeconfig_dl_' . $token,
 			array(
 				'slug'      => $slug,
 				'api_key'   => $api_key,

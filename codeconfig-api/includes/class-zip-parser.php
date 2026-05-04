@@ -3,7 +3,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-class MyPlugin_Zip_Parser {
+class CodeConfig_Zip_Parser {
 
 	public static function parse( $file_path ) {
 

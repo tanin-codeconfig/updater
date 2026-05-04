@@ -4,7 +4,7 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
-class MyPlugin_Updater
+class CodeConfig_Updater
 {
     public static function init()
     {
@@ -16,21 +16,21 @@ class MyPlugin_Updater
 
         // Register cron schedule and event
         add_filter('cron_schedules', array( __CLASS__, 'add_cron_schedule' ));
-        add_action('my_plugin_cron_update_check', array( __CLASS__, 'cron_check_for_update' ));
+        add_action('codeconfig_cron_update_check', array( __CLASS__, 'cron_check_for_update' ));
     }
 
     public static function activate()
     {
         // Schedule the cron event (4 times daily = every 6 hours)
-        if (! wp_next_scheduled('my_plugin_cron_update_check')) {
-            wp_schedule_event(time(), 'six_hours', 'my_plugin_cron_update_check');
+        if (! wp_next_scheduled('codeconfig_cron_update_check')) {
+            wp_schedule_event(time(), 'six_hours', 'codeconfig_cron_update_check');
         }
     }
 
     public static function deactivate()
     {
         // Clear the cron event
-        wp_clear_scheduled_hook('my_plugin_cron_update_check');
+        wp_clear_scheduled_hook('codeconfig_cron_update_check');
     }
 
     public static function add_cron_schedule($schedules)
@@ -49,24 +49,24 @@ class MyPlugin_Updater
 
     public static function force_check_for_update()
     {
-        if (my_plugin_is_pro()) {
+        if (codeconfig_is_pro()) {
             return;
         }
 
-        $installed_version = my_plugin_config('version');
-        $data = MyPlugin_Ajax::check_api_for_version($installed_version);
+        $installed_version = codeconfig_config('version');
+        $data = CodeConfig_Ajax::check_api_for_version($installed_version);
 
         // Save result to options for AJAX handler
         if (! is_wp_error($data)) {
-            update_option('my_plugin_check_result', $data);
-            update_option('my_plugin_last_check', time());
-            update_option('my_plugin_api_status', $data['success'] ? 'connected' : 'error');
+            update_option('codeconfig_check_result', $data);
+            update_option('codeconfig_last_check', time());
+            update_option('codeconfig_api_status', $data['success'] ? 'connected' : 'error');
         } else {
-            update_option('my_plugin_api_status', 'error');
+            update_option('codeconfig_api_status', 'error');
         }
 
-        $basename = my_plugin_config('basename');
-        $slug = my_plugin_config('slug');
+        $basename = codeconfig_config('basename');
+        $slug = codeconfig_config('slug');
 
         if (is_wp_error($data) || ! $data['update']) {
             $transient = get_site_transient('update_plugins');
@@ -84,7 +84,7 @@ class MyPlugin_Updater
 
         $transient->response[ $basename ] = (object) array(
             'slug'         => $slug,
-            'plugin'       => MY_PLUGIN_BASENAME,
+            'plugin'       => CODECONFIG_BASENAME,
             'new_version'  => $data['new_version'],
             'package'      => $data['package'],
             'url'          => $data['changelog'] ?? '',
@@ -100,7 +100,7 @@ class MyPlugin_Updater
 
     public static function allow_api_host($args, $url)
     {
-        $parsed = parse_url(my_plugin_config('api_url'));
+        $parsed = parse_url(codeconfig_config('api_url'));
         $api_host = isset($parsed['host']) ? $parsed['host'] : '';
         $url_host = parse_url($url, PHP_URL_HOST);
 
@@ -117,19 +117,19 @@ class MyPlugin_Updater
             return $transient;
         }
 
-        if (my_plugin_is_pro()) {
+        if (codeconfig_is_pro()) {
             return $transient;
         }
 
-        $basename = my_plugin_config('basename');
-        $slug = my_plugin_config('slug');
-        $version = my_plugin_config('version');
+        $basename = codeconfig_config('basename');
+        $slug = codeconfig_config('slug');
+        $version = codeconfig_config('version');
 
         $installed_version = isset($transient->checked[ $basename ])
             ? $transient->checked[ $basename ]
             : $version;
 
-        $data = MyPlugin_Ajax::check_api_for_version($installed_version);
+        $data = CodeConfig_Ajax::check_api_for_version($installed_version);
 
         if (is_wp_error($data) || ! $data['update']) {
             return $transient;
@@ -137,7 +137,7 @@ class MyPlugin_Updater
 
         $transient->response[ $basename ] = (object) array(
             'slug'         => $slug,
-            'plugin'       => MY_PLUGIN_BASENAME,
+            'plugin'       => CODECONFIG_BASENAME,
             'new_version'  => $data['new_version'],
             'package'      => $data['package'],
             'url'          => $data['changelog'] ?? '',
@@ -153,13 +153,13 @@ class MyPlugin_Updater
 
     public static function plugin_info($false, $action, $args)
     {
-        $slug = my_plugin_config('slug');
+        $slug = codeconfig_config('slug');
 
         if ($action !== 'plugin_information' || $args->slug !== $slug) {
             return $false;
         }
 
-        $data = MyPlugin_Ajax::check_api_for_version('0.0.0');
+        $data = CodeConfig_Ajax::check_api_for_version('0.0.0');
 
         if (is_wp_error($data) || ! $data['success']) {
             return $false;
@@ -195,15 +195,15 @@ class MyPlugin_Updater
 
     public static function on_update_complete($upgrader, $hook_extra)
     {
-        $basename = my_plugin_config('basename');
+        $basename = codeconfig_config('basename');
 
         if (empty($hook_extra['plugin']) || $hook_extra['plugin'] !== $basename) {
             return;
         }
 
         delete_site_transient('update_plugins');
-        delete_option('my_plugin_check_result');
-        delete_option('my_plugin_api_status');
-        delete_option('my_plugin_last_check');
+        delete_option('codeconfig_check_result');
+        delete_option('codeconfig_api_status');
+        delete_option('codeconfig_last_check');
     }
 }

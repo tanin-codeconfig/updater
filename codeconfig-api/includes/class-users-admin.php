@@ -3,21 +3,21 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-class MyPlugin_Users_Admin {
+class CodeConfig_Users_Admin {
 
 	public static function add_menu() {
 		add_submenu_page(
-			'myplugin-api',
+			'codeconfig-api',
 			'MyPlugin Users',
 			'Users',
 			'manage_options',
-			'myplugin-users',
+			'codeconfig-users',
 			array( __CLASS__, 'render_page' )
 		);
 	}
 
 	public static function register_actions() {
-		add_action( 'admin_post_myplugin_users_action', array( __CLASS__, 'handle_form_submit' ) );
+		add_action( 'admin_post_codeconfig_users_action', array( __CLASS__, 'handle_form_submit' ) );
 	}
 
 	private static function generate_name_from_domain( $domain ) {
@@ -30,7 +30,7 @@ class MyPlugin_Users_Admin {
 
 	public static function handle_form_submit() {
 
-		if ( ! check_admin_referer( 'myplugin_users_action', 'myplugin_users_nonce' ) ) {
+		if ( ! check_admin_referer( 'codeconfig_users_action', 'codeconfig_users_nonce' ) ) {
 			wp_die( 'Security check failed.' );
 		}
 
@@ -38,15 +38,15 @@ class MyPlugin_Users_Admin {
 			wp_die( 'Permission denied.' );
 		}
 
-		$action = sanitize_text_field( $_POST['myplugin_users_action'] );
-		$args   = array( 'page' => 'myplugin-users' );
+		$action = sanitize_text_field( $_POST['codeconfig_users_action'] );
+		$args   = array( 'page' => 'codeconfig-users' );
 
 		if ( in_array( $action, array( 'bulk_activate', 'bulk_deactivate', 'bulk_delete' ), true ) && isset( $_POST['bulk_ids'] ) ) {
 			$bulk_ids = array_map( 'intval', (array) $_POST['bulk_ids'] );
 			$bulk_ids = array_filter( $bulk_ids );
 
 			if ( empty( $bulk_ids ) ) {
-				$args['myplugin_users_notice'] = 'no_items_selected';
+				$args['codeconfig_users_notice'] = 'no_items_selected';
 			} else {
 				foreach ( $bulk_ids as $id ) {
 					if ( 'bulk_delete' === $action ) {
@@ -57,7 +57,7 @@ class MyPlugin_Users_Admin {
 						MyPlugin_Users_DB::update_user( $id, array( 'is_active' => 0 ) );
 					}
 				}
-				$args['myplugin_users_notice'] = 'bulk_' . str_replace( 'bulk_', '', $action );
+				$args['codeconfig_users_notice'] = 'bulk_' . str_replace( 'bulk_', '', $action );
 			}
 			wp_safe_redirect( add_query_arg( $args, admin_url( 'admin.php' ) ) );
 			exit;
@@ -74,7 +74,7 @@ class MyPlugin_Users_Admin {
 			$domain = isset( $_POST['domain'] ) ? esc_url_raw( $_POST['domain'] ) : '';
 
 			if ( empty( $domain ) ) {
-				$args['myplugin_users_notice'] = 'missing_domain';
+				$args['codeconfig_users_notice'] = 'missing_domain';
 			} else {
 				if ( empty( $name ) && ! empty( $domain ) ) {
 					$name = self::generate_name_from_domain( $domain );
@@ -86,26 +86,26 @@ class MyPlugin_Users_Admin {
 					'domain'    => $domain,
 					'is_active' => 1,
 				) );
-				$args['myplugin_users_notice'] = 'user_added';
+				$args['codeconfig_users_notice'] = 'user_added';
 			}
 		}
 
 		if ( 'activate' === $action ) {
 			$id = (int) $_POST['id'];
 			MyPlugin_Users_DB::update_user( $id, array( 'is_active' => 1 ) );
-			$args['myplugin_users_notice'] = 'user_activated';
+			$args['codeconfig_users_notice'] = 'user_activated';
 		}
 
 		if ( 'deactivate' === $action ) {
 			$id = (int) $_POST['id'];
 			MyPlugin_Users_DB::update_user( $id, array( 'is_active' => 0 ) );
-			$args['myplugin_users_notice'] = 'user_deactivated';
+			$args['codeconfig_users_notice'] = 'user_deactivated';
 		}
 
 		if ( 'delete_user' === $action ) {
 			$id = (int) $_POST['id'];
 			MyPlugin_Users_DB::delete_user( $id );
-			$args['myplugin_users_notice'] = 'user_deleted';
+			$args['codeconfig_users_notice'] = 'user_deleted';
 		}
 
 		if ( 'edit_user' === $action ) {
@@ -115,14 +115,14 @@ class MyPlugin_Users_Admin {
 			$domain = isset( $_POST['domain'] ) ? esc_url_raw( $_POST['domain'] ) : '';
 
 			if ( empty( $name ) || empty( $email ) ) {
-				$args['myplugin_users_notice'] = 'missing_fields';
+				$args['codeconfig_users_notice'] = 'missing_fields';
 			} else {
 				MyPlugin_Users_DB::update_user( $id, array(
 					'name'   => $name,
 					'email'  => $email,
 					'domain' => $domain,
 				) );
-				$args['myplugin_users_notice'] = 'user_updated';
+				$args['codeconfig_users_notice'] = 'user_updated';
 			}
 		}
 
@@ -130,7 +130,7 @@ class MyPlugin_Users_Admin {
 			$id = (int) $_POST['id'];
 			$new_key = MyPlugin_Users_DB::generate_api_key();
 			MyPlugin_Users_DB::update_user( $id, array( 'api_key' => $new_key ) );
-			$args['myplugin_users_notice'] = 'key_regenerated';
+			$args['codeconfig_users_notice'] = 'key_regenerated';
 		}
 
 		wp_safe_redirect( add_query_arg( $args, admin_url( 'admin.php' ) ) );
@@ -168,9 +168,9 @@ class MyPlugin_Users_Admin {
 
 			<h2>Add New User</h2>
 			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-				<?php wp_nonce_field( 'myplugin_users_action', 'myplugin_users_nonce' ); ?>
-				<input type="hidden" name="action" value="myplugin_users_action" />
-				<input type="hidden" name="myplugin_users_action" value="add_user" />
+				<?php wp_nonce_field( 'codeconfig_users_action', 'codeconfig_users_nonce' ); ?>
+				<input type="hidden" name="action" value="codeconfig_users_action" />
+				<input type="hidden" name="codeconfig_users_action" value="add_user" />
 
 				<table class="form-table">
 					<tr>
@@ -195,7 +195,7 @@ class MyPlugin_Users_Admin {
 			<h2>Users List</h2>
 
 			<form method="get" action="">
-				<input type="hidden" name="page" value="myplugin-users" />
+				<input type="hidden" name="page" value="codeconfig-users" />
 				<p class="search-box">
 					<label for="user-search">Search Users:</label>
 					<input type="search" id="user-search" name="s" value="<?php echo esc_attr( $search ); ?>" placeholder="Name, email, or domain..." />
@@ -212,7 +212,7 @@ class MyPlugin_Users_Admin {
 					</select>
 					<button type="submit" class="button">Filter</button>
 					<?php if ( $search || '' !== $is_active || $domain ) : ?>
-						<a href="<?php echo esc_url( admin_url( 'admin.php?page=myplugin-users' ) ); ?>" class="button">Clear</a>
+						<a href="<?php echo esc_url( admin_url( 'admin.php?page=codeconfig-users' ) ); ?>" class="button">Clear</a>
 					<?php endif; ?>
 				</p>
 			</form>
@@ -222,12 +222,12 @@ class MyPlugin_Users_Admin {
 			$edit_user = $edit_id ? MyPlugin_Users_DB::get_user( $edit_id ) : null;
 			if ( $edit_user ) :
 			?>
-			<div id="myplugin-edit-user-form" style="background:#f9f9f9;padding:15px;margin-bottom:20px;border:1px solid #ccc;">
+			<div id="codeconfig-edit-user-form" style="background:#f9f9f9;padding:15px;margin-bottom:20px;border:1px solid #ccc;">
 				<h3>Edit User</h3>
 				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-					<?php wp_nonce_field( 'myplugin_users_action', 'myplugin_users_nonce' ); ?>
-					<input type="hidden" name="action" value="myplugin_users_action" />
-					<input type="hidden" name="myplugin_users_action" value="edit_user" />
+					<?php wp_nonce_field( 'codeconfig_users_action', 'codeconfig_users_nonce' ); ?>
+					<input type="hidden" name="action" value="codeconfig_users_action" />
+					<input type="hidden" name="codeconfig_users_action" value="edit_user" />
 					<input type="hidden" name="id" value="<?php echo (int) $edit_user['id']; ?>" />
 
 					<table class="form-table">
@@ -246,19 +246,19 @@ class MyPlugin_Users_Admin {
 					</table>
 
 					<?php submit_button( 'Update User' ); ?>
-					<a href="<?php echo esc_url( admin_url( 'admin.php?page=myplugin-users' ) ); ?>" class="button">Cancel</a>
+					<a href="<?php echo esc_url( admin_url( 'admin.php?page=codeconfig-users' ) ); ?>" class="button">Cancel</a>
 				</form>
 			</div>
 			<?php endif; ?>
-			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" id="myplugin-users-table-form">
-				<?php wp_nonce_field( 'myplugin_users_action', 'myplugin_users_nonce' ); ?>
-				<input type="hidden" name="action" value="myplugin_users_action" />
-				<input type="hidden" name="myplugin_users_action" id="bulk-action-type" value="" />
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" id="codeconfig-users-table-form">
+				<?php wp_nonce_field( 'codeconfig_users_action', 'codeconfig_users_nonce' ); ?>
+				<input type="hidden" name="action" value="codeconfig_users_action" />
+				<input type="hidden" name="codeconfig_users_action" id="bulk-action-type" value="" />
 
 				<div class="tablenav top">
 					<div class="alignleft actions bulkactions">
 						<label for="bulk-action-selector-top" class="screen-reader-text">Select bulk action</label>
-						<select name="myplugin_users_action" id="bulk-action-selector-top">
+						<select name="codeconfig_users_action" id="bulk-action-selector-top">
 							<option value="">Bulk Actions</option>
 							<option value="bulk_activate">Activate</option>
 							<option value="bulk_deactivate">Deactivate</option>
@@ -268,9 +268,9 @@ class MyPlugin_Users_Admin {
 					</div>
 					<div class="alignright">
 						<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display:inline;">
-							<?php wp_nonce_field( 'myplugin_users_action', 'myplugin_users_nonce' ); ?>
-							<input type="hidden" name="action" value="myplugin_users_action" />
-							<input type="hidden" name="myplugin_users_action" value="export_csv" />
+							<?php wp_nonce_field( 'codeconfig_users_action', 'codeconfig_users_nonce' ); ?>
+							<input type="hidden" name="action" value="codeconfig_users_action" />
+							<input type="hidden" name="codeconfig_users_action" value="export_csv" />
 							<button type="submit" class="button">Export CSV</button>
 						</form>
 					</div>
@@ -303,39 +303,39 @@ class MyPlugin_Users_Admin {
 								<td><?php echo esc_html( $u['name'] ); ?></td>
 								<td><?php echo esc_html( $u['email'] ); ?></td>
 								<td>
-									<code class="myplugin-api-key" id="api-key-<?php echo (int) $u['id']; ?>"><?php echo esc_html( substr( $u['api_key'], 0, 12 ) ) . '...'; ?></code>
-									<button type="button" class="button button-small myplugin-copy-key" data-key="<?php echo esc_attr( $u['api_key'] ); ?>">Copy</button>
+									<code class="codeconfig-api-key" id="api-key-<?php echo (int) $u['id']; ?>"><?php echo esc_html( substr( $u['api_key'], 0, 12 ) ) . '...'; ?></code>
+									<button type="button" class="button button-small codeconfig-copy-key" data-key="<?php echo esc_attr( $u['api_key'] ); ?>">Copy</button>
 								</td>
 								<td><?php echo esc_html( $u['domain'] ?? '—' ); ?></td>
-								<td><?php echo $u['is_active'] ? '<span class="myplugin-status-active">Active</span>' : '<span class="myplugin-status-inactive">Inactive</span>'; ?></td>
+								<td><?php echo $u['is_active'] ? '<span class="codeconfig-status-active">Active</span>' : '<span class="codeconfig-status-inactive">Inactive</span>'; ?></td>
 								<td><?php echo esc_html( $u['created_at'] ); ?></td>
 								<td><?php echo $u['last_used_at'] ? esc_html( $u['last_used_at'] ) : '—'; ?></td>
 								<td>
-									<a href="<?php echo esc_url( admin_url( 'admin.php?page=myplugin-users&edit=' . (int) $u['id'] ) ); ?>" class="button button-small">Edit</a>
+									<a href="<?php echo esc_url( admin_url( 'admin.php?page=codeconfig-users&edit=' . (int) $u['id'] ) ); ?>" class="button button-small">Edit</a>
 									<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display:inline;">
-										<?php wp_nonce_field( 'myplugin_users_action', 'myplugin_users_nonce' ); ?>
-										<input type="hidden" name="action" value="myplugin_users_action" />
-										<input type="hidden" name="myplugin_users_action" value="regenerate_key" />
+										<?php wp_nonce_field( 'codeconfig_users_action', 'codeconfig_users_nonce' ); ?>
+										<input type="hidden" name="action" value="codeconfig_users_action" />
+										<input type="hidden" name="codeconfig_users_action" value="regenerate_key" />
 										<input type="hidden" name="id" value="<?php echo (int) $u['id']; ?>" />
 										<button type="submit" class="button button-small" onclick="return confirm('Regenerate API key? Old key will stop working.');">Regen Key</button>
 									</form>
 									<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display:inline;">
-										<?php wp_nonce_field( 'myplugin_users_action', 'myplugin_users_nonce' ); ?>
-										<input type="hidden" name="action" value="myplugin_users_action" />
+										<?php wp_nonce_field( 'codeconfig_users_action', 'codeconfig_users_nonce' ); ?>
+										<input type="hidden" name="action" value="codeconfig_users_action" />
 										<?php if ( $u['is_active'] ) : ?>
-											<input type="hidden" name="myplugin_users_action" value="deactivate" />
+											<input type="hidden" name="codeconfig_users_action" value="deactivate" />
 											<input type="hidden" name="id" value="<?php echo (int) $u['id']; ?>" />
 											<button type="submit" class="button button-small">Deactivate</button>
 										<?php else : ?>
-											<input type="hidden" name="myplugin_users_action" value="activate" />
+											<input type="hidden" name="codeconfig_users_action" value="activate" />
 											<input type="hidden" name="id" value="<?php echo (int) $u['id']; ?>" />
 											<button type="submit" class="button button-small">Activate</button>
 										<?php endif; ?>
 									</form>
 									<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display:inline;">
-										<?php wp_nonce_field( 'myplugin_users_action', 'myplugin_users_nonce' ); ?>
-										<input type="hidden" name="action" value="myplugin_users_action" />
-										<input type="hidden" name="myplugin_users_action" value="delete_user" />
+										<?php wp_nonce_field( 'codeconfig_users_action', 'codeconfig_users_nonce' ); ?>
+										<input type="hidden" name="action" value="codeconfig_users_action" />
+										<input type="hidden" name="codeconfig_users_action" value="delete_user" />
 										<input type="hidden" name="id" value="<?php echo (int) $u['id']; ?>" />
 										<button type="submit" class="button button-small" onclick="return confirm('Delete this user?');">Delete</button>
 									</form>
@@ -369,7 +369,7 @@ class MyPlugin_Users_Admin {
 
 		<script>
 		jQuery( document ).ready( function( $ ) {
-			$( '.myplugin-copy-key' ).on( 'click', function() {
+			$( '.codeconfig-copy-key' ).on( 'click', function() {
 				var key = $( this ).data( 'key' );
 				if ( navigator.clipboard ) {
 					navigator.clipboard.writeText( key ).then( function() {
@@ -421,7 +421,7 @@ class MyPlugin_Users_Admin {
 		}
 
 		header( 'Content-Type: text/csv; charset=utf-8' );
-		header( 'Content-Disposition: attachment; filename=myplugin-users-' . date( 'Y-m-d' ) . '.csv' );
+		header( 'Content-Disposition: attachment; filename=codeconfig-users-' . date( 'Y-m-d' ) . '.csv' );
 
 		$output = fopen( 'php://output', 'w' );
 
@@ -446,11 +446,11 @@ class MyPlugin_Users_Admin {
 
 	private static function maybe_show_notice() {
 
-		if ( ! isset( $_GET['myplugin_users_notice'] ) ) {
+		if ( ! isset( $_GET['codeconfig_users_notice'] ) ) {
 			return;
 		}
 
-		$notice  = sanitize_text_field( $_GET['myplugin_users_notice'] );
+		$notice  = sanitize_text_field( $_GET['codeconfig_users_notice'] );
 		$type    = 'info';
 		$message = '';
 

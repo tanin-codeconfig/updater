@@ -4,17 +4,17 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
-class MyPlugin_Ajax
+class CodeConfig_Ajax
 {
     public static function init()
     {
-        add_action('wp_ajax_my_plugin_manual_check', array( __CLASS__, 'handle_manual_check' ));
+        add_action('wp_ajax_codeconfig_manual_check', array( __CLASS__, 'handle_manual_check' ));
     }
 
     public static function handle_manual_check()
     {
 
-        if (! check_ajax_referer('my_plugin_check_nonce', 'nonce', false)) {
+        if (! check_ajax_referer('codeconfig_check_nonce', 'nonce', false)) {
             wp_send_json_error(array(
                 'message' => 'Security check failed.',
             ));
@@ -26,7 +26,7 @@ class MyPlugin_Ajax
             ));
         }
 
-        if (my_plugin_is_pro()) {
+        if (codeconfig_is_pro()) {
             wp_send_json_success(array(
                 'update_available' => false,
                 'message'          => 'Updates are managed by Freemius.',
@@ -37,23 +37,23 @@ class MyPlugin_Ajax
         self::clear_update_transient();
 
         // Use the new force check method
-        MyPlugin_Updater::force_check_for_update();
+        CodeConfig_Updater::force_check_for_update();
 
-        $result = get_option('my_plugin_check_result', array());
+        $result = get_option('codeconfig_check_result', array());
 
         if (empty($result)) {
             $result = self::check_api();
         }
 
         if (is_wp_error($result)) {
-            update_option('my_plugin_api_status', 'error');
+            update_option('codeconfig_api_status', 'error');
             wp_send_json_error(array(
                 'message' => $result->get_error_message(),
             ));
         }
 
-        update_option('my_plugin_api_status', 'connected');
-        update_option('my_plugin_last_check', time());
+        update_option('codeconfig_api_status', 'connected');
+        update_option('codeconfig_last_check', time());
 
         wp_send_json_success(array(
             'update_available' => ! empty($result['update']),
@@ -70,18 +70,18 @@ class MyPlugin_Ajax
 
     public static function check_api()
     {
-        return self::check_api_for_version(MY_PLUGIN_VERSION);
+        return self::check_api_for_version(CODECONFIG_VERSION);
     }
 
     public static function check_api_for_version($version)
     {
 
-        $api_url = my_plugin_config('api_url') . '/update-check';
-        $api_key = my_plugin_get_api_key();
+        $api_url = codeconfig_config('api_url') . '/update-check';
+        $api_key = codeconfig_get_api_key();
 
         $params = array(
             'version' => $version,
-            'slug'    => my_plugin_config('slug'),
+            'slug'    => codeconfig_config('slug'),
             'domain'  => site_url(),
         );
 
@@ -89,8 +89,8 @@ class MyPlugin_Ajax
             $params['api_key'] = $api_key;
         }
 
-        $name = get_option('my_plugin_name', '');
-        $email = get_option('my_plugin_email', '');
+        $name = get_option('codeconfig_name', '');
+        $email = get_option('codeconfig_email', '');
 
         if (! empty($name)) {
             $params['name'] = $name;
@@ -131,8 +131,8 @@ class MyPlugin_Ajax
         }
 
         if (! empty($data['user_created']) && ! empty($data['api_key'])) {
-            my_plugin_update_api_key($data['api_key']);
-            do_action('my_plugin_api_key_updated', $data['api_key']);
+            codeconfig_update_api_key($data['api_key']);
+            do_action('codeconfig_api_key_updated', $data['api_key']);
         }
 
         return $data;
@@ -140,7 +140,7 @@ class MyPlugin_Ajax
 
     public static function get_last_check()
     {
-        $timestamp = get_option('my_plugin_last_check');
+        $timestamp = get_option('codeconfig_last_check');
 
         if (! $timestamp) {
             return null;
@@ -148,14 +148,14 @@ class MyPlugin_Ajax
 
         return array(
             'time'   => $timestamp,
-            'result' => get_option('my_plugin_check_result', array()),
+            'result' => get_option('codeconfig_check_result', array()),
         );
     }
 
     public static function force_clear_cache()
     {
-        delete_option('my_plugin_last_check');
-        delete_option('my_plugin_check_result');
-        delete_option('my_plugin_api_status');
+        delete_option('codeconfig_last_check');
+        delete_option('codeconfig_check_result');
+        delete_option('codeconfig_api_status');
     }
 }

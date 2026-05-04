@@ -4,7 +4,7 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
-class MyPlugin_Config
+class CodeConfig_Config
 {
     private static $config = array();
 
@@ -22,8 +22,8 @@ class MyPlugin_Config
     private static function load_config()
     {
         if (empty(self::$config)) {
-            self::$config = apply_filters('my_plugin_config', array(
-                'api_url'   => 'http://localhost:10078/wp-json/myplugin/v1',
+            self::$config = apply_filters('codeconfig_config', array(
+                'api_url'   => 'http://localhost:10078/wp-json/codeconfig/v1',
                 'slug'      => 'my-plugin',
                 'basename'  => 'my-plugin/my-plugin.php',
                 'version'   => '1.0.20',
@@ -49,17 +49,17 @@ class MyPlugin_Config
 
     public static function get_option($option_name, $default = '')
     {
-        return get_option('my_plugin_' . $option_name, $default);
+        return get_option('codeconfig_' . $option_name, $default);
     }
 
     public static function update_option($option_name, $value)
     {
-        return update_option('my_plugin_' . $option_name, $value);
+        return update_option('codeconfig_' . $option_name, $value);
     }
 
     public static function delete_option($option_name)
     {
-        return delete_option('my_plugin_' . $option_name);
+        return delete_option('codeconfig_' . $option_name);
     }
 
     public static function get_api_key()
@@ -94,34 +94,34 @@ class MyPlugin_Config
 
     public static function get_version()
     {
-        return defined('MY_PLUGIN_VERSION') ? MY_PLUGIN_VERSION : '1.0.0';
+        return defined('CODECONFIG_VERSION') ? CODECONFIG_VERSION : '1.0.0';
     }
 }
 
-function my_plugin_config($key = null, $default = '')
+function codeconfig_config($key = null, $default = '')
 {
     if ($key === null) {
-        return MyPlugin_Config::get('api_url');
+        return CodeConfig_Config::get('api_url');
     }
-    return MyPlugin_Config::get($key, $default);
+    return CodeConfig_Config::get($key, $default);
 }
 
-function my_plugin_get_api_key()
+function codeconfig_get_api_key()
 {
-    return MyPlugin_Config::get_api_key();
+    return CodeConfig_Config::get_api_key();
 }
 
-function my_plugin_update_api_key($key)
+function codeconfig_update_api_key($key)
 {
-    return MyPlugin_Config::set_api_key($key);
+    return CodeConfig_Config::set_api_key($key);
 }
 
-function my_plugin_get_name()
+function codeconfig_get_name()
 {
-    return MyPlugin_Config::get_name();
+    return CodeConfig_Config::get_name();
 }
 
-function my_plugin_get_email()
+function codeconfig_get_email()
 {
-    return MyPlugin_Config::get_email();
+    return CodeConfig_Config::get_email();
 }

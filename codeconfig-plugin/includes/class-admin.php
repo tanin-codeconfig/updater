@@ -3,28 +3,28 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
-class MyPlugin_Admin
+class CodeConfig_Admin
 {
     public static function init()
     {
         add_action('admin_menu', array( __CLASS__, 'add_menu' ));
         add_action('admin_enqueue_scripts', array( __CLASS__, 'enqueue_assets' ));
-        add_action('wp_ajax_my_plugin_force_refresh', array( __CLASS__, 'handle_force_refresh' ));
-        add_action('wp_ajax_my_plugin_test_connection', array( __CLASS__, 'handle_test_connection' ));
+        add_action('wp_ajax_codeconfig_force_refresh', array( __CLASS__, 'handle_force_refresh' ));
+        add_action('wp_ajax_codeconfig_test_connection', array( __CLASS__, 'handle_test_connection' ));
         add_action('admin_init', array( __CLASS__, 'register_settings' ));
     }
 
     public static function register_settings()
     {
-        register_setting('my-plugin-settings', 'my_plugin_api_key');
-        register_setting('my-plugin-settings', 'my_plugin_name');
-        register_setting('my-plugin-settings', 'my_plugin_email');
+        register_setting('my-plugin-settings', 'codeconfig_api_key');
+        register_setting('my-plugin-settings', 'codeconfig_name');
+        register_setting('my-plugin-settings', 'codeconfig_email');
     }
 
     public static function add_plugin_action_links($links)
     {
 
-        if (my_plugin_is_pro()) {
+        if (codeconfig_is_pro()) {
             return $links;
         }
 
@@ -58,35 +58,35 @@ class MyPlugin_Admin
 
         wp_enqueue_script(
             'my-plugin-admin-js',
-            MY_PLUGIN_URL . 'assets/js/admin.js',
+            CODECONFIG_URL . 'assets/js/admin.js',
             array( 'jquery' ),
-            MY_PLUGIN_VERSION,
+            CODECONFIG_VERSION,
             true
         );
 
         wp_localize_script('my-plugin-admin-js', 'myPluginAdmin', array(
             'ajaxUrl'    => admin_url('admin-ajax.php'),
-            'nonce'      => wp_create_nonce('my_plugin_check_nonce'),
+            'nonce'      => wp_create_nonce('codeconfig_check_nonce'),
             'checking'   => 'Checking...',
             'checkBtn'   => 'Check for Updates',
         ));
 
         wp_enqueue_style(
             'my-plugin-admin-css',
-            MY_PLUGIN_URL . 'assets/css/admin.css',
+            CODECONFIG_URL . 'assets/css/admin.css',
             array(),
-            MY_PLUGIN_VERSION
+            CODECONFIG_VERSION
         );
     }
 
     public static function render_page()
     {
 
-        $is_pro     = my_plugin_is_pro();
-        $api_status = get_option('my_plugin_api_status', 'unknown');
-        $last_check = MyPlugin_Ajax::get_last_check();
+        $is_pro     = codeconfig_is_pro();
+        $api_status = get_option('codeconfig_api_status', 'unknown');
+        $last_check = CodeConfig_Ajax::get_last_check();
         // Use cached data from cron job instead of calling API on every page load
-        $api_data   = $is_pro ? array() : get_option('my_plugin_check_result', array());
+        $api_data   = $is_pro ? array() : get_option('codeconfig_check_result', array());
 
         self::maybe_update_plugin();
         self::render_notices();
@@ -111,16 +111,16 @@ class MyPlugin_Admin
     {
         // Only used for manual "Check for Updates" button via AJAX
         // Page loads now use cached data from cron
-        $result = MyPlugin_Ajax::check_api();
+        $result = CodeConfig_Ajax::check_api();
 
         if (is_wp_error($result)) {
-            update_option('my_plugin_api_status', 'error');
+            update_option('codeconfig_api_status', 'error');
             return array( 'update' => false, 'error' => $result->get_error_message() );
         }
 
-        update_option('my_plugin_api_status', 'connected');
-        update_option('my_plugin_last_check', time());
-        update_option('my_plugin_check_result', $result);
+        update_option('codeconfig_api_status', 'connected');
+        update_option('codeconfig_last_check', time());
+        update_option('codeconfig_check_result', $result);
 
         return $result;
     }
@@ -128,14 +128,14 @@ class MyPlugin_Admin
     private static function render_notices()
     {
 
-        if (isset($_GET['my_plugin_update_done'])) {
+        if (isset($_GET['codeconfig_update_done'])) {
             echo '<div class="notice notice-success is-dismissible"><p>Plugin updated successfully! New version is now active.</p></div>';
         }
 
-        if (isset($_GET['my_plugin_update_error'])) {
+        if (isset($_GET['codeconfig_update_error'])) {
             printf(
                 '<div class="notice notice-error is-dismissible"><p>Update failed: %s</p></div>',
-                esc_html(sanitize_text_field($_GET['my_plugin_update_error']))
+                esc_html(sanitize_text_field($_GET['codeconfig_update_error']))
             );
         }
     }
@@ -143,11 +143,11 @@ class MyPlugin_Admin
     public static function maybe_update_plugin()
     {
 
-        if (! isset($_GET['my_plugin_do_update']) || ! isset($_GET['update_nonce'])) {
+        if (! isset($_GET['codeconfig_do_update']) || ! isset($_GET['update_nonce'])) {
             return;
         }
 
-        if (! wp_verify_nonce($_GET['update_nonce'], 'my_plugin_do_update')) {
+        if (! wp_verify_nonce($_GET['update_nonce'], 'codeconfig_do_update')) {
             wp_die('Security check failed.');
         }
 
@@ -155,12 +155,12 @@ class MyPlugin_Admin
             wp_die('Permission denied.');
         }
 
-        $api_data = MyPlugin_Ajax::check_api();
+        $api_data = CodeConfig_Ajax::check_api();
 
         if (is_wp_error($api_data) || empty($api_data['update'])) {
             wp_redirect(add_query_arg(array(
                 'page'                   => 'my-plugin-status',
-                'my_plugin_update_error' => 'No update available or API error.',
+                'codeconfig_update_error' => 'No update available or API error.',
             ), admin_url('admin.php')));
             exit;
         }
@@ -171,8 +171,8 @@ class MyPlugin_Admin
         require_once ABSPATH . 'wp-admin/includes/class-plugin-upgrader.php';
         require_once ABSPATH . 'wp-admin/includes/plugin.php';
 
-        $basename = my_plugin_config('basename');
-        $slug = my_plugin_config('slug');
+        $basename = codeconfig_config('basename');
+        $slug = codeconfig_config('slug');
 
         deactivate_plugins($basename);
 
@@ -193,23 +193,23 @@ class MyPlugin_Admin
             activate_plugin($basename, '', false, true);
             wp_redirect(add_query_arg(array(
                 'page'                   => 'my-plugin-status',
-                'my_plugin_update_error' => $result->get_error_message(),
+                'codeconfig_update_error' => $result->get_error_message(),
             ), admin_url('admin.php')));
             exit;
         }
 
-        $basename = my_plugin_config('basename');
+        $basename = codeconfig_config('basename');
 
         activate_plugin($basename, '', false, true);
 
         delete_site_transient('update_plugins');
-        delete_option('my_plugin_check_result');
-        delete_option('my_plugin_api_status');
-        delete_option('my_plugin_last_check');
+        delete_option('codeconfig_check_result');
+        delete_option('codeconfig_api_status');
+        delete_option('codeconfig_last_check');
 
         wp_redirect(add_query_arg(array(
             'page'                 => 'my-plugin-status',
-            'my_plugin_update_done' => '1',
+            'codeconfig_update_done' => '1',
         ), admin_url('admin.php')));
         exit;
     }
@@ -248,7 +248,7 @@ class MyPlugin_Admin
 				<tbody>
 					<tr>
 						<th>Current Version</th>
-						<td><code><?php echo esc_html(MY_PLUGIN_VERSION); ?></code></td>
+						<td><code><?php echo esc_html(CODECONFIG_VERSION); ?></code></td>
 					</tr>
 					<?php if ($new_version) : ?>
 						<tr>
@@ -261,7 +261,7 @@ class MyPlugin_Admin
 						<td>
 							<span class="my-plugin-status-badge <?php echo esc_attr($status_class); ?>"><?php echo esc_html($status_icon); ?> <?php echo esc_html($status_text); ?></span>
 							<?php if ($has_update) : ?>
-								<a href="<?php echo esc_url(wp_nonce_url(add_query_arg('my_plugin_do_update', '1', admin_url('admin.php?page=my-plugin-status')), 'my_plugin_do_update', 'update_nonce')); ?>" class="button button-primary" style="margin-left:10px;">Update Now to <?php echo esc_html($new_version); ?></a>
+								<a href="<?php echo esc_url(wp_nonce_url(add_query_arg('codeconfig_do_update', '1', admin_url('admin.php?page=my-plugin-status')), 'codeconfig_do_update', 'update_nonce')); ?>" class="button button-primary" style="margin-left:10px;">Update Now to <?php echo esc_html($new_version); ?></a>
 							<?php endif; ?>
 						</td>
 					</tr>
@@ -294,9 +294,9 @@ class MyPlugin_Admin
 
     private static function render_actions($api_data = array())
     {
-        $api_key      = get_option('my_plugin_api_key', '');
-        $name         = get_option('my_plugin_name', '');
-        $email        = get_option('my_plugin_email', '');
+        $api_key      = get_option('codeconfig_api_key', '');
+        $name         = get_option('codeconfig_name', '');
+        $email        = get_option('codeconfig_email', '');
         ?>
 		<div class="card my-plugin-actions-card">
 			<h2>Actions</h2>
@@ -319,23 +319,23 @@ class MyPlugin_Admin
 				<?php settings_fields('my-plugin-settings'); ?>
 				<table class="form-table">
 					<tr>
-						<th><label for="my_plugin_name">Name (optional)</label></th>
+						<th><label for="codeconfig_name">Name (optional)</label></th>
 						<td>
-							<input type="text" id="my_plugin_name" name="my_plugin_name" class="regular-text" value="<?php echo esc_attr($name); ?>" placeholder="Your name or site name" />
+							<input type="text" id="codeconfig_name" name="codeconfig_name" class="regular-text" value="<?php echo esc_attr($name); ?>" placeholder="Your name or site name" />
 							<p class="description">This helps identify your site on the API server.</p>
 						</td>
 					</tr>
 					<tr>
-						<th><label for="my_plugin_email">Email (optional)</label></th>
+						<th><label for="codeconfig_email">Email (optional)</label></th>
 						<td>
-							<input type="email" id="my_plugin_email" name="my_plugin_email" class="regular-text" value="<?php echo esc_attr($email); ?>" placeholder="your@email.com" />
+							<input type="email" id="codeconfig_email" name="codeconfig_email" class="regular-text" value="<?php echo esc_attr($email); ?>" placeholder="your@email.com" />
 							<p class="description">Your contact email for update notifications.</p>
 						</td>
 					</tr>
 					<tr>
-						<th><label for="my_plugin_api_key">API Key</label></th>
+						<th><label for="codeconfig_api_key">API Key</label></th>
 						<td>
-							<input type="text" id="my_plugin_api_key" name="my_plugin_api_key" class="regular-text" value="<?php echo esc_attr($api_key); ?>" placeholder="Paste your API key here" />
+							<input type="text" id="codeconfig_api_key" name="codeconfig_api_key" class="regular-text" value="<?php echo esc_attr($api_key); ?>" placeholder="Paste your API key here" />
 							<p class="description">Get this key from MyPlugin API → Users → Copy. If empty, a new user will be created automatically.</p>
 						</td>
 					</tr>
@@ -369,7 +369,7 @@ class MyPlugin_Admin
 				<tbody>
 					<tr>
 						<th>API URL</th>
-						<td><code><?php echo esc_html(my_plugin_config('api_url')); ?></code></td>
+						<td><code><?php echo esc_html(codeconfig_config('api_url')); ?></code></td>
 					</tr>
 					<tr>
 						<th>Status</th>
@@ -418,7 +418,7 @@ class MyPlugin_Admin
     public static function handle_force_refresh()
     {
 
-        if (! check_ajax_referer('my_plugin_check_nonce', 'nonce', false)) {
+        if (! check_ajax_referer('codeconfig_check_nonce', 'nonce', false)) {
             wp_send_json_error(array( 'message' => 'Security check failed.' ));
         }
 
@@ -426,7 +426,7 @@ class MyPlugin_Admin
             wp_send_json_error(array( 'message' => 'Permission denied.' ));
         }
 
-        MyPlugin_Ajax::force_clear_cache();
+        CodeConfig_Ajax::force_clear_cache();
         delete_site_transient('update_plugins');
 
         wp_send_json_success(array(
@@ -437,20 +437,20 @@ class MyPlugin_Admin
     public static function handle_test_connection()
     {
 
-        if (! check_ajax_referer('my_plugin_check_nonce', 'nonce', false)) {
+        if (! check_ajax_referer('codeconfig_check_nonce', 'nonce', false)) {
             wp_send_json_error(array( 'message' => 'Security check failed.' ));
         }
 
-        $result = MyPlugin_Ajax::check_api();
+        $result = CodeConfig_Ajax::check_api();
 
         if (is_wp_error($result)) {
-            update_option('my_plugin_api_status', 'error');
+            update_option('codeconfig_api_status', 'error');
             wp_send_json_error(array(
                 'message' => $result->get_error_message(),
             ));
         }
 
-        update_option('my_plugin_api_status', 'connected');
+        update_option('codeconfig_api_status', 'connected');
         wp_send_json_success(array(
             'message' => 'Connection successful!',
         ));

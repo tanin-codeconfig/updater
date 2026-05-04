@@ -3,16 +3,16 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-require_once MYPLUGIN_API_PATH . 'includes/class-update-check.php';
+require_once CODECONFIG_API_PATH . 'includes/class-update-check.php';
 
-class MyPlugin_Routes {
+class CodeConfig_Routes {
 
 	public static function register_routes() {
 
-		register_rest_route( 'myplugin/v1', '/update-check', array(
+		register_rest_route( 'codeconfig/v1', '/update-check', array(
 			'methods'             => 'GET',
-			'callback'            => array( 'MyPlugin_Update_Check', 'handle' ),
-			'permission_callback' => array( 'MyPlugin_Routes', 'public_access' ),
+			'callback'            => array( 'CodeConfig_Update_Check', 'handle' ),
+			'permission_callback' => array( 'CodeConfig_Routes', 'public_access' ),
 			'args'                => array(
 				'version' => array(
 					'required'    => true,
@@ -29,10 +29,10 @@ class MyPlugin_Routes {
 			),
 		) );
 
-		register_rest_route( 'myplugin/v1', '/latest-download', array(
+		register_rest_route( 'codeconfig/v1', '/latest-download', array(
 			'methods'             => 'GET',
-			'callback'            => array( 'MyPlugin_Routes', 'handle_latest_download' ),
-			'permission_callback' => array( 'MyPlugin_Routes', 'public_access' ),
+			'callback'            => array( 'CodeConfig_Routes', 'handle_latest_download' ),
+			'permission_callback' => array( 'CodeConfig_Routes', 'public_access' ),
 			'args'                => array(
 				'slug' => array(
 					'default'     => 'my-plugin',
@@ -45,7 +45,7 @@ class MyPlugin_Routes {
 	public static function handle_latest_download( $request ) {
 		$slug = $request->get_param( 'slug' );
 
-		$latest = MyPlugin_Version_DB::get_active_version( $slug );
+		$latest = CodeConfig_Version_DB::get_active_version( $slug );
 
 		if ( ! $latest || empty( $latest['download_path'] ) ) {
 			return new WP_REST_Response( array(
@@ -58,7 +58,7 @@ class MyPlugin_Routes {
 
 		if ( ! file_exists( $file_path ) ) {
 			// Try constructing path from storage dir
-			$file_path = MYPLUGIN_API_STORAGE . $slug . '-v' . $latest['version'] . '.zip';
+			$file_path = CODECONFIG_API_STORAGE . $slug . '-v' . $latest['version'] . '.zip';
 		}
 
 		if ( ! file_exists( $file_path ) ) {
