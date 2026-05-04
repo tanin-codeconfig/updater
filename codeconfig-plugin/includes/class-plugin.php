@@ -46,14 +46,15 @@ class CodeConfig
 
     private function load_classes()
     {
-        // Debug output
-        error_log('=== CodeConfig Plugin Loading ===');
-        error_log('CODECONFIG_PATH: ' . CODECONFIG_PATH);
-        error_log('CODECONFIG_URL: ' . CODECONFIG_URL);
-        error_log('CODECONFIG_BASENAME: ' . CODECONFIG_BASENAME);
-
+        $log_file = WP_CONTENT_DIR . '/codeconfig-debug.log';
+        $log = "=== CodeConfig Plugin Loading ===\n";
+        $log .= 'CODECONFIG_PATH: ' . CODECONFIG_PATH . "\n";
+        $log .= 'CODECONFIG_URL: ' . CODECONFIG_URL . "\n";
+        $log .= 'CODECONFIG_BASENAME: ' . CODECONFIG_BASENAME . "\n";
+        
         if (file_exists(CODECONFIG_PATH . 'freemius.php')) {
             require_once CODECONFIG_PATH . 'freemius.php';
+            $log .= "freemius.php loaded\n";
         }
 
         if (! function_exists('codeconfig_is_pro')) {
@@ -65,15 +66,16 @@ class CodeConfig
 
         if (! codeconfig_is_pro()) {
             $updater_path = CODECONFIG_PATH . 'updater/index.php';
-            error_log('Looking for updater at: ' . $updater_path);
-            error_log('File exists: ' . (file_exists($updater_path) ? 'YES' : 'NO'));
+            $log .= "Looking for updater at: $updater_path\n";
+            $log .= "File exists: " . (file_exists($updater_path) ? 'YES' : 'NO') . "\n";
 
             if (file_exists($updater_path)) {
                 require_once $updater_path;
+                $log .= "updater/index.php loaded\n";
             }
 
             if (function_exists('ccupd')) {
-                error_log('ccupd() called');
+                $log .= "ccupd() called\n";
                 ccupd(array(
                     'api_url'   => 'http://localhost:10078/wp-json/codeconfig/v1',
                     'slug'      => 'codeconfig-plugin',
@@ -82,10 +84,15 @@ class CodeConfig
                     'name'      => 'CodeConfig Plugin',
                     'show_admin_page' => true,
                 ));
+                $log .= "ccupd() done\n";
             } else {
-                error_log('ERROR: ccupd() function not found!');
+                $log .= "ERROR: ccupd() function not found!\n";
             }
+        } else {
+            $log .= "Is PRO mode, skipping updater\n";
         }
+        
+        file_put_contents($log_file, $log);
     }
 
     public function load_textdomain()
