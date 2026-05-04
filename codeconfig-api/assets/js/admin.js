@@ -351,6 +351,15 @@
 			}
 		});
 
+		// Click on drop zone to open file browser
+		dropZone.on( 'click', function( e ) {
+			// Don't trigger if clicking on the "Select from Media Library" button
+			if ( e.target.id === 'codeconfig-select-media' || $( e.target ).closest( '#codeconfig-select-media' ).length ) {
+				return;
+			}
+			$( '#plugin_zip' ).trigger( 'click' );
+		});
+
 		// Confirm bulk action
 		window.confirmBulkAction = function() {
 			var action = $( '#bulk-action-selector' ).val();
