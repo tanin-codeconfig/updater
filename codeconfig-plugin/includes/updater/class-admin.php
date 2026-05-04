@@ -68,16 +68,14 @@ class CodeConfig_Updater_Admin
 
     public static function enqueue_assets($hook)
     {
+        // Always load on plugins.php page for the "Check for Updates" link
+        // Also load on our admin page if it exists
         $show_admin_page = ccupd_config('show_admin_page', false);
         $parent_slug = 'codeconfig-plugin-main';
+        $expected_hook = 'toplevel_page_' . $parent_slug;
 
-        if ($show_admin_page) {
-            $expected_hook = 'toplevel_page_' . $parent_slug;
-        } else {
-            $expected_hook = 'toplevel_page_' . $parent_slug;
-        }
-
-        if ($expected_hook !== $hook && 'plugins.php' !== $hook) {
+        // Load assets on plugins.php page OR on our admin page
+        if ($hook !== 'plugins.php' && $hook !== $expected_hook) {
             return;
         }
 
