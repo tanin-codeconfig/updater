@@ -46,32 +46,44 @@ class CodeConfig
 
     private function load_classes()
     {
+        // Debug output
+        error_log('=== CodeConfig Plugin Loading ===');
+        error_log('CODECONFIG_PATH: ' . CODECONFIG_PATH);
+        error_log('CODECONFIG_URL: ' . CODECONFIG_URL);
+        error_log('CODECONFIG_BASENAME: ' . CODECONFIG_BASENAME);
+
         if (file_exists(CODECONFIG_PATH . 'freemius.php')) {
             require_once CODECONFIG_PATH . 'freemius.php';
         }
 
         if (! function_exists('codeconfig_is_pro')) {
-            function codeconfig_is_pro() {
+            function codeconfig_is_pro()
+            {
                 return defined('CODECONFIG_PRO_ACTIVE') && CODECONFIG_PRO_ACTIVE;
             }
         }
 
         if (! codeconfig_is_pro()) {
             $updater_path = CODECONFIG_PATH . 'updater/index.php';
-            
+            error_log('Looking for updater at: ' . $updater_path);
+            error_log('File exists: ' . (file_exists($updater_path) ? 'YES' : 'NO'));
+
             if (file_exists($updater_path)) {
                 require_once $updater_path;
             }
 
             if (function_exists('ccupd')) {
+                error_log('ccupd() called');
                 ccupd(array(
                     'api_url'   => 'http://localhost:10078/wp-json/codeconfig/v1',
                     'slug'      => 'codeconfig-plugin',
                     'basename'  => 'codeconfig-plugin/codeconfig-plugin.php',
                     'version'   => '1.0.20',
                     'name'      => 'CodeConfig Plugin',
-                    'show_admin_page' => false,
+                    'show_admin_page' => true,
                 ));
+            } else {
+                error_log('ERROR: ccupd() function not found!');
             }
         }
     }
