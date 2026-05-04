@@ -3,9 +3,15 @@
 
 	$( document ).ready( function() {
 
+		console.log('CodeConfig Admin JS loaded');
+		console.log('codeconfigPluginAdmin:', codeconfigPluginAdmin);
+
 		var checkBtn = $( '#codeconfig-plugin-check-btn' );
 		var refreshBtn = $( '#codeconfig-plugin-refresh-btn' );
 		var testBtn = $( '#codeconfig-plugin-test-btn' );
+		var pluginRowBtn = $( '#codeconfig-plugin-row-check' );
+
+		console.log('Buttons found - checkBtn:', !!checkBtn.length, 'refreshBtn:', !!refreshBtn.length, 'testBtn:', !!testBtn.length, 'pluginRowBtn:', !!pluginRowBtn.length);
 
 		if ( checkBtn.length ) {
 			checkBtn.on( 'click', function() {
@@ -94,6 +100,8 @@
 		if ( pluginRowBtn.length ) {
 			pluginRowBtn.on( 'click', function( e ) {
 				e.preventDefault();
+				console.log('Plugin row button clicked');
+				console.log('REST URL:', codeconfigPluginAdmin.restUrl);
 
 				var btn = $( this );
 				var originalText = btn.text();
@@ -107,6 +115,7 @@
 						xhr.setRequestHeader( 'X-WP-Nonce', codeconfigPluginAdmin.nonce );
 					},
 				} ).done( function( response ) {
+					console.log('Response:', response);
 					if ( response.update_available ) {
 						window.location.reload();
 					} else {
@@ -117,7 +126,8 @@
 							$( '.notice.is-dismissible' ).fadeOut();
 						}, 5000 );
 					}
-				} ).fail( function() {
+				} ).fail( function( jqXHR, textStatus, errorThrown ) {
+					console.log('AJAX Error:', textStatus, errorThrown);
 					btn.html( originalText ).removeClass( 'disabled' ).css( 'pointer-events', '' );
 					var notice = '<div class="notice notice-error is-dismissible" style="margin:10px 5px;"><p>Request failed. Try again.</p></div>';
 					btn.closest( 'tr' ).after( notice );
