@@ -47,10 +47,14 @@ class CodeConfig
 
     private function load_classes()
     {
-        require_once CODECONFIG_PATH . 'includes/freemius.php';
+        if (file_exists(CODECONFIG_PATH . 'freemius.php')) {
+            require_once CODECONFIG_PATH . 'freemius.php';
+        }
 
         if (! codeconfig_is_pro()) {
-            require_once CODECONFIG_PATH . 'includes/updater/index.php';
+            if (file_exists(CODECONFIG_PATH . 'updater/index.php')) {
+                require_once CODECONFIG_PATH . 'updater/index.php';
+            }
 
             ccupd(array(
                 'api_url'   => 'http://localhost:10078/wp-json/codeconfig/v1',
