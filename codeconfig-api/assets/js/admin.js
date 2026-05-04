@@ -148,9 +148,13 @@
 			$( document ).on( 'click', '.codeconfig-edit-btn', function() {
 				var btn = $( this );
 				var id = btn.data( 'id' );
+				console.log('Edit button clicked, id:', id);
+				console.log('codeconfigAdmin.versions:', codeconfigAdmin.versions);
 				var data = codeconfigAdmin.versions && codeconfigAdmin.versions[ id ];
 
 				if ( ! data ) {
+					console.log('No data found for id:', id);
+					alert('No version data found. ID: ' + id);
 					return;
 				}
 
