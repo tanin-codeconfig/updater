@@ -22,8 +22,7 @@ class CodeConfig_Updater_Admin
 
     public static function add_plugin_action_links($links)
     {
-
-        if (codeconfig_is_pro()) {
+        if (ccupd_config('is_pro', false)) {
             return $links;
         }
 
@@ -37,36 +36,39 @@ class CodeConfig_Updater_Admin
 
     public static function add_menu()
     {
-        $plugin_name = ccupd_config('name', 'CodeConfig Plugin');
-        $menu_slug   = 'codeconfig-plugin-main';
-
-        add_menu_page(
-            $plugin_name,
-            $plugin_name,
-            'manage_options',
-            $menu_slug,
-            '__return_null',
-            'dashicons-update',
-            31
-        );
-
         $show_admin_page = ccupd_config('show_admin_page', false);
+        $menu_config = ccupd_config('menu', array());
+        $plugin_name = ccupd_config('name', 'CodeConfig Plugin');
 
-        if ($show_admin_page) {
-            add_submenu_page(
-                $menu_slug,
-                __('Update Status', 'codeconfig-plugin'),
-                __('Update Status', 'codeconfig-plugin'),
-                'manage_options',
-                'codeconfig-plugin-status',
-                array( __CLASS__, 'render_page' )
-            );
+        if (! $show_admin_page) {
+            return;
         }
 
-        remove_submenu_page($menu_slug, $menu_slug);
+        $menu_slug = ccupd_config('slug', 'codeconfig-plugin') . '-status';
+        
+        if (! empty($menu_config['parent_slug'])) {
+            add_submenu_page(
+                $menu_config['parent_slug'],
+                ! empty($menu_config['page_title']) ? $menu_config['page_title'] : $plugin_name . ' Updates',
+                ! empty($menu_config['menu_title']) ? $menu_config['menu_title'] : 'Updates',
+                'manage_options',
+                $menu_slug,
+                array( __CLASS__, 'render_page' )
+            );
+        } else {
+            add_menu_page(
+                $plugin_name . ' Updates',
+                $plugin_name,
+                'manage_options',
+                $menu_slug,
+                array( __CLASS__, 'render_page' ),
+                'dashicons-update',
+                31
+            );
+        }
     }
 
-public static function enqueue_assets($hook)
+    public static function enqueue_assets($hook)
     {
         // Load on plugins.php page AND all codeconfig plugin admin pages
         if (strpos($hook, 'codeconfig') === false && $hook !== 'plugins.php') {
@@ -74,7 +76,7 @@ public static function enqueue_assets($hook)
         }
 
         // Use native WordPress function - get updater folder URL
-        $assets_url = plugin_dir_url(__DIR__) . 'assets/';
+        $assets_url = plugin_dir_url(__DIR__) . '/updater/assets/';
 
         wp_enqueue_script(
             'codeconfig-plugin-admin-js',
@@ -102,7 +104,7 @@ public static function enqueue_assets($hook)
     public static function render_page()
     {
 
-        $is_pro     = codeconfig_is_pro();
+        $is_pro     = ccupd_config('is_pro', false);
         $api_status = get_option('codeconfig_api_status', 'unknown');
         $last_check = CodeConfig_REST::get_last_check();
         // Use cached data from cron job instead of calling API on every page load

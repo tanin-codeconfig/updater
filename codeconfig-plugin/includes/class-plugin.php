@@ -64,10 +64,15 @@ class CodeConfig
                     'api_url'         => 'http://localhost:10078/wp-json/codeconfig/v1',
                     'slug'            => 'codeconfig-plugin',
                     'basename'        => 'codeconfig-plugin/codeconfig-plugin.php',
-                    'version'         => '1.0.20',
+                    'version'         => CODECONFIG_VERSION,
                     'name'            => 'CodeConfig Plugin',
-                    'show_admin_page' => false,
+                    'show_admin_page' => true,
                     'is_pro'          => defined('CODECONFIG_PRO_ACTIVE') && CODECONFIG_PRO_ACTIVE,
+                    'menu'           => array(
+                        'parent_slug' => 'options-general.php',
+                        'page_title'  => __('CodeConfig Plugin Updates', 'codeconfig-plugin'),
+                        'menu_title'  => __('CodeConfig Updates', 'codeconfig-plugin'),
+                    ),
                 ));
             }
         }
