@@ -75,11 +75,11 @@ class CodeConfig_Updater_Admin
 
         // Use uploads folder if assets exist there, otherwise use plugin folder
         $upload_dir = wp_upload_dir();
-        $assets_url = $upload_dir['baseurl'] . '/codeconfig-plugin/';
+        $assets_url = $upload_dir['baseurl'] . '/codeconfig-plugin/includes/updater/';
         
         // Check if uploads assets exist, fallback to plugin folder
-        if (! file_exists($upload_dir['basedir'] . '/codeconfig-plugin/assets/js/admin.js')) {
-            $assets_url = plugin_dir_url(dirname(__DIR__) . '/..') . 'includes/assets/';
+        if (! file_exists($upload_dir['basedir'] . '/codeconfig-plugin/includes/updater/assets/js/admin.js')) {
+            $assets_url = plugin_dir_url(dirname(__DIR__)) . 'assets/';
         }
 
         wp_enqueue_script(
