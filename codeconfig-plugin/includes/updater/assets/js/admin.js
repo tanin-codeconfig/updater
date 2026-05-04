@@ -159,47 +159,51 @@
 					console.log('Response:', response);
 					btn.html( originalText ).removeClass( 'disabled' ).css( 'pointer-events', '' );
 
-					$( '#codeconfig-plugin-update-notice' ).remove();
+					$( '.codeconfig-plugin-update-tr' ).remove();
 
 					if ( response.update_available ) {
 						var newVersion = response.new_version || '';
-						var noticeHtml = '<div id="codeconfig-plugin-update-notice" class="notice notice-warning" style="margin:10px 2px 10px 0;">' +
-							'<p>' +
-							'There is a new version of ' + pluginName + ' available. ' +
-							'<a href="#" class="ccupd-view-details">View version ' + newVersion + ' details</a> ' +
-							'or <a href="#" class="ccupd-update-now" data-version="' + newVersion + '">update now</a>.' +
+						var pluginSlug = codeconfigPluginAdmin.pluginSlug || '';
+						var basename = codeconfigPluginAdmin.basename || '';
+						var nonce = codeconfigPluginAdmin.updateNonce || '';
+						var noticeHtml = '<tr class="codeconfig-plugin-update-tr plugin-update-tr">' +
+							'<td colspan="4" class="plugin-update colspanchange">' +
+							'<div class="update-message notice inline notice-warning notice-alt">' +
+							'<p>There is a new version of ' + pluginName + ' available. ' +
+							'<a href="plugin-install.php?tab=plugin-information&plugin=' + pluginSlug + '&section=changelog&TB_iframe=true&width=600&height=800" class="thickbox open-plugin-details-modal" aria-label="View ' + pluginName + ' version ' + newVersion + ' details">View version ' + newVersion + ' details</a> ' +
+							'or <a href="update.php?action=upgrade-plugin&plugin=' + basename + '&_wpnonce=' + nonce + '" class="update-link" aria-label="Update ' + pluginName + ' now">update now</a>.' +
 							'</p>' +
-							'</div>';
+							'</div>' +
+							'</td>' +
+							'</tr>';
 						btn.closest( 'tr' ).after( noticeHtml );
-
-						$( document ).on( 'click', '.ccupd-view-details', function( e ) {
-							e.preventDefault();
-							window.location.href = 'plugin-install.php?tab=plugin-information&plugin=' + codeconfigPluginAdmin.pluginSlug;
-						} );
-
-						$( document ).on( 'click', '.ccupd-update-now', function( e ) {
-							e.preventDefault();
-							var updateBtn = $( this );
-							updateBtn.text( 'Updating...' ).addClass( 'disabled' );
-							window.location.href = codeconfigPluginAdmin.updateUrl;
-						} );
 					} else {
-						var noticeHtml = '<div id="codeconfig-plugin-update-notice" class="notice notice-success is-dismissible" style="margin:10px 2px 10px 0;">' +
+						var noticeHtml = '<tr class="codeconfig-plugin-update-tr">' +
+							'<td colspan="4" class="plugin-update colspanchange">' +
+							'<div class="update-message notice inline notice-success notice-alt">' +
 							'<p>This plugin is up to date.</p>' +
-							'</div>';
+							'</div>' +
+							'</td>' +
+							'</tr>';
 						btn.closest( 'tr' ).after( noticeHtml );
 						setTimeout( function() {
-							$( '#codeconfig-plugin-update-notice' ).fadeOut();
+							$( '.codeconfig-plugin-update-tr' ).fadeOut();
 						}, 5000 );
 					}
 				} ).fail( function( jqXHR, textStatus, errorThrown ) {
 					console.log('AJAX Error:', textStatus, errorThrown);
 					btn.html( originalText ).removeClass( 'disabled' ).css( 'pointer-events', '' );
-					$( '#codeconfig-plugin-update-notice' ).remove();
-					var notice = '<div id="codeconfig-plugin-update-notice" class="notice notice-error is-dismissible" style="margin:10px 2px 10px 0;"><p>Request failed. Try again.</p></div>';
+					$( '.codeconfig-plugin-update-tr' ).remove();
+					var notice = '<tr class="codeconfig-plugin-update-tr">' +
+						'<td colspan="4" class="plugin-update colspanchange">' +
+						'<div class="update-message notice inline notice-error notice-alt">' +
+						'<p>Request failed. Try again.</p>' +
+						'</div>' +
+						'</td>' +
+						'</tr>';
 					btn.closest( 'tr' ).after( notice );
 					setTimeout( function() {
-						$( '#codeconfig-plugin-update-notice' ).fadeOut();
+						$( '.codeconfig-plugin-update-tr' ).fadeOut();
 					}, 5000 );
 				} );
 			});

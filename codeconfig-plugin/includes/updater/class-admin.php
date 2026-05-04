@@ -87,14 +87,15 @@ class CodeConfig_Updater_Admin
         );
 
         wp_localize_script('codeconfig-plugin-admin-js', 'codeconfigPluginAdmin', array(
-            'restUrl'       => rest_url('ccupd/v1') . '/',
-            'nonce'         => wp_create_nonce('wp_rest'),
-            'checking'     => 'Checking...',
-            'checkBtn'      => 'Check for Updates',
-            'pluginName'    => ccupd_config('name', 'This plugin'),
-            'pluginSlug'    => ccupd_config('slug', ''),
+            'restUrl'        => rest_url('ccupd/v1') . '/',
+            'nonce'          => wp_create_nonce('wp_rest'),
+            'checking'      => 'Checking...',
+            'checkBtn'       => 'Check for Updates',
+            'pluginName'     => ccupd_config('name', 'This plugin'),
+            'pluginSlug'     => ccupd_config('slug', ''),
             'currentVersion' => ccupd_config('version', ''),
-            'updateUrl'     => wp_nonce_url(add_query_arg('codeconfig_do_update', '1', admin_url('admin.php?page=codeconfig-plugin-status')), 'codeconfig_do_update', 'update_nonce'),
+            'basename'       => ccupd_config('basename', ''),
+            'updateNonce'    => wp_create_nonce('codeconfig_do_update'),
         ));
 
         wp_enqueue_style(
