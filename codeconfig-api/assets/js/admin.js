@@ -148,12 +148,9 @@
 			$( document ).on( 'click', '.codeconfig-edit-btn', function() {
 				var btn = $( this );
 				var id = btn.data( 'id' );
-				console.log('Edit button clicked, id:', id);
-				console.log('codeconfigAdmin.versions:', codeconfigAdmin.versions);
 				var data = codeconfigAdmin.versions && codeconfigAdmin.versions[ id ];
 
 				if ( ! data ) {
-					console.log('No data found for id:', id);
 					alert('No version data found. ID: ' + id);
 					return;
 				}
@@ -164,7 +161,23 @@
 				$( '#edit_changelog' ).val( data.changelog );
 				$( '#edit_zip' ).val( '' );
 
-				tb_show( 'Edit Version', '#TB_inline?height=400&width=500&inlineId=codeconfig-edit-form' );
+				// Make sure the form is visible for thickbox
+				$( '#codeconfig-edit-form' ).css( 'display', 'block' );
+				
+				if ( typeof tb_show === 'function' ) {
+					tb_show( 'Edit Version', '#TB_inline?height=450&width=550&inlineId=codeconfig-edit-form' );
+				} else {
+					// Fallback: show form manually
+					$( '#codeconfig-edit-form' ).dialog({
+						title: 'Edit Version',
+						width: 550,
+						height: 450,
+						modal: true,
+						close: function() {
+							$( this ).dialog( 'destroy' ).hide();
+						}
+					});
+				}
 			});
 
 			// Single action buttons (activate/deactivate/delete)
