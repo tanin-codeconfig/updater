@@ -4,17 +4,6 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
-// Define local constants if not defined by main plugin (for isolation)
-if (! defined('CODECONFIG_BASENAME')) {
-    define('CODECONFIG_BASENAME', 'codeconfig-plugin/codeconfig-plugin.php');
-}
-if (! defined('CODECONFIG_VERSION')) {
-    define('CODECONFIG_VERSION', '1.0.20');
-}
-if (! defined('CODECONFIG_PRO_ACTIVE')) {
-    define('CODECONFIG_PRO_ACTIVE', false);
-}
-
 if (! function_exists('ccupd')) {
 
     function ccupd($config = array())
@@ -155,6 +144,16 @@ class CodeConfig_Updater_Manager
 
     private function is_pro()
     {
-        return defined('CODECONFIG_PRO_ACTIVE') && CODECONFIG_PRO_ACTIVE;
+        return ccupd_config('is_pro', false);
+    }
+
+    public function get_basename()
+    {
+        return $this->get_config('basename', '');
+    }
+
+    public function get_version()
+    {
+        return $this->get_config('version', '1.0.0');
     }
 }

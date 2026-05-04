@@ -51,7 +51,7 @@ class CodeConfig_Updater
     {
         global $ccupd_config;
 
-        if (defined('CODECONFIG_PRO_ACTIVE') && CODECONFIG_PRO_ACTIVE) {
+        if (ccupd_config('is_pro', false)) {
             return;
         }
 
@@ -86,7 +86,7 @@ class CodeConfig_Updater
 
         $transient->response[ $basename ] = (object) array(
             'slug'         => $slug,
-            'plugin'       => CODECONFIG_BASENAME,
+            'plugin'       => ccupd_config('basename', ''),
             'new_version'  => $data['new_version'],
             'package'      => $data['package'],
             'url'          => $data['changelog'] ?? '',
@@ -139,7 +139,7 @@ class CodeConfig_Updater
 
         $transient->response[ $basename ] = (object) array(
             'slug'         => $slug,
-            'plugin'       => CODECONFIG_BASENAME,
+            'plugin'       => ccupd_config('basename', ''),
             'new_version'  => $data['new_version'],
             'package'      => $data['package'],
             'url'          => $data['changelog'] ?? '',

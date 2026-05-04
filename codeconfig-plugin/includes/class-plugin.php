@@ -31,10 +31,6 @@ class CodeConfig
         if (! defined('CODECONFIG_PATH')) {
             define('CODECONFIG_PATH', plugin_dir_path(__DIR__));
         }
-        if (! defined('CODECONFIG_URL')) {
-            $upload_dir = wp_upload_dir();
-            define('CODECONFIG_URL', $upload_dir['baseurl'] . '/codeconfig-plugin/');
-        }
         if (! defined('CODECONFIG_BASENAME')) {
             define('CODECONFIG_BASENAME', 'codeconfig-plugin/codeconfig-plugin.php');
         }
@@ -70,7 +66,8 @@ class CodeConfig
                     'basename'        => 'codeconfig-plugin/codeconfig-plugin.php',
                     'version'         => '1.0.20',
                     'name'            => 'CodeConfig Plugin',
-                    'show_admin_page' => true,
+                    'show_admin_page' => false,
+                    'is_pro'          => defined('CODECONFIG_PRO_ACTIVE') && CODECONFIG_PRO_ACTIVE,
                 ));
             }
         }

@@ -7,7 +7,7 @@ class CodeConfig_Updater_Admin
 {
     public static function init()
     {
-        add_filter('plugin_action_links_' . CODECONFIG_BASENAME, array( __CLASS__, 'add_plugin_action_links' ));
+        add_filter('plugin_action_links_' . ccupd_config('basename', ''), array( __CLASS__, 'add_plugin_action_links' ));
         add_action('admin_menu', array( __CLASS__, 'add_menu' ));
         add_action('admin_enqueue_scripts', array( __CLASS__, 'enqueue_assets' ));
         add_action('admin_init', array( __CLASS__, 'register_settings' ));
@@ -268,7 +268,7 @@ public static function enqueue_assets($hook)
 				<tbody>
 					<tr>
 						<th>Current Version</th>
-						<td><code><?php echo esc_html(CODECONFIG_VERSION); ?></code></td>
+						<td><code><?php echo esc_html(ccupd_config('version', '1.0.0')); ?></code></td>
 					</tr>
 					<?php if ($new_version) : ?>
 						<tr>

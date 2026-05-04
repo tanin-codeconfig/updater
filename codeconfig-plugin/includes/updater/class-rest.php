@@ -40,7 +40,7 @@ class CodeConfig_REST
 
     public static function handle_check(WP_REST_Request $request)
     {
-        if (defined('CODECONFIG_PRO_ACTIVE') && CODECONFIG_PRO_ACTIVE) {
+        if (ccupd_config('is_pro', false)) {
             return new WP_REST_Response(array(
                 'update_available' => false,
                 'message'          => 'Updates are managed by Freemius.',
