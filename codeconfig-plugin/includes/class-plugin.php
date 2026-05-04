@@ -32,7 +32,7 @@ class CodeConfig
             define('CODECONFIG_PATH', plugin_dir_path(__DIR__));
         }
         if (! defined('CODECONFIG_URL')) {
-            define('CODECONFIG_URL', plugins_url('', dirname(__DIR__)) . '/');
+            define('CODECONFIG_URL', plugin_dir_url(__DIR__ . '/..'));
         }
         if (! defined('CODECONFIG_BASENAME')) {
             define('CODECONFIG_BASENAME', 'codeconfig-plugin/codeconfig-plugin.php');
