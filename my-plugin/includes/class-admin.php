@@ -171,23 +171,26 @@ class MyPlugin_Admin
         require_once ABSPATH . 'wp-admin/includes/class-plugin-upgrader.php';
         require_once ABSPATH . 'wp-admin/includes/plugin.php';
 
-        deactivate_plugins(MY_PLUGIN_BASENAME);
+        $basename = my_plugin_config('basename');
+        $slug = my_plugin_config('slug');
+
+        deactivate_plugins($basename);
 
         $skin     = new WP_Ajax_Upgrader_Skin();
         $upgrader = new Plugin_Upgrader($skin);
 
         $result = $upgrader->run(array(
             'package'           => $api_data['package'],
-            'destination'       => WP_PLUGIN_DIR . '/' . MY_PLUGIN_SLUG,
+            'destination'       => WP_PLUGIN_DIR . '/' . $slug,
             'clear_destination' => true,
             'clear_working'     => true,
             'hook_extra'        => array(
-                'plugin' => MY_PLUGIN_BASENAME,
+                'plugin' => $basename,
             ),
         ));
 
         if (is_wp_error($result)) {
-            activate_plugin(MY_PLUGIN_BASENAME, '', false, true);
+            activate_plugin($basename, '', false, true);
             wp_redirect(add_query_arg(array(
                 'page'                   => 'my-plugin-status',
                 'my_plugin_update_error' => $result->get_error_message(),
@@ -195,7 +198,9 @@ class MyPlugin_Admin
             exit;
         }
 
-        activate_plugin(MY_PLUGIN_BASENAME, '', false, true);
+        $basename = my_plugin_config('basename');
+
+        activate_plugin($basename, '', false, true);
 
         delete_site_transient('update_plugins');
         delete_option('my_plugin_check_result');
@@ -364,7 +369,7 @@ class MyPlugin_Admin
 				<tbody>
 					<tr>
 						<th>API URL</th>
-						<td><code><?php echo esc_html(MY_PLUGIN_API_URL); ?></code></td>
+						<td><code><?php echo esc_html(my_plugin_config('api_url')); ?></code></td>
 					</tr>
 					<tr>
 						<th>Status</th>

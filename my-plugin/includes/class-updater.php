@@ -53,7 +53,7 @@ class MyPlugin_Updater
             return;
         }
 
-        $installed_version = MY_PLUGIN_VERSION;
+        $installed_version = my_plugin_config('version');
         $data = MyPlugin_Ajax::check_api_for_version($installed_version);
 
         // Save result to options for AJAX handler
@@ -65,24 +65,25 @@ class MyPlugin_Updater
             update_option('my_plugin_api_status', 'error');
         }
 
+        $basename = my_plugin_config('basename');
+        $slug = my_plugin_config('slug');
+
         if (is_wp_error($data) || ! $data['update']) {
-            // Remove from transient if no update
             $transient = get_site_transient('update_plugins');
-            if (is_object($transient) && isset($transient->response[ MY_PLUGIN_BASENAME ])) {
-                unset($transient->response[ MY_PLUGIN_BASENAME ]);
+            if (is_object($transient) && isset($transient->response[ $basename ])) {
+                unset($transient->response[ $basename ]);
                 set_site_transient('update_plugins', $transient);
             }
             return;
         }
 
-        // Set the transient with update info
         $transient = get_site_transient('update_plugins');
         if (! is_object($transient)) {
             $transient = new stdClass();
         }
 
-        $transient->response[ MY_PLUGIN_BASENAME ] = (object) array(
-            'slug'         => MY_PLUGIN_SLUG,
+        $transient->response[ $basename ] = (object) array(
+            'slug'         => $slug,
             'plugin'       => MY_PLUGIN_BASENAME,
             'new_version'  => $data['new_version'],
             'package'      => $data['package'],
@@ -99,7 +100,7 @@ class MyPlugin_Updater
 
     public static function allow_api_host($args, $url)
     {
-        $parsed = parse_url(MY_PLUGIN_API_URL);
+        $parsed = parse_url(my_plugin_config('api_url'));
         $api_host = isset($parsed['host']) ? $parsed['host'] : '';
         $url_host = parse_url($url, PHP_URL_HOST);
 
@@ -120,9 +121,13 @@ class MyPlugin_Updater
             return $transient;
         }
 
-        $installed_version = isset($transient->checked[ MY_PLUGIN_BASENAME ])
-            ? $transient->checked[ MY_PLUGIN_BASENAME ]
-            : MY_PLUGIN_VERSION;
+        $basename = my_plugin_config('basename');
+        $slug = my_plugin_config('slug');
+        $version = my_plugin_config('version');
+
+        $installed_version = isset($transient->checked[ $basename ])
+            ? $transient->checked[ $basename ]
+            : $version;
 
         $data = MyPlugin_Ajax::check_api_for_version($installed_version);
 
@@ -130,8 +135,8 @@ class MyPlugin_Updater
             return $transient;
         }
 
-        $transient->response[ MY_PLUGIN_BASENAME ] = (object) array(
-            'slug'         => MY_PLUGIN_SLUG,
+        $transient->response[ $basename ] = (object) array(
+            'slug'         => $slug,
             'plugin'       => MY_PLUGIN_BASENAME,
             'new_version'  => $data['new_version'],
             'package'      => $data['package'],
@@ -148,7 +153,9 @@ class MyPlugin_Updater
 
     public static function plugin_info($false, $action, $args)
     {
-        if ($action !== 'plugin_information' || $args->slug !== MY_PLUGIN_SLUG) {
+        $slug = my_plugin_config('slug');
+
+        if ($action !== 'plugin_information' || $args->slug !== $slug) {
             return $false;
         }
 
@@ -160,7 +167,7 @@ class MyPlugin_Updater
 
         $plugin_info = new stdClass();
         $plugin_info->name           = 'My Plugin';
-        $plugin_info->slug           = MY_PLUGIN_SLUG;
+        $plugin_info->slug           = $slug;
         $plugin_info->version        = $data['new_version'];
         $plugin_info->author         = '<a href="#">Your Name</a>';
         $plugin_info->homepage       = home_url();
@@ -188,7 +195,9 @@ class MyPlugin_Updater
 
     public static function on_update_complete($upgrader, $hook_extra)
     {
-        if (empty($hook_extra['plugin']) || $hook_extra['plugin'] !== MY_PLUGIN_BASENAME) {
+        $basename = my_plugin_config('basename');
+
+        if (empty($hook_extra['plugin']) || $hook_extra['plugin'] !== $basename) {
             return;
         }
 

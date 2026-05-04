@@ -76,12 +76,12 @@ class MyPlugin_Ajax
     public static function check_api_for_version($version)
     {
 
-        $api_url = MY_PLUGIN_API_URL . '/update-check';
+        $api_url = my_plugin_config('api_url') . '/update-check';
         $api_key = my_plugin_get_api_key();
 
         $params = array(
             'version' => $version,
-            'slug'    => MY_PLUGIN_SLUG,
+            'slug'    => my_plugin_config('slug'),
             'domain'  => site_url(),
         );
 
