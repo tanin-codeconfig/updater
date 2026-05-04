@@ -56,7 +56,7 @@ class CodeConfig_Updater
         }
 
         $installed_version = isset($ccupd_config['version']) ? $ccupd_config['version'] : '1.0.0';
-        $data = CodeConfig_Ajax::check_api_for_version($installed_version);
+        $data = CodeConfig_REST::check_api_for_version($installed_version);
 
         // Save result to options for AJAX handler
         if (! is_wp_error($data)) {
@@ -131,7 +131,7 @@ class CodeConfig_Updater
             ? $transient->checked[ $basename ]
             : $version;
 
-        $data = CodeConfig_Ajax::check_api_for_version($installed_version);
+        $data = CodeConfig_REST::check_api_for_version($installed_version);
 
         if (is_wp_error($data) || ! $data['update']) {
             return $transient;
@@ -161,7 +161,7 @@ class CodeConfig_Updater
             return $false;
         }
 
-        $data = CodeConfig_Ajax::check_api_for_version('0.0.0');
+        $data = CodeConfig_REST::check_api_for_version('0.0.0');
 
         if (is_wp_error($data) || ! $data['success']) {
             return $false;

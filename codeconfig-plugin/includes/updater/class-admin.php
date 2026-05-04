@@ -9,8 +9,6 @@ class CodeConfig_Admin
     {
         add_action('admin_menu', array( __CLASS__, 'add_menu' ));
         add_action('admin_enqueue_scripts', array( __CLASS__, 'enqueue_assets' ));
-        add_action('wp_ajax_codeconfig_force_refresh', array( __CLASS__, 'handle_force_refresh' ));
-        add_action('wp_ajax_codeconfig_test_connection', array( __CLASS__, 'handle_test_connection' ));
         add_action('admin_init', array( __CLASS__, 'register_settings' ));
     }
 
@@ -91,8 +89,8 @@ class CodeConfig_Admin
         );
 
         wp_localize_script('codeconfig-plugin-admin-js', 'codeconfigPluginAdmin', array(
-            'ajaxUrl'    => admin_url('admin-ajax.php'),
-            'nonce'      => wp_create_nonce('codeconfig_check_nonce'),
+            'restUrl'    => rest_url('ccupd/v1'),
+            'nonce'      => wp_create_nonce('wp_rest'),
             'checking'   => 'Checking...',
             'checkBtn'   => 'Check for Updates',
         ));
@@ -110,7 +108,7 @@ class CodeConfig_Admin
 
         $is_pro     = codeconfig_is_pro();
         $api_status = get_option('codeconfig_api_status', 'unknown');
-        $last_check = CodeConfig_Ajax::get_last_check();
+        $last_check = CodeConfig_REST::get_last_check();
         // Use cached data from cron job instead of calling API on every page load
         $api_data   = $is_pro ? array() : get_option('codeconfig_check_result', array());
 
@@ -137,7 +135,7 @@ class CodeConfig_Admin
     {
         // Only used for manual "Check for Updates" button via AJAX
         // Page loads now use cached data from cron
-        $result = CodeConfig_Ajax::check_api();
+        $result = CodeConfig_REST::check_api();
 
         if (is_wp_error($result)) {
             update_option('codeconfig_api_status', 'error');
@@ -181,7 +179,7 @@ class CodeConfig_Admin
             wp_die('Permission denied.');
         }
 
-        $api_data = CodeConfig_Ajax::check_api();
+        $api_data = CodeConfig_REST::check_api();
 
         if (is_wp_error($api_data) || empty($api_data['update'])) {
             wp_redirect(add_query_arg(array(
@@ -452,7 +450,7 @@ class CodeConfig_Admin
             wp_send_json_error(array( 'message' => 'Permission denied.' ));
         }
 
-        CodeConfig_Ajax::force_clear_cache();
+        CodeConfig_REST::force_clear_cache();
         delete_site_transient('update_plugins');
 
         wp_send_json_success(array(
@@ -467,7 +465,7 @@ class CodeConfig_Admin
             wp_send_json_error(array( 'message' => 'Security check failed.' ));
         }
 
-        $result = CodeConfig_Ajax::check_api();
+        $result = CodeConfig_REST::check_api();
 
         if (is_wp_error($result)) {
             update_option('codeconfig_api_status', 'error');

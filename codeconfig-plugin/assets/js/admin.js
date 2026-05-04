@@ -15,20 +15,23 @@
 				btn.prop( 'disabled', true ).html( '<span class="spinner is-active"></span> ' + codeconfigPluginAdmin.checking );
 				resultDiv.hide().removeClass( 'notice-success notice-error notice-warning' );
 
-				$.post( codeconfigPluginAdmin.ajaxUrl, {
-					action: 'codeconfig_manual_check',
-					nonce:  codeconfigPluginAdmin.nonce,
-				}, function( response ) {
-					if ( response.success ) {
+				$.ajax( {
+					url: codeconfigPluginAdmin.restUrl + 'check',
+					method: 'POST',
+					beforeSend: function( xhr ) {
+						xhr.setRequestHeader( 'X-WP-Nonce', codeconfigPluginAdmin.nonce );
+					},
+				} ).done( function( response ) {
+					if ( response.update_available ) {
 						window.location.reload();
 					} else {
 						btn.prop( 'disabled', false ).html( '<span class="dashicons dashicons-update" style="margin-top:3px;"></span> ' + codeconfigPluginAdmin.checkBtn );
-						resultDiv.addClass( 'notice-error' ).html( '<p>' + ( response.data.message || 'Check failed.' ) + '</p>' ).show();
+						resultDiv.addClass( 'notice-success' ).html( '<p>' + response.message + '</p>' ).show();
 					}
-				}).fail( function() {
+				} ).fail( function() {
 					btn.prop( 'disabled', false ).html( '<span class="dashicons dashicons-update" style="margin-top:3px;"></span> ' + codeconfigPluginAdmin.checkBtn );
 					resultDiv.addClass( 'notice-error' ).html( '<p>Request failed. Try again.</p>' ).show();
-				});
+				} );
 			});
 		}
 
@@ -39,19 +42,20 @@
 
 				btn.prop( 'disabled', true ).text( 'Clearing...' );
 
-				$.post( codeconfigPluginAdmin.ajaxUrl, {
-					action: 'codeconfig_force_refresh',
-					nonce:  codeconfigPluginAdmin.nonce,
-				}, function( response ) {
+				$.ajax( {
+					url: codeconfigPluginAdmin.restUrl + 'force-refresh',
+					method: 'POST',
+					beforeSend: function( xhr ) {
+						xhr.setRequestHeader( 'X-WP-Nonce', codeconfigPluginAdmin.nonce );
+					},
+				} ).done( function( response ) {
 					btn.prop( 'disabled', false ).text( 'Force Refresh' );
-
-					if ( response.success ) {
-						window.location.reload();
-					} else {
-						resultDiv.removeClass( 'notice-success' ).addClass( 'notice-error' );
-						resultDiv.html( '<p>' + ( response.data.message || 'Failed.' ) + '</p>' ).show();
-					}
-				});
+					window.location.reload();
+				} ).fail( function() {
+					btn.prop( 'disabled', false ).text( 'Force Refresh' );
+					resultDiv.removeClass( 'notice-success' ).addClass( 'notice-error' );
+					resultDiv.html( '<p>Failed.</p>' ).show();
+				} );
 			});
 		}
 
@@ -62,20 +66,27 @@
 
 				btn.prop( 'disabled', true ).text( 'Testing...' );
 
-				$.post( codeconfigPluginAdmin.ajaxUrl, {
-					action: 'codeconfig_test_connection',
-					nonce:  codeconfigPluginAdmin.nonce,
-				}, function( response ) {
+				$.ajax( {
+					url: codeconfigPluginAdmin.restUrl + 'test-connection',
+					method: 'POST',
+					beforeSend: function( xhr ) {
+						xhr.setRequestHeader( 'X-WP-Nonce', codeconfigPluginAdmin.nonce );
+					},
+				} ).done( function( response ) {
 					btn.prop( 'disabled', false ).text( 'Test Connection' );
 
 					if ( response.success ) {
 						resultDiv.removeClass( 'notice-error' ).addClass( 'notice-success' );
-						resultDiv.html( '<p>' + response.data.message + '</p>' ).show();
+						resultDiv.html( '<p>' + response.message + '</p>' ).show();
 					} else {
 						resultDiv.removeClass( 'notice-success' ).addClass( 'notice-error' );
-						resultDiv.html( '<p>' + ( response.data.message || 'Connection failed.' ) + '</p>' ).show();
+						resultDiv.html( '<p>' + ( response.message || 'Connection failed.' ) + '</p>' ).show();
 					}
-				});
+				} ).fail( function() {
+					btn.prop( 'disabled', false ).text( 'Test Connection' );
+					resultDiv.removeClass( 'notice-success' ).addClass( 'notice-error' );
+					resultDiv.html( '<p>Connection failed.</p>' ).show();
+				} );
 			});
 		}
 
@@ -89,28 +100,31 @@
 
 				btn.html( '<span class="spinner is-active"></span> Checking...' ).addClass( 'disabled' ).css( 'pointer-events', 'none' );
 
-				$.post( codeconfigPluginAdmin.ajaxUrl, {
-					action: 'codeconfig_manual_check',
-					nonce:  codeconfigPluginAdmin.nonce,
-				}, function( response ) {
-					if ( response.success ) {
+				$.ajax( {
+					url: codeconfigPluginAdmin.restUrl + 'check',
+					method: 'POST',
+					beforeSend: function( xhr ) {
+						xhr.setRequestHeader( 'X-WP-Nonce', codeconfigPluginAdmin.nonce );
+					},
+				} ).done( function( response ) {
+					if ( response.update_available ) {
 						window.location.reload();
 					} else {
 						btn.html( originalText ).removeClass( 'disabled' ).css( 'pointer-events', '' );
-						var notice = '<div class="notice notice-error is-dismissible" style="margin:10px 5px;"><p>' + ( response.data ? response.data.message : 'Check failed.' ) + '</p></div>';
+						var notice = '<div class="notice notice-success is-dismissible" style="margin:10px 5px;"><p>' + response.message + '</p></div>';
 						btn.closest( 'tr' ).after( notice );
 						setTimeout( function() {
 							$( '.notice.is-dismissible' ).fadeOut();
 						}, 5000 );
 					}
-				}).fail( function() {
+				} ).fail( function() {
 					btn.html( originalText ).removeClass( 'disabled' ).css( 'pointer-events', '' );
 					var notice = '<div class="notice notice-error is-dismissible" style="margin:10px 5px;"><p>Request failed. Try again.</p></div>';
 					btn.closest( 'tr' ).after( notice );
 					setTimeout( function() {
 						$( '.notice.is-dismissible' ).fadeOut();
 					}, 5000 );
-				});
+				} );
 			});
 		}
 	});
