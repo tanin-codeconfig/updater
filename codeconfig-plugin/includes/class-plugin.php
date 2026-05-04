@@ -38,7 +38,7 @@ class CodeConfig
 
     private function init_hooks()
     {
-        add_action('init', array($this, 'load_textdomain'));
+        add_action('init', array($this, 'load_textdomain'), 20);
     }
 
     private function load_classes()
