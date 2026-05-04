@@ -3,7 +3,7 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
-class CodeConfig_Admin
+class CodeConfig_Updater_Admin
 {
     public static function init()
     {

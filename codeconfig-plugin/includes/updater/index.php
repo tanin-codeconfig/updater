@@ -23,7 +23,7 @@ if (! function_exists('ccupd')) {
         if (! class_exists('CodeConfig_REST')) {
             require_once __DIR__ . '/class-rest.php';
         }
-        if (! class_exists('CodeConfig_Admin')) {
+        if (! class_exists('CodeConfig_Updater_Admin')) {
             require_once __DIR__ . '/class-admin.php';
         }
 
@@ -97,7 +97,7 @@ class CodeConfig_Updater_Manager
 
         CodeConfig_Updater::init();
         CodeConfig_REST::init();
-        CodeConfig_Admin::init();
+        CodeConfig_Updater_Admin::init();
 
         do_action('ccupd_loaded');
     }
