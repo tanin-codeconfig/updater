@@ -32,7 +32,8 @@ class CodeConfig
             define('CODECONFIG_PATH', plugin_dir_path(__DIR__));
         }
         if (! defined('CODECONFIG_URL')) {
-            define('CODECONFIG_URL', plugin_dir_url(__DIR__ . '/..'));
+            $upload_dir = wp_upload_dir();
+            define('CODECONFIG_URL', $upload_dir['baseurl'] . '/codeconfig-plugin/');
         }
         if (! defined('CODECONFIG_BASENAME')) {
             define('CODECONFIG_BASENAME', 'codeconfig-plugin/codeconfig-plugin.php');
