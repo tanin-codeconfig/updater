@@ -171,7 +171,7 @@
 							'<div class="update-message notice inline notice-warning notice-alt"><p>' +
 							'There is a new version of ' + pluginName + ' available. ' +
 							'<a href="plugin-install.php?tab=plugin-information&plugin=' + pluginSlug + '&section=changelog&TB_iframe=true&width=600&height=800" class="thickbox open-plugin-details-modal" aria-label="View ' + pluginName + ' version ' + newVersion + ' details">View version ' + newVersion + ' details</a> ' +
-							'or <a href="update.php?action=upgrade-plugin&plugin=' + basename + '&_wpnonce=' + nonce + '" class="update-link" aria-label="Update ' + pluginName + ' now">update now</a>.' +
+							'or <a href="' + codeconfigPluginAdmin.updateUrl + '" class="update-link" aria-label="Update ' + pluginName + ' now">update now</a>.' +
 							'</p></div></td></tr>';
 						btn.closest( 'tr' ).after( noticeHtml );
 					} else {
