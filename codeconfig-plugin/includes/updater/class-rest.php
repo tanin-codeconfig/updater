@@ -252,6 +252,7 @@ class CodeConfig_REST
 
         delete_site_transient('update_plugins');
 
+        require_once ABSPATH . 'wp-admin/includes/file.php';
         require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
         require_once ABSPATH . 'wp-admin/includes/class-plugin-upgrader.php';
         require_once ABSPATH . 'wp-admin/includes/plugin.php';
