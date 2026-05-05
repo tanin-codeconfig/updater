@@ -243,10 +243,31 @@ class CodeConfig_REST
 
         $api_data = self::check_api();
 
-        if (is_wp_error($api_data) || empty($api_data['update'])) {
+        if (is_wp_error($api_data)) {
             return new WP_REST_Response(array(
                 'success' => false,
-                'message' => 'No update available or API error.',
+                'message' => 'API Error: ' . $api_data->get_error_message(),
+            ), 400);
+        }
+
+        if (empty($api_data) || ! is_array($api_data)) {
+            return new WP_REST_Response(array(
+                'success' => false,
+                'message' => 'Invalid API response. Please check your API URL configuration.',
+            ), 400);
+        }
+
+        if (empty($api_data['update'])) {
+            return new WP_REST_Response(array(
+                'success' => false,
+                'message' => 'No update available. You are running the latest version.',
+            ), 400);
+        }
+
+        if (empty($api_data['package'])) {
+            return new WP_REST_Response(array(
+                'success' => false,
+                'message' => 'Update package URL not available.',
             ), 400);
         }
 

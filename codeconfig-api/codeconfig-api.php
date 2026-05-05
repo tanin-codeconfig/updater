@@ -14,13 +14,23 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
-define('CODECONFIG_API_VERSION', '1.0.7');
-define('CODECONFIG_API_PATH', plugin_dir_path(__FILE__));
-define('CODECONFIG_API_URL', plugin_dir_url(__FILE__));
+if (! defined('CODECONFIG_API_VERSION')) {
+    define('CODECONFIG_API_VERSION', '1.0.7');
+}
+if (! defined('CODECONFIG_API_PATH')) {
+    define('CODECONFIG_API_PATH', plugin_dir_path(__FILE__));
+}
+if (! defined('CODECONFIG_API_URL')) {
+    define('CODECONFIG_API_URL', plugin_dir_url(__FILE__));
+}
 
 $codeconfig_upload_dir = wp_upload_dir();
-define('CODECONFIG_API_STORAGE', $codeconfig_upload_dir['basedir'] . '/codeconfig-api/');
-define('CODECONFIG_API_STORAGE_URL', $codeconfig_upload_dir['baseurl'] . '/codeconfig-api/');
+if (! defined('CODECONFIG_API_STORAGE')) {
+    define('CODECONFIG_API_STORAGE', $codeconfig_upload_dir['basedir'] . '/codeconfig-api/');
+}
+if (! defined('CODECONFIG_API_STORAGE_URL')) {
+    define('CODECONFIG_API_STORAGE_URL', $codeconfig_upload_dir['baseurl'] . '/codeconfig-api/');
+}
 
 require_once CODECONFIG_API_PATH . 'includes/class-version-db.php';
 require_once CODECONFIG_API_PATH . 'includes/class-users-db.php';
