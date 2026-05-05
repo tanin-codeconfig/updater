@@ -11,6 +11,7 @@ class CodeConfig_Updater_Admin
         add_action('admin_menu', array( __CLASS__, 'add_menu' ));
         add_action('admin_enqueue_scripts', array( __CLASS__, 'enqueue_assets' ));
         add_action('admin_init', array( __CLASS__, 'register_settings' ));
+        add_action('after_plugin_row_' . ccupd_config('basename', ''), array( __CLASS__, 'render_plugin_update_notice' ), 10, 3);
     }
 
     public static function register_settings()
@@ -488,5 +489,63 @@ class CodeConfig_Updater_Admin
         wp_send_json_success(array(
             'message' => 'Connection successful!',
         ));
+    }
+
+    public static function render_plugin_update_notice($plugin_file, $plugin_data, $status)
+    {
+        $is_pro = ccupd_config('is_pro', false);
+        if ($is_pro) {
+            return;
+        }
+
+        $basename = ccupd_config('basename', '');
+        if ($plugin_file !== $basename) {
+            return;
+        }
+
+        $api_data = get_option('codeconfig_check_result', array());
+        if (empty($api_data['update'])) {
+            return;
+        }
+
+        $new_version = ! empty($api_data['new_version']) ? $api_data['new_version'] : '';
+        $current_version = ccupd_config('version', '1.0.0');
+        $plugin_name = ccupd_config('name', 'This plugin');
+        $slug = ccupd_config('slug', '');
+
+        $wp_list_table = _get_list_table('WP_Plugins_List_Table', array( 'screen' => get_current_screen() ));
+        $column_count = $wp_list_table->get_column_count();
+
+        $update_nonce = wp_create_nonce('codeconfig_do_update');
+        $status_page = admin_url('plugins.php?page=codeconfig-plugin-status');
+        $update_url = add_query_arg(array(
+            'codeconfig_do_update' => '1',
+            'update_nonce' => $update_nonce,
+        ), $status_page);
+
+        $details_url = add_query_arg(array(
+            'tab' => 'plugin-information',
+            'plugin' => $slug,
+            'section' => 'changelog',
+            'TB_iframe' => 'true',
+            'width' => 600,
+            'height' => 800,
+        ), admin_url('plugin-install.php'));
+
+        $is_active = is_plugin_active($basename);
+        $active_class = $is_active ? ' active' : '';
+
+        echo '<tr class="plugin-update-tr' . esc_attr($active_class) . '" id="' . esc_attr($slug . '-update') . '" data-slug="' . esc_attr($slug) . '" data-plugin="' . esc_attr($basename) . '">';
+        echo '<td colspan="' . esc_attr($column_count) . '" class="plugin-update colspanchange">';
+        echo '<div class="update-message notice inline notice-warning notice-alt"><p>';
+        printf(
+            __('There is a new version of %1$s available. <a href="%2$s" class="thickbox open-plugin-details-modal" aria-label="View %1$s version %3$s details">View version %3$s details</a> or <a href="%4$s" class="update-link" aria-label="Update %1$s now">update now</a>.'),
+            esc_html($plugin_name),
+            esc_url($details_url),
+            esc_attr($new_version),
+            esc_url($update_url)
+        );
+        echo '</p></div>';
+        echo '</td></tr>';
     }
 }
