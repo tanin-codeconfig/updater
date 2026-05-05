@@ -510,6 +510,11 @@ class CodeConfig_Updater_Admin
 
         $new_version = ! empty($api_data['new_version']) ? $api_data['new_version'] : '';
         $current_version = ccupd_config('version', '1.0.0');
+
+        if (empty($new_version) || version_compare($current_version, $new_version, '>=')) {
+            return;
+        }
+
         $plugin_name = ccupd_config('name', 'This plugin');
         $slug = ccupd_config('slug', '');
 
