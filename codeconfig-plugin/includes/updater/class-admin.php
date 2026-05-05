@@ -255,11 +255,15 @@ class CodeConfig_Updater_Admin
         $status_text  = 'Not checked yet';
         $status_icon  = '⏳';
 
+        $new_version = $api_data['new_version'] ?? '';
+        $current_version = ccupd_config('version', '1.0.0');
+        $has_update = ! $is_pro && ! empty($api_data['update']) && ! empty($new_version) && version_compare($current_version, $new_version, '<');
+
         if ($is_pro) {
             $status_class = 'status-pro';
             $status_text  = 'Managed by Freemius';
             $status_icon  = '✅';
-        } elseif (! empty($api_data['update'])) {
+        } elseif ($has_update) {
             $status_class = 'status-update';
             $status_text  = 'Update Available';
             $status_icon  = '⚠️';
@@ -272,9 +276,6 @@ class CodeConfig_Updater_Admin
             $status_text  = 'Up to Date';
             $status_icon  = '✅';
         }
-
-        $has_update  = ! $is_pro && ! empty($api_data['update']);
-        $new_version = $api_data['new_version'] ?? '';
         ?>
 		<div class="card codeconfig-plugin-status-card <?php echo esc_attr($status_class); ?>">
 			<h2>Current Status</h2>
