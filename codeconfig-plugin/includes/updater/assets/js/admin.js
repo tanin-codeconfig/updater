@@ -164,7 +164,9 @@
 
 					if ( response.update_available ) {
 						var pluginName = codeconfigPluginAdmin.pluginName || 'This plugin';
-						var noticeHtml = '<tr class="plugin-update-tr codeconfig-plugin-update-tr" id="' + pluginSlug + '-update" data-slug="' + pluginSlug + '" data-plugin="' + basename + '">' +
+						var isActive = btn.closest( 'tr' ).hasClass( 'active' );
+						var activeClass = isActive ? ' active' : '';
+						var noticeHtml = '<tr class="plugin-update-tr codeconfig-plugin-update-tr' + activeClass + '" id="' + pluginSlug + '-update" data-slug="' + pluginSlug + '" data-plugin="' + basename + '">' +
 							'<td colspan="4" class="plugin-update colspanchange">' +
 							'<div class="update-message notice inline notice-warning notice-alt"><p>' +
 							'There is a new version of ' + pluginName + ' available. ' +
