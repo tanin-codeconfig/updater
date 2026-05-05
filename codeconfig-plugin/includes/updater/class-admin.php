@@ -542,11 +542,11 @@ class CodeConfig_Updater_Admin
         $is_active = is_plugin_active($basename);
         $active_class = $is_active ? ' active' : '';
 
-        echo '<tr class="plugin-update-tr' . esc_attr($active_class) . '" id="' . esc_attr($slug . '-update') . '" data-slug="' . esc_attr($slug) . '" data-plugin="' . esc_attr($basename) . '">';
+        echo '<tr class="codeconfig-plugin-update-tr' . esc_attr($active_class) . '" id="' . esc_attr($slug . '-update') . '" data-slug="' . esc_attr($slug) . '" data-plugin="' . esc_attr($basename) . '">';
         echo '<td colspan="' . esc_attr($column_count) . '" class="plugin-update colspanchange">';
         echo '<div class="update-message notice inline notice-warning notice-alt"><p>';
         printf(
-            __('There is a new version of %1$s available. <a href="%2$s" class="thickbox open-plugin-details-modal" aria-label="View %1$s version %3$s details">View version %3$s details</a> or <a href="%4$s" class="update-link" aria-label="Update %1$s now">update now</a>.'),
+            __('There is a new version of %1$s available. <a href="%2$s" class="thickbox open-plugin-details-modal" aria-label="View %1$s version %3$s details">View version %3$s details</a> or <a href="%4$s" class="codeconfig-update-link" aria-label="Update %1$s now">update now</a>.'),
             esc_html($plugin_name),
             esc_url($details_url),
             esc_attr($new_version),

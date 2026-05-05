@@ -160,22 +160,22 @@
 					var nonce = codeconfigPluginAdmin.updateNonce || '';
 
 					$( '.codeconfig-plugin-update-tr' ).remove();
-					$( '.plugin-update-tr[data-plugin="' + basename + '"]' ).remove();
+					$( '.codeconfig-plugin-update-tr[data-plugin="' + basename + '"]' ).remove();
 
 					if ( response.update_available ) {
 						var pluginName = codeconfigPluginAdmin.pluginName || 'This plugin';
 						var isActive = btn.closest( 'tr' ).hasClass( 'active' );
 						var activeClass = isActive ? ' active' : '';
-						var noticeHtml = '<tr class="plugin-update-tr codeconfig-plugin-update-tr' + activeClass + '" id="' + pluginSlug + '-update" data-slug="' + pluginSlug + '" data-plugin="' + basename + '">' +
+						var noticeHtml = '<tr class="codeconfig-plugin-update-tr' + activeClass + '" id="' + pluginSlug + '-update" data-slug="' + pluginSlug + '" data-plugin="' + basename + '">' +
 							'<td colspan="4" class="plugin-update colspanchange">' +
 							'<div class="update-message notice inline notice-warning notice-alt"><p>' +
 							'There is a new version of ' + pluginName + ' available. ' +
 							'<a href="plugin-install.php?tab=plugin-information&plugin=' + pluginSlug + '&section=changelog&TB_iframe=true&width=600&height=800" class="thickbox open-plugin-details-modal" aria-label="View ' + pluginName + ' version ' + newVersion + ' details">View version ' + newVersion + ' details</a> ' +
-							'or <a href="' + codeconfigPluginAdmin.updateUrl + '" class="update-link" aria-label="Update ' + pluginName + ' now">update now</a>.' +
+							'or <a href="' + codeconfigPluginAdmin.updateUrl + '" class="codeconfig-update-link" aria-label="Update ' + pluginName + ' now">update now</a>.' +
 							'</p></div></td></tr>';
 						btn.closest( 'tr' ).after( noticeHtml );
 					} else {
-						var noticeHtml = '<tr class="plugin-update-tr codeconfig-plugin-update-tr">' +
+						var noticeHtml = '<tr class="codeconfig-plugin-update-tr">' +
 							'<td colspan="4" class="plugin-update colspanchange">' +
 							'<div class="update-message notice inline notice-success notice-alt"><p>This plugin is up to date.</p></div></td></tr>';
 						btn.closest( 'tr' ).after( noticeHtml );
@@ -187,8 +187,7 @@
 					console.log('AJAX Error:', textStatus, errorThrown);
 					btn.html( originalText ).removeClass( 'disabled' ).css( 'pointer-events', '' );
 					$( '.codeconfig-plugin-update-tr' ).remove();
-					$( '.plugin-update-tr[data-plugin="' + basename + '"]' ).remove();
-					var notice = '<tr class="plugin-update-tr codeconfig-plugin-update-tr">' +
+					var notice = '<tr class="codeconfig-plugin-update-tr">' +
 						'<td colspan="4" class="plugin-update colspanchange">' +
 						'<div class="update-message notice inline notice-error notice-alt"><p>Request failed. Try again.</p></div></td></tr>';
 					btn.closest( 'tr' ).after( notice );
