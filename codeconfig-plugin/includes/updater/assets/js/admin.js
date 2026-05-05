@@ -154,15 +154,17 @@
 				} ).done( function( response ) {
 					btn.html( originalText ).removeClass( 'disabled' ).css( 'pointer-events', '' );
 
+					var newVersion = response.new_version || '';
+					var pluginSlug = codeconfigPluginAdmin.pluginSlug || '';
+					var basename = codeconfigPluginAdmin.basename || '';
+					var nonce = codeconfigPluginAdmin.updateNonce || '';
+
 					$( '.codeconfig-plugin-update-tr' ).remove();
 					$( '.plugin-update-tr[data-plugin="' + basename + '"]' ).remove();
 
 					if ( response.update_available ) {
-						var newVersion = response.new_version || '';
-						var pluginSlug = codeconfigPluginAdmin.pluginSlug || '';
-						var basename = codeconfigPluginAdmin.basename || '';
-						var nonce = codeconfigPluginAdmin.updateNonce || '';
-						var noticeHtml = '<tr class="codeconfig-plugin-update-tr plugin-update-tr">' +
+						var pluginName = codeconfigPluginAdmin.pluginName || 'This plugin';
+						var noticeHtml = '<tr class="codeconfig-plugin-update-tr plugin-update-tr" data-plugin="' + basename + '">' +
 							'<td colspan="4" class="plugin-update colspanchange">' +
 							'<div class="update-message notice inline notice-warning notice-alt">' +
 							'<p>There is a new version of ' + pluginName + ' available. ' +
