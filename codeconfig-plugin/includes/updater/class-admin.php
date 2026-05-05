@@ -97,7 +97,7 @@ class CodeConfig_Updater_Admin
             'currentVersion' => ccupd_config('version', ''),
             'basename'       => ccupd_config('basename', ''),
             'updateNonce'    => wp_create_nonce('codeconfig_do_update'),
-            'updateUrl'      => admin_url('plugins.php?codeconfig_do_update=1&update_nonce=' . wp_create_nonce('codeconfig_do_update')),
+            'updateUrl'      => wp_nonce_url(admin_url('update.php?action=codeconfig-upgrade-plugin&plugin=' . urlencode(ccupd_config('basename', ''))), 'codeconfig_upgrade_plugin_' . ccupd_config('basename', '')),
         ));
 
         wp_enqueue_style(
@@ -176,6 +176,75 @@ class CodeConfig_Updater_Admin
 
     public static function maybe_update_plugin()
     {
+        if (isset($_GET['action']) && $_GET['action'] === 'codeconfig-upgrade-plugin' && isset($_GET['plugin'])) {
+            $basename = sanitize_text_field($_GET['plugin']);
+            $nonce = $_GET['_wpnonce'] ?? '';
+
+            if (! wp_verify_nonce($nonce, 'codeconfig_upgrade_plugin_' . $basename)) {
+                wp_die('Security check failed.');
+            }
+
+            if (! current_user_can('update_plugins')) {
+                wp_die('Permission denied.');
+            }
+
+            $api_data = CodeConfig_REST::check_api();
+
+            if (is_wp_error($api_data) || empty($api_data['update'])) {
+                wp_redirect(add_query_arg(array(
+                    'codeconfig_update_error' => 'No update available or API error.',
+                ), admin_url('plugins.php')));
+                exit;
+            }
+
+            delete_site_transient('update_plugins');
+
+            require_once ABSPATH . 'wp-admin/includes/file.php';
+            require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
+            require_once ABSPATH . 'wp-admin/includes/class-plugin-upgrader.php';
+            require_once ABSPATH . 'wp-admin/includes/plugin.php';
+
+            deactivate_plugins($basename, false, true);
+
+            $skin     = new WP_Ajax_Upgrader_Skin();
+            $upgrader = new Plugin_Upgrader($skin);
+
+            $slug = ccupd_config('slug');
+
+            $result = $upgrader->run(array(
+                'package'           => $api_data['package'],
+                'destination'       => WP_PLUGIN_DIR . '/' . $slug,
+                'clear_destination' => true,
+                'clear_working'     => true,
+                'hook_extra'        => array(
+                    'plugin' => $basename,
+                ),
+                'incompatible_archive' => false,
+            ));
+
+            if (is_wp_error($result)) {
+                activate_plugin($basename, '', false, true);
+                wp_redirect(add_query_arg(array(
+                    'codeconfig_update_error' => $result->get_error_message(),
+                ), admin_url('plugins.php')));
+                exit;
+            }
+
+            activate_plugin($basename, '', false, true);
+
+            delete_site_transient('update_plugins');
+            delete_option('codeconfig_check_result');
+            delete_option('codeconfig_api_status');
+            delete_option('codeconfig_last_check');
+
+            $new_version = ! empty($api_data['new_version']) ? $api_data['new_version'] : '';
+            set_transient('codeconfig_update_success', $new_version, 30);
+
+            wp_redirect(add_query_arg(array(
+                'codeconfig_update_done' => '1',
+            ), admin_url('plugins.php')));
+            exit;
+        }
 
         if (! isset($_GET['codeconfig_do_update']) || ! isset($_GET['update_nonce'])) {
             return;
@@ -523,11 +592,8 @@ class CodeConfig_Updater_Admin
         $wp_list_table = _get_list_table('WP_Plugins_List_Table', array( 'screen' => get_current_screen() ));
         $column_count = $wp_list_table->get_column_count();
 
-        $update_nonce = wp_create_nonce('codeconfig_do_update');
-        $update_url = add_query_arg(array(
-            'codeconfig_do_update' => '1',
-            'update_nonce' => $update_nonce,
-        ), admin_url('plugins.php'));
+        $update_nonce = wp_create_nonce('codeconfig_upgrade_plugin_' . $basename);
+        $update_url = wp_nonce_url(admin_url('update.php?action=codeconfig-upgrade-plugin&plugin=' . urlencode($basename)), 'codeconfig_upgrade_plugin_' . $basename);
 
         $details_url = add_query_arg(array(
             'tab' => 'plugin-information',
