@@ -114,6 +114,13 @@ class CodeConfig_Update_Check {
 			), 404 );
 		}
 
+		if ( empty( $latest['download_path'] ) || ! file_exists( $latest['download_path'] ) ) {
+			return new WP_REST_Response( array(
+				'success' => false,
+				'message' => 'Plugin file not found. Please contact support.',
+			), 404 );
+		}
+
 		if ( version_compare( $version, $latest['version'], '>=' ) ) {
 			$response = array(
 				'success'   => true,
