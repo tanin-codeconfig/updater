@@ -97,7 +97,7 @@ class CodeConfig_Updater_Admin
             'currentVersion' => ccupd_config('version', ''),
             'basename'       => ccupd_config('basename', ''),
             'updateNonce'    => wp_create_nonce('codeconfig_do_update'),
-            'updateUrl'      => admin_url('plugins.php?page=codeconfig-plugin-status&codeconfig_do_update=1&update_nonce=' . wp_create_nonce('codeconfig_do_update')),
+            'updateUrl'      => admin_url('plugins.php?codeconfig_do_update=1&update_nonce=' . wp_create_nonce('codeconfig_do_update')),
         ));
 
         wp_enqueue_style(
@@ -524,11 +524,10 @@ class CodeConfig_Updater_Admin
         $column_count = $wp_list_table->get_column_count();
 
         $update_nonce = wp_create_nonce('codeconfig_do_update');
-        $status_page = admin_url('plugins.php?page=codeconfig-plugin-status');
         $update_url = add_query_arg(array(
             'codeconfig_do_update' => '1',
             'update_nonce' => $update_nonce,
-        ), $status_page);
+        ), admin_url('plugins.php'));
 
         $details_url = add_query_arg(array(
             'tab' => 'plugin-information',
