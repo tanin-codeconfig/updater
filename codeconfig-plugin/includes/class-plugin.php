@@ -26,7 +26,7 @@ class CodeConfig
     private function define_constants()
     {
         if (! defined('CODECONFIG_VERSION')) {
-            define('CODECONFIG_VERSION', '1.0.23');
+            define('CODECONFIG_VERSION', '1.0.25');
         }
         if (! defined('CODECONFIG_PATH')) {
             define('CODECONFIG_PATH', plugin_dir_path(__DIR__));
