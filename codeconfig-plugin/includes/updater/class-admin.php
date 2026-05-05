@@ -97,7 +97,7 @@ class CodeConfig_Updater_Admin
             'currentVersion' => ccupd_config('version', ''),
             'basename'       => ccupd_config('basename', ''),
             'updateNonce'    => wp_create_nonce('codeconfig_do_update'),
-            'updateUrl'      => wp_nonce_url(admin_url('update.php?action=codeconfig-upgrade-plugin&plugin=' . urlencode(ccupd_config('basename', ''))), 'codeconfig_upgrade_plugin_' . ccupd_config('basename', '')),
+            'updateUrl'      => wp_nonce_url(admin_url('update.php?action=upgrade-plugin&plugin=' . urlencode(ccupd_config('basename', ''))), 'codeconfig_upgrade_plugin_' . ccupd_config('basename', '')),
         ));
 
         wp_enqueue_style(
@@ -176,7 +176,7 @@ class CodeConfig_Updater_Admin
 
     public static function maybe_update_plugin()
     {
-        if (isset($_GET['action']) && $_GET['action'] === 'codeconfig-upgrade-plugin' && isset($_GET['plugin'])) {
+        if (isset($_GET['action']) && $_GET['action'] === 'upgrade-plugin' && isset($_GET['plugin'])) {
             $basename = sanitize_text_field($_GET['plugin']);
             $nonce = $_GET['_wpnonce'] ?? '';
 
@@ -593,7 +593,7 @@ class CodeConfig_Updater_Admin
         $column_count = $wp_list_table->get_column_count();
 
         $update_nonce = wp_create_nonce('codeconfig_upgrade_plugin_' . $basename);
-        $update_url = wp_nonce_url(admin_url('update.php?action=codeconfig-upgrade-plugin&plugin=' . urlencode($basename)), 'codeconfig_upgrade_plugin_' . $basename);
+        $update_url = wp_nonce_url(admin_url('update.php?action=upgrade-plugin&plugin=' . urlencode($basename)), 'codeconfig_upgrade_plugin_' . $basename);
 
         $details_url = add_query_arg(array(
             'tab' => 'plugin-information',
