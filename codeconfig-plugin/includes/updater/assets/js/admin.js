@@ -30,6 +30,9 @@
 					if ( response.update_available ) {
 						resultDiv.addClass( 'notice-warning' ).html( '<p>' + response.message + '</p>' ).show();
 						$( '.codeconfig-plugin-update-btn' ).prop( 'disabled', false ).show();
+						setTimeout( function() {
+							window.location.reload();
+						}, 1500 );
 					} else {
 						resultDiv.addClass( 'notice-success' ).html( '<p>' + response.message + '</p>' ).show();
 						$( '.codeconfig-plugin-update-btn' ).hide();
