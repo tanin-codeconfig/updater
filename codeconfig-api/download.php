@@ -10,9 +10,32 @@ require_once CODECONFIG_API_PATH . 'includes/class-version-db.php';
 require_once CODECONFIG_API_PATH . 'includes/class-users-db.php';
 require_once CODECONFIG_API_PATH . 'includes/class-analytics-db.php';
 
+$id = isset($_GET['id']) ? (int) $_GET['id'] : 0;
 $token = isset($_GET['token']) ? sanitize_text_field($_GET['token']) : '';
 $slug  = isset($_GET['slug']) ? sanitize_text_field($_GET['slug']) : 'codeconfig-plugin';
 $key   = isset($_GET['api_key']) ? sanitize_text_field($_GET['api_key']) : '';
+
+if ($id > 0) {
+    $version = CodeConfig_Version_DB::get_existing_version_by_id($id);
+    if (! $version || empty($version['download_path']) || ! file_exists($version['download_path'])) {
+        status_header(404);
+        die('Plugin file not found.');
+    }
+    $file_path = $version['download_path'];
+    $filename = basename($file_path);
+    
+    header('Content-Description: File Transfer');
+    header('Content-Type: application/zip');
+    header('Content-Disposition: attachment; filename="' . $filename . '"');
+    header('Content-Transfer-Encoding: binary');
+    header('Expires: 0');
+    header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
+    header('Pragma: public');
+    header('Content-Length: ' . filesize($file_path));
+    
+    readfile($file_path);
+    exit;
+}
 
 if (empty($token)) {
     status_header(403);

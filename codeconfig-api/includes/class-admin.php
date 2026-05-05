@@ -530,24 +530,39 @@ class CodeConfig_Admin
 					<tr><td colspan="8">No versions uploaded yet.</td></tr>
 				<?php else : ?>
 					<?php foreach ($versions as $v) : ?>
+						<?php
+						$file_exists = ! empty( $v['download_path'] ) && file_exists( $v['download_path'] );
+						$file_display = $file_exists ? basename( $v['download_path'] ) : 'File not found';
+						$file_color = $file_exists ? '' : 'color: #d63638;';
+						$is_active = $v['is_active'] && $file_exists;
+						$download_url = CODECONFIG_API_URL . 'download.php?id=' . (int) $v['id'];
+						?>
 						<tr>
 							<th scope="row" class="check-column"><input type="checkbox" name="bulk_ids[]" value="<?php echo (int) $v['id']; ?>" /></th>
 							<td><?php echo esc_html($v['id']); ?></td>
-							<td>
-								<?php echo esc_html(basename($v['download_path'] ?? '')); ?>
+							<td style="<?php echo esc_attr( $file_color ); ?>">
+								<?php echo esc_html($file_display); ?>
 								<div class="row-actions">
-									<button type="button" class="button-link codeconfig-edit-btn" data-id="<?php echo (int) $v['id']; ?>" data-version="<?php echo esc_attr($v['version']); ?>" data-slug="<?php echo esc_attr($v['slug']); ?>">Edit</button>
-									|
-									<button type="button" class="button-link codeconfig-single-action-btn" data-action="<?php echo $v['is_active'] ? 'deactivate' : 'activate'; ?>" data-id="<?php echo (int) $v['id']; ?>">
-										<?php echo $v['is_active'] ? 'Deactivate' : 'Activate'; ?>
-									</button>
-									|
-									<button type="button" class="button-link codeconfig-single-action-btn" data-action="delete" data-id="<?php echo (int) $v['id']; ?>">Delete</button>
+									<?php if ( $file_exists ) : ?>
+										<a href="<?php echo $download_url; ?>" class="button-link" target="_blank">Download</a>
+										|
+										<button type="button" class="button-link codeconfig-edit-btn" data-id="<?php echo (int) $v['id']; ?>" data-version="<?php echo esc_attr($v['version']); ?>" data-slug="<?php echo esc_attr($v['slug']); ?>">Edit</button>
+										|
+										<button type="button" class="button-link codeconfig-single-action-btn" data-action="<?php echo $is_active ? 'deactivate' : 'activate'; ?>" data-id="<?php echo (int) $v['id']; ?>">
+											<?php echo $is_active ? 'Deactivate' : 'Activate'; ?>
+										</button>
+										|
+										<button type="button" class="button-link codeconfig-single-action-btn" data-action="delete" data-id="<?php echo (int) $v['id']; ?>">Delete</button>
+									<?php else : ?>
+										<button type="button" class="button-link codeconfig-edit-btn" data-id="<?php echo (int) $v['id']; ?>" data-version="<?php echo esc_attr($v['version']); ?>" data-slug="<?php echo esc_attr($v['slug']); ?>">Edit</button>
+										|
+										<button type="button" class="button-link codeconfig-single-action-btn" data-action="delete" data-id="<?php echo (int) $v['id']; ?>">Delete</button>
+									<?php endif; ?>
 								</div>
 							</td>
 							<td><?php echo esc_html($v['version']); ?></td>
 							<td><?php echo esc_html($v['slug']); ?></td>
-							<td><?php echo $v['is_active'] ? '<span class="codeconfig-status-active">Active</span>' : '<span class="codeconfig-status-inactive">Inactive</span>'; ?></td>
+							<td><?php echo $is_active ? '<span class="codeconfig-status-active">Active</span>' : '<span class="codeconfig-status-inactive">Inactive</span>'; ?></td>
 							<td>
 								<?php
                                 $download_count = 0;

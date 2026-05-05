@@ -171,6 +171,19 @@ class CodeConfig_Version_DB {
 		);
 	}
 
+	public static function deactivate_version( $slug ) {
+		global $wpdb;
+		$table_name = self::get_table_name();
+
+		return $wpdb->update(
+			$table_name,
+			array( 'is_active' => 0 ),
+			array( 'slug' => sanitize_text_field( $slug ) ),
+			array( '%d' ),
+			array( '%s' )
+		);
+	}
+
 	public static function get_existing_version_by_id( $id ) {
 		global $wpdb;
 		$table_name = self::get_table_name();
