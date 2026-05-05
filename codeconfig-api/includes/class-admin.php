@@ -675,6 +675,17 @@ class CodeConfig_Admin
 
     private static function maybe_show_notice()
     {
+        // Check for version deactivation notification
+        $deactivated = get_transient('codeconfig_version_deactivated');
+        if ($deactivated) {
+            delete_transient('codeconfig_version_deactivated');
+            echo '<div class="notice notice-warning is-dismissible"><p>';
+            printf(
+                '⚠️ Plugin file not found for version %s. Version deactivated automatically.',
+                esc_html($deactivated['version'] ?? 'unknown')
+            );
+            echo '</p></div>';
+        }
 
         if (! isset($_GET['codeconfig_notice'])) {
             return;

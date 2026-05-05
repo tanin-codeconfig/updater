@@ -126,6 +126,13 @@ class CodeConfig_Version_DB
         if ($active_version && (empty($active_version['download_path']) || ! file_exists($active_version['download_path']))) {
             // If the file doesn't exist, deactivate this version and try to get the next active version
             self::deactivate_version($slug, $active_version['version'] ?? null);
+            
+            // Store notification for admin
+            set_transient('codeconfig_version_deactivated', array(
+                'slug' => $slug,
+                'version' => $active_version['version'] ?? 'unknown',
+            ), 30);
+            
             return self::get_active_version($slug);
         }
 
