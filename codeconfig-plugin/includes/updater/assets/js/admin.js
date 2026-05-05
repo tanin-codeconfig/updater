@@ -155,6 +155,7 @@
 					btn.html( originalText ).removeClass( 'disabled' ).css( 'pointer-events', '' );
 
 					$( '.codeconfig-plugin-update-tr' ).remove();
+					$( '.plugin-update-tr[data-plugin="' + basename + '"]' ).remove();
 
 					if ( response.update_available ) {
 						var newVersion = response.new_version || '';
@@ -189,6 +190,7 @@
 					console.log('AJAX Error:', textStatus, errorThrown);
 					btn.html( originalText ).removeClass( 'disabled' ).css( 'pointer-events', '' );
 					$( '.codeconfig-plugin-update-tr' ).remove();
+					$( '.plugin-update-tr[data-plugin="' + basename + '"]' ).remove();
 					var notice = '<tr class="codeconfig-plugin-update-tr">' +
 						'<td colspan="4" class="plugin-update colspanchange">' +
 						'<div class="update-message notice inline notice-error notice-alt">' +
