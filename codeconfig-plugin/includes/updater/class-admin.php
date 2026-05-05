@@ -285,7 +285,7 @@ class CodeConfig_Updater_Admin
 						<th>Current Version</th>
 						<td><code><?php echo esc_html(ccupd_config('version', '1.0.0')); ?></code></td>
 					</tr>
-					<?php if ($new_version) : ?>
+					<?php if ($has_update && $new_version) : ?>
 						<tr>
 							<th>Latest Version</th>
 							<td><code><?php echo esc_html($new_version); ?></code></td>
