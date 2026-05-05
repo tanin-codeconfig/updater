@@ -3,7 +3,7 @@ Contributors: codeconfig
 Tags: plugin, updates, api, custom-updates
 Requires at least: 5.6
 Tested up to: 6.4
-Stable tag: 1.0.7
+Stable tag: 1.0.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -57,11 +57,14 @@ For support, visit https://codeconfig.io
 
 == Changelog ==
 
-= 1.0.7 =
-* Add download button in versions table
-* Add file not found detection
-* Add admin notice for auto-deactivated versions
-* Improve get_active_version to find next valid version
-
-= 1.0.6 =
+= 1.0.0 =
 * Initial release
+* Version management with upload/activate/deactivate/delete
+* Download button in versions table
+* File not found detection and auto-deactivation
+* Admin notice for auto-deactivated versions
+* REST API endpoints for update checking
+* Direct download via ID
+* User and API key management
+* Analytics tracking
+* Headless mode support

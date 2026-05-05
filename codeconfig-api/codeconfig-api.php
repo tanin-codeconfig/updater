@@ -3,7 +3,7 @@
 /**
  * Plugin Name: CodeConfig API
  * Description: Custom update API server for CodeConfig plugins
- * Version: 1.0.7
+ * Version: 1.0.0
  * Author: CodeConfig
  * Author URI: https://codeconfig.io
  * Text Domain: codeconfig-api
@@ -15,7 +15,7 @@ if (! defined('ABSPATH')) {
 }
 
 if (! defined('CODECONFIG_API_VERSION')) {
-    define('CODECONFIG_API_VERSION', '1.0.7');
+    define('CODECONFIG_API_VERSION', '1.0.0');
 }
 if (! defined('CODECONFIG_API_PATH')) {
     define('CODECONFIG_API_PATH', plugin_dir_path(__FILE__));
