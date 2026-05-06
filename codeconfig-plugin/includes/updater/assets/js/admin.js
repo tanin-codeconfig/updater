@@ -2,10 +2,6 @@
 	'use strict';
 
 	$( document ).ready( function() {
-
-		console.log('CodeConfig Admin JS loaded');
-		console.log('codeconfigPluginAdmin:', codeconfigPluginAdmin);
-
 		var checkBtn = $( '#codeconfig-plugin-check-btn' );
 		var refreshBtn = $( '#codeconfig-plugin-refresh-btn' );
 		var testBtn = $( '#codeconfig-plugin-test-btn' );
@@ -37,9 +33,10 @@
 						resultDiv.addClass( 'notice-success' ).html( '<p>' + response.message + '</p>' ).show();
 						$( '.codeconfig-plugin-update-btn' ).hide();
 					}
-				} ).fail( function() {
+				} ).fail( function(jqXHR) {
+					const message = jqXHR.responseJSON && jqXHR.responseJSON.message ? jqXHR.responseJSON.message : 'Request failed. Try again.';
 					btn.prop( 'disabled', false ).html( '<span class="dashicons dashicons-update" style="margin-top:3px;"></span> ' + codeconfigPluginAdmin.checkBtn );
-					resultDiv.addClass( 'notice-error' ).html( '<p>Request failed. Try again.</p>' ).show();
+					resultDiv.addClass( 'notice-error' ).html( '<p>' + message + '</p>' ).show();
 				} );
 			});
 		}
@@ -60,10 +57,11 @@
 				} ).done( function( response ) {
 					btn.prop( 'disabled', false ).text( 'Force Refresh' );
 					window.location.reload();
-				} ).fail( function() {
+				} ).fail( function(jqXHR) {
+					const message = jqXHR.responseJSON && jqXHR.responseJSON.message ? jqXHR.responseJSON.message : 'Request failed. Try again.';
 					btn.prop( 'disabled', false ).text( 'Force Refresh' );
 					resultDiv.removeClass( 'notice-success' ).addClass( 'notice-error' );
-					resultDiv.html( '<p>Failed.</p>' ).show();
+					resultDiv.html( '<p>' + message + '</p>' ).show();
 				} );
 			});
 		}
@@ -97,10 +95,11 @@
 						resultDiv.removeClass( 'notice-success notice-warning' ).addClass( 'notice-error' );
 						resultDiv.html( '<p>' + response.message + '</p>' ).show();
 					}
-				} ).fail( function() {
+				} ).fail( function(jqXHR) {
+					const message = jqXHR.responseJSON && jqXHR.responseJSON.message ? jqXHR.responseJSON.message : 'Update failed. Try again.';
 					btn.prop( 'disabled', false ).html( 'Update Now' );
 					resultDiv.removeClass( 'notice-success notice-warning' ).addClass( 'notice-error' );
-					resultDiv.html( '<p>Update failed. Try again.</p>' ).show();
+					resultDiv.html( '<p>' + message + '</p>' ).show();
 				} );
 			});
 		}
@@ -128,10 +127,11 @@
 						resultDiv.removeClass( 'notice-success' ).addClass( 'notice-error' );
 						resultDiv.html( '<p>' + ( response.message || 'Connection failed.' ) + '</p>' ).show();
 					}
-				} ).fail( function() {
+				} ).fail( function(jqXHR) {
+					const message = jqXHR.responseJSON && jqXHR.responseJSON.message ? jqXHR.responseJSON.message : 'Connection failed. Try again.';
 					btn.prop( 'disabled', false ).text( 'Test Connection' );
 					resultDiv.removeClass( 'notice-success' ).addClass( 'notice-error' );
-					resultDiv.html( '<p>Connection failed.</p>' ).show();
+					resultDiv.html( '<p>' + message + '</p>' ).show();
 				} );
 			});
 		}
@@ -186,13 +186,13 @@
 							$( '.codeconfig-plugin-update-tr' ).fadeOut();
 						}, 5000 );
 					}
-				} ).fail( function( jqXHR, textStatus, errorThrown ) {
-					console.log('AJAX Error:', textStatus, errorThrown);
+				} ).fail( function( jqXHR ) {
+					const message = jqXHR.responseJSON && jqXHR.responseJSON.message ? jqXHR.responseJSON.message : 'Request failed. Try again.';
 					btn.html( originalText ).removeClass( 'disabled' ).css( 'pointer-events', '' );
 					$( '.codeconfig-plugin-update-tr' ).remove();
 					var notice = '<tr class="codeconfig-plugin-update-tr">' +
 						'<td colspan="4" class="plugin-update colspanchange">' +
-						'<div class="update-message notice inline notice-error notice-alt"><p>Request failed. Try again.</p></div></td></tr>';
+						'<div class="update-message notice inline notice-error notice-alt"><p>' + message + '</p></div></td></tr>';
 					btn.closest( 'tr' ).after( notice );
 					setTimeout( function() {
 						$( '.codeconfig-plugin-update-tr' ).fadeOut();

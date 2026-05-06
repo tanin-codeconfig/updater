@@ -794,7 +794,7 @@ class CodeConfig_Admin
 							<?php
                         $latest = CodeConfig_Version_DB::get_active_version($slug);
 						    $version = $latest ? $latest['version'] : 'N/A';
-						    $url = $site_url . '/wp-json/codeconfig/v1/latest-download?slug=' . urlencode($slug);
+						    $url = $site_url . '/wp-json/plugin/v1/latest-download?slug=' . urlencode($slug);
 						    ?>
 							<tr>
 								<td><strong><?php echo esc_html($slug); ?></strong></td>

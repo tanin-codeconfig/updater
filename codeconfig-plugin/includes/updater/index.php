@@ -6,7 +6,7 @@ if (! defined('ABSPATH')) {
 
 if (! function_exists('ccupd')) {
 
-    function ccupd($config = array())
+    function ccupd($config = [])
     {
         global $ccupd;
 
@@ -14,6 +14,7 @@ if (! function_exists('ccupd')) {
             if (! empty($config)) {
                 $ccupd->update_config($config);
             }
+
             return $ccupd;
         }
 
@@ -29,9 +30,9 @@ if (! function_exists('ccupd')) {
 
         $ccupd = new CodeConfig_Updater_Manager($config);
 
-        add_action('plugins_loaded', array($ccupd, 'init'));
-        add_action('activate_plugin', array($ccupd, 'on_activate'));
-        add_action('deactivate_plugin', array($ccupd, 'on_deactivate'));
+        add_action('plugins_loaded', [$ccupd, 'init']);
+        add_action('activate_plugin', [$ccupd, 'on_activate']);
+        add_action('deactivate_plugin', [$ccupd, 'on_deactivate']);
 
         return $ccupd;
     }
@@ -45,6 +46,7 @@ if (! function_exists('ccupd_config')) {
         if ($manager) {
             return $manager->get_config($key, $default);
         }
+
         return $default;
     }
 }
@@ -52,18 +54,18 @@ if (! function_exists('ccupd_config')) {
 class CodeConfig_Updater_Manager
 {
     private static $instance = null;
-    private $config = array();
+    private $config          = [];
 
-    public function __construct($config = array())
+    public function __construct($config = [])
     {
-        $this->config = wp_parse_args($config, array(
+        $this->config = wp_parse_args($config, [
             'api_url'         => '',
             'slug'            => '',
             'basename'        => '',
             'version'         => '1.0.0',
             'name'            => 'CodeConfig Plugin',
             'show_admin_page' => false,
-        ));
+        ]);
 
         self::$instance = $this;
     }
@@ -83,6 +85,7 @@ class CodeConfig_Updater_Manager
         if (empty($key)) {
             return $this->config;
         }
+
         return isset($this->config[$key]) ? $this->config[$key] : $default;
     }
 

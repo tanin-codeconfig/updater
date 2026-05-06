@@ -23,7 +23,7 @@ class CodeConfig_Config
     {
         if (empty(self::$config)) {
             self::$config = apply_filters('codeconfig_config', array(
-                'api_url'   => 'http://localhost:10078/wp-json/codeconfig/v1',
+                'api_url'   => 'http://localhost:10078/wp-json/plugin/v1',
                 'slug'      => 'codeconfig-plugin',
                 'basename'  => 'codeconfig-plugin/codeconfig-plugin.php',
                 'version'   => '1.0.20',

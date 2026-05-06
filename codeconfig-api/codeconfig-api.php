@@ -142,11 +142,11 @@ function codeconfig_headless_mode()
             </html>';
         exit;
     } elseif ('redirect' === $behavior) {
-        $api_docs = get_site_url(null, '/wp-json/codeconfig/v1');
+        $api_docs = get_site_url(null, '/wp-json/plugin/v1');
         wp_redirect($api_docs, 302);
         exit;
     } elseif ('custom_url' === $behavior) {
-        $custom_url = ! empty($settings['headless_redirect_url']) ? $settings['headless_redirect_url'] : get_site_url(null, '/wp-json/codeconfig/v1');
+        $custom_url = ! empty($settings['headless_redirect_url']) ? $settings['headless_redirect_url'] : get_site_url(null, '/wp-json/plugin/v1');
         wp_redirect($custom_url, 302);
         exit;
     }

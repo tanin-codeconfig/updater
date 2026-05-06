@@ -59,21 +59,31 @@ class CodeConfig
                 require_once CODECONFIG_PATH . 'includes/updater/index.php';
             }
 
-            if (function_exists('ccupd')) {
-                ccupd(array(
-                    'api_url'         => 'http://localhost:10078/wp-json/codeconfig/v1',
-                    'slug'            => 'codeconfig-plugin',
-                    'basename'        => 'codeconfig-plugin/codeconfig-plugin.php',
-                    'version'         => CODECONFIG_VERSION,
-                    'name'            => 'CodeConfig Plugin',
-                    'show_admin_page' => true,
-                    'is_pro'          => defined('CODECONFIG_PRO_ACTIVE') && CODECONFIG_PRO_ACTIVE,
-                    'menu'           => array(
-                        'parent_slug' => 'options-general.php',
-                        'page_title'  => 'CodeConfig Plugin Updates',
-                        'menu_title'  => 'CodeConfig Updates',
-                    ),
-                ));
+            if (!function_exists('ccp_updater')) {
+                function ccp_updater($config)
+                {
+
+                    global $ccp_updater;
+
+                    if (! $ccp_updater) {
+                        $ccp_updater = ccupd(array(
+                            'api_url'         => 'http://localhost:10078/wp-json/plugin/v1',
+                            'slug'            => 'codeconfig-plugin',
+                            'basename'        => 'codeconfig-plugin/codeconfig-plugin.php',
+                            'version'         => CODECONFIG_VERSION,
+                            'name'            => 'CodeConfig Plugin',
+                            'show_admin_page' => true,
+                            'is_pro'          => defined('CODECONFIG_PRO_ACTIVE') && CODECONFIG_PRO_ACTIVE,
+                            'menu'           => array(
+                                'parent_slug' => 'options-general.php',
+                                'page_title'  => 'CodeConfig Plugin Updates',
+                                'menu_title'  => 'CodeConfig Updates',
+                            ),
+                        ));
+                    }
+
+                    return $ccp_updater;
+                }
             }
         }
     }

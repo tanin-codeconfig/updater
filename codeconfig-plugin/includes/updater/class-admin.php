@@ -7,12 +7,12 @@ class CodeConfig_Updater_Admin
 {
     public static function init()
     {
-        add_filter('plugin_action_links_' . ccupd_config('basename', ''), array( __CLASS__, 'add_plugin_action_links' ));
-        add_action('admin_menu', array( __CLASS__, 'add_menu' ));
-        add_action('admin_enqueue_scripts', array( __CLASS__, 'enqueue_assets' ));
-        add_action('admin_init', array( __CLASS__, 'register_settings' ));
-        add_action('admin_init', array( __CLASS__, 'handle_upgrade_action' ));
-        add_action('after_plugin_row_' . ccupd_config('basename', ''), array( __CLASS__, 'render_plugin_update_notice' ), 10, 3);
+        add_filter('plugin_action_links_' . ccupd_config('basename', ''), [ __CLASS__, 'add_plugin_action_links' ]);
+        add_action('admin_menu', [ __CLASS__, 'add_menu' ]);
+        add_action('admin_enqueue_scripts', [ __CLASS__, 'enqueue_assets' ]);
+        add_action('admin_init', [ __CLASS__, 'register_settings' ]);
+        add_action('admin_init', [ __CLASS__, 'handle_upgrade_action' ]);
+        add_action('after_plugin_row_' . ccupd_config('basename', ''), [ __CLASS__, 'render_plugin_update_notice' ], 10, 3);
     }
 
     public static function register_settings()
@@ -39,8 +39,8 @@ class CodeConfig_Updater_Admin
     public static function add_menu()
     {
         $show_admin_page = ccupd_config('show_admin_page', false);
-        $menu_config = ccupd_config('menu', array());
-        $plugin_name = ccupd_config('name', 'CodeConfig Plugin');
+        $menu_config     = ccupd_config('menu', []);
+        $plugin_name     = ccupd_config('name', 'CodeConfig Plugin');
 
         if (! $show_admin_page) {
             return;
@@ -55,7 +55,7 @@ class CodeConfig_Updater_Admin
                 ! empty($menu_config['menu_title']) ? $menu_config['menu_title'] : 'Updates',
                 'manage_options',
                 $menu_slug,
-                array( __CLASS__, 'render_page' )
+                [ __CLASS__, 'render_page' ]
             );
         } else {
             add_menu_page(
@@ -63,7 +63,7 @@ class CodeConfig_Updater_Admin
                 $plugin_name,
                 'manage_options',
                 $menu_slug,
-                array( __CLASS__, 'render_page' ),
+                [ __CLASS__, 'render_page' ],
                 'dashicons-update',
                 31
             );
@@ -73,22 +73,22 @@ class CodeConfig_Updater_Admin
     public static function enqueue_assets($hook)
     {
         // Load on plugins.php page AND all codeconfig plugin admin pages
-        if (strpos($hook, 'codeconfig') === false && $hook !== 'plugins.php') {
+        if (strpos($hook, 'integration-google-drive') === false && $hook !== 'plugins.php') {
             return;
         }
 
         // Use native WordPress function - get updater folder URL
-        $assets_url = plugin_dir_url(__DIR__) . '/updater/assets/';
+        $assets_url = plugin_dir_url(__DIR__) . 'updater/assets/';
 
         wp_enqueue_script(
             'codeconfig-plugin-admin-js',
             $assets_url . 'js/admin.js',
-            array( 'jquery' ),
+            [ 'jquery' ],
             '1.0.0',
             true
         );
 
-        wp_localize_script('codeconfig-plugin-admin-js', 'codeconfigPluginAdmin', array(
+        wp_localize_script('codeconfig-plugin-admin-js', 'codeconfigPluginAdmin', [
             'restUrl'        => rest_url('ccupd/v1') . '/',
             'nonce'          => wp_create_nonce('wp_rest'),
             'checking'       => 'Checking...',
@@ -99,12 +99,12 @@ class CodeConfig_Updater_Admin
             'basename'       => ccupd_config('basename', ''),
             'updateNonce'    => wp_create_nonce('codeconfig_do_update'),
             'updateUrl'      => wp_nonce_url(admin_url('update.php?action=codeconfig-upgrade-plugin&plugin=' . urlencode(ccupd_config('basename', ''))), 'codeconfig_upgrade_plugin_' . ccupd_config('basename', '')),
-        ));
+        ]);
 
         wp_enqueue_style(
             'codeconfig-plugin-admin-css',
             $assets_url . 'css/admin.css',
-            array(),
+            [],
             '1.0.0'
         );
     }
@@ -116,12 +116,12 @@ class CodeConfig_Updater_Admin
         $api_status = get_option('codeconfig_api_status', 'unknown');
         $last_check = CodeConfig_REST::get_last_check();
         // Use cached data from cron job instead of calling API on every page load
-        $api_data   = $is_pro ? array() : get_option('codeconfig_check_result', array());
+        $api_data   = $is_pro ? [] : get_option('codeconfig_check_result', []);
 
         self::render_notices();
         ?>
 		<div class="wrap codeconfig-plugin-status-wrap">
-			<h1>My Plugin — Update Status</h1>
+			<h1><?php echo esc_html(ccupd_config('name', 'This plugin')); ?> — Update Status</h1>
 
 			<?php self::render_status_card($last_check, $api_status, $is_pro, $api_data); ?>
 
@@ -144,7 +144,8 @@ class CodeConfig_Updater_Admin
 
         if (is_wp_error($result)) {
             update_option('codeconfig_api_status', 'error');
-            return array( 'update' => false, 'error' => $result->get_error_message() );
+
+            return [ 'update' => false, 'error' => $result->get_error_message() ];
         }
 
         update_option('codeconfig_api_status', 'connected');
@@ -185,7 +186,7 @@ class CodeConfig_Updater_Admin
         }
 
         $basename = sanitize_text_field($_GET['plugin']);
-        $nonce = $_GET['_wpnonce'] ?? '';
+        $nonce    = $_GET['_wpnonce'] ?? '';
 
         if (! wp_verify_nonce($nonce, 'codeconfig_upgrade_plugin_' . $basename)) {
             wp_die('Security check failed.');
@@ -198,9 +199,9 @@ class CodeConfig_Updater_Admin
         $api_data = CodeConfig_REST::check_api();
 
         if (is_wp_error($api_data) || empty($api_data['update'])) {
-            wp_redirect(add_query_arg(array(
+            wp_redirect(add_query_arg([
                 'codeconfig_update_error' => 'No update available or API error.',
-            ), admin_url('plugins.php')));
+            ], admin_url('plugins.php')));
             exit;
         }
 
@@ -218,22 +219,22 @@ class CodeConfig_Updater_Admin
 
         $slug = ccupd_config('slug');
 
-        $result = $upgrader->run(array(
+        $result = $upgrader->run([
             'package'           => $api_data['package'],
             'destination'       => WP_PLUGIN_DIR . '/' . $slug,
             'clear_destination' => true,
             'clear_working'     => true,
-            'hook_extra'        => array(
+            'hook_extra'        => [
                 'plugin' => $basename,
-            ),
+            ],
             'incompatible_archive' => false,
-        ));
+        ]);
 
         if (is_wp_error($result)) {
             activate_plugin($basename, '', false, true);
-            wp_redirect(add_query_arg(array(
+            wp_redirect(add_query_arg([
                 'codeconfig_update_error' => $result->get_error_message(),
-            ), admin_url('plugins.php')));
+            ], admin_url('plugins.php')));
             exit;
         }
 
@@ -247,9 +248,9 @@ class CodeConfig_Updater_Admin
         $new_version = ! empty($api_data['new_version']) ? $api_data['new_version'] : '';
         set_transient('codeconfig_update_success', $new_version, 30);
 
-        wp_redirect(add_query_arg(array(
+        wp_redirect(add_query_arg([
             'codeconfig_update_done' => '1',
-        ), admin_url('plugins.php')));
+        ], admin_url('plugins.php')));
         exit;
     }
 
@@ -260,9 +261,9 @@ class CodeConfig_Updater_Admin
         $status_text  = 'Not checked yet';
         $status_icon  = '⏳';
 
-        $new_version = $api_data['new_version'] ?? '';
+        $new_version     = $api_data['new_version'] ?? '';
         $current_version = ccupd_config('version', '1.0.0');
-        $has_update = ! $is_pro && ! empty($api_data['update']) && ! empty($new_version) && version_compare($current_version, $new_version, '<');
+        $has_update      = ! $is_pro && ! empty($api_data['update']) && ! empty($new_version) && version_compare($current_version, $new_version, '<');
 
         if ($is_pro) {
             $status_class = 'status-pro';
@@ -334,7 +335,7 @@ class CodeConfig_Updater_Admin
 		<?php
     }
 
-    private static function render_actions($api_data = array())
+    private static function render_actions($api_data = [])
     {
         $api_key      = get_option('codeconfig_api_key', '');
         $name         = get_option('codeconfig_name', '');
@@ -460,41 +461,41 @@ class CodeConfig_Updater_Admin
     {
 
         if (! check_ajax_referer('codeconfig_check_nonce', 'nonce', false)) {
-            wp_send_json_error(array( 'message' => 'Security check failed.' ));
+            wp_send_json_error([ 'message' => 'Security check failed.' ]);
         }
 
         if (! current_user_can('update_plugins')) {
-            wp_send_json_error(array( 'message' => 'Permission denied.' ));
+            wp_send_json_error([ 'message' => 'Permission denied.' ]);
         }
 
         CodeConfig_REST::force_clear_cache();
         delete_site_transient('update_plugins');
 
-        wp_send_json_success(array(
+        wp_send_json_success([
             'message' => 'Cache cleared. Click "Check for Updates" to fetch latest info.',
-        ));
+        ]);
     }
 
     public static function handle_test_connection()
     {
 
         if (! check_ajax_referer('codeconfig_check_nonce', 'nonce', false)) {
-            wp_send_json_error(array( 'message' => 'Security check failed.' ));
+            wp_send_json_error([ 'message' => 'Security check failed.' ]);
         }
 
         $result = CodeConfig_REST::check_api();
 
         if (is_wp_error($result)) {
             update_option('codeconfig_api_status', 'error');
-            wp_send_json_error(array(
+            wp_send_json_error([
                 'message' => $result->get_error_message(),
-            ));
+            ]);
         }
 
         update_option('codeconfig_api_status', 'connected');
-        wp_send_json_success(array(
+        wp_send_json_success([
             'message' => 'Connection successful!',
-        ));
+        ]);
     }
 
     public static function render_plugin_update_notice($plugin_file, $plugin_data, $status)
@@ -509,12 +510,12 @@ class CodeConfig_Updater_Admin
             return;
         }
 
-        $api_data = get_option('codeconfig_check_result', array());
+        $api_data = get_option('codeconfig_check_result', []);
         if (empty($api_data['update'])) {
             return;
         }
 
-        $new_version = ! empty($api_data['new_version']) ? $api_data['new_version'] : '';
+        $new_version     = ! empty($api_data['new_version']) ? $api_data['new_version'] : '';
         $current_version = ccupd_config('version', '1.0.0');
 
         if (empty($new_version) || version_compare($current_version, $new_version, '>=')) {
@@ -522,24 +523,24 @@ class CodeConfig_Updater_Admin
         }
 
         $plugin_name = ccupd_config('name', 'This plugin');
-        $slug = ccupd_config('slug', '');
+        $slug        = ccupd_config('slug', '');
 
-        $wp_list_table = _get_list_table('WP_Plugins_List_Table', array( 'screen' => get_current_screen() ));
-        $column_count = $wp_list_table->get_column_count();
+        $wp_list_table = _get_list_table('WP_Plugins_List_Table', [ 'screen' => get_current_screen() ]);
+        $column_count  = $wp_list_table->get_column_count();
 
         $update_nonce = wp_create_nonce('codeconfig_upgrade_plugin_' . $basename);
-        $update_url = wp_nonce_url(admin_url('update.php?action=codeconfig-upgrade-plugin&plugin=' . urlencode($basename)), 'codeconfig_upgrade_plugin_' . $basename);
+        $update_url   = wp_nonce_url(admin_url('update.php?action=codeconfig-upgrade-plugin&plugin=' . urlencode($basename)), 'codeconfig_upgrade_plugin_' . $basename);
 
-        $details_url = add_query_arg(array(
-            'tab' => 'plugin-information',
-            'plugin' => $slug,
-            'section' => 'changelog',
+        $details_url = add_query_arg([
+            'tab'       => 'plugin-information',
+            'plugin'    => $slug,
+            'section'   => 'changelog',
             'TB_iframe' => 'true',
-            'width' => 600,
-            'height' => 800,
-        ), admin_url('plugin-install.php'));
+            'width'     => 600,
+            'height'    => 800,
+        ], admin_url('plugin-install.php'));
 
-        $is_active = is_plugin_active($basename);
+        $is_active    = is_plugin_active($basename);
         $active_class = $is_active ? ' active' : '';
 
         echo '<tr class="codeconfig-plugin-update-tr' . esc_attr($active_class) . '" id="' . esc_attr($slug . '-update') . '" data-slug="' . esc_attr($slug) . '" data-plugin="' . esc_attr($basename) . '">';

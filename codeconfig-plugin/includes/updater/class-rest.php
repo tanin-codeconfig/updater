@@ -8,59 +8,59 @@ class CodeConfig_REST
 {
     public static function init()
     {
-        add_action('rest_api_init', array(__CLASS__, 'register_routes'));
+        add_action('rest_api_init', [__CLASS__, 'register_routes']);
     }
 
     public static function register_routes()
     {
-        register_rest_route('ccupd/v1', '/check', array(
+        register_rest_route('ccupd/v1', '/check', [
             'methods'             => 'POST',
-            'callback'            => array(__CLASS__, 'handle_check'),
-            'permission_callback' => function() {
+            'callback'            => [__CLASS__, 'handle_check'],
+            'permission_callback' => function () {
                 return current_user_can('update_plugins');
             },
-        ));
+        ]);
 
-        register_rest_route('ccupd/v1', '/test-connection', array(
+        register_rest_route('ccupd/v1', '/test-connection', [
             'methods'             => 'POST',
-            'callback'            => array(__CLASS__, 'handle_test_connection'),
-            'permission_callback' => function() {
+            'callback'            => [__CLASS__, 'handle_test_connection'],
+            'permission_callback' => function () {
                 return current_user_can('manage_options');
             },
-        ));
+        ]);
 
-        register_rest_route('ccupd/v1', '/force-refresh', array(
+        register_rest_route('ccupd/v1', '/force-refresh', [
             'methods'             => 'POST',
-            'callback'            => array(__CLASS__, 'handle_force_refresh'),
-            'permission_callback' => function() {
+            'callback'            => [__CLASS__, 'handle_force_refresh'],
+            'permission_callback' => function () {
                 return current_user_can('update_plugins');
             },
-        ));
+        ]);
 
-        register_rest_route('ccupd/v1', '/update', array(
+        register_rest_route('ccupd/v1', '/update', [
             'methods'             => 'POST',
-            'callback'            => array(__CLASS__, 'handle_update'),
-            'permission_callback' => function() {
+            'callback'            => [__CLASS__, 'handle_update'],
+            'permission_callback' => function () {
                 return current_user_can('update_plugins');
             },
-        ));
+        ]);
     }
 
     public static function handle_check(WP_REST_Request $request)
     {
         if (ccupd_config('is_pro', false)) {
-            return new WP_REST_Response(array(
+            return new WP_REST_Response([
                 'update_available' => false,
                 'message'          => 'Updates are managed by Freemius.',
                 'is_pro'           => true,
-            ), 200);
+            ], 200);
         }
 
         self::clear_update_transient();
 
         CodeConfig_Updater::force_check_for_update();
 
-        $result = get_option('codeconfig_check_result', array());
+        $result = get_option('codeconfig_check_result', []);
 
         if (empty($result)) {
             $result = self::check_api();
@@ -68,61 +68,68 @@ class CodeConfig_REST
 
         if (is_wp_error($result)) {
             update_option('codeconfig_api_status', 'error');
-            return new WP_REST_Response(array(
+
+            return new WP_REST_Response([
                 'message' => $result->get_error_message(),
-            ), 400);
+            ], 400);
         }
 
         update_option('codeconfig_api_status', 'connected');
         update_option('codeconfig_last_check', time());
         update_option('codeconfig_check_result', $result);
 
-        return new WP_REST_Response(array(
+        return new WP_REST_Response([
             'update_available' => ! empty($result['update']),
             'new_version'      => $result['new_version'] ?? '',
-            'message'          => ! empty($result['update']) 
-                ? sprintf('Update available! Version %s is ready to install.', $result['new_version']) 
+            'message'          => ! empty($result['update'])
+                ? sprintf('Update available! Version %s is ready to install.', $result['new_version'])
                 : 'You are running the latest version.',
             'changelog'        => $result['changelog'] ?? '',
-        ), 200);
+        ], 200);
     }
 
     public static function handle_test_connection(WP_REST_Request $request)
     {
         $api_url = ccupd_config('api_url', '');
-        
+
         if (empty($api_url)) {
-            return new WP_REST_Response(array(
+            return new WP_REST_Response([
                 'success' => false,
                 'message' => 'API URL not configured.',
-            ), 400);
+            ], 400);
         }
 
-        $response = wp_remote_get($api_url . '/update-check', array(
+        $params = [
+            'version' => ccupd_config('version', '1.0.0'),
+            'slug'    => ccupd_config('slug', ''),
+            'domain'  => site_url(),
+        ];
+
+        $response = wp_remote_get(add_query_arg($params, $api_url . '/update-check'), [
             'timeout'   => 15,
             'sslverify' => false,
-        ));
+        ]);
 
         if (is_wp_error($response)) {
-            return new WP_REST_Response(array(
+            return new WP_REST_Response([
                 'success' => false,
                 'message' => 'Connection failed: ' . $response->get_error_message(),
-            ), 400);
+            ], 400);
         }
 
         $code = wp_remote_retrieve_response_code($response);
 
         if ($code >= 200 && $code < 300) {
-            return new WP_REST_Response(array(
+            return new WP_REST_Response([
                 'success' => true,
                 'message' => 'Connection successful!',
-            ), 200);
+            ], 200);
         }
 
-        return new WP_REST_Response(array(
+        return new WP_REST_Response([
             'success' => false,
             'message' => 'Connection failed with HTTP ' . $code,
-        ), 400);
+        ], 400);
     }
 
     public static function handle_force_refresh(WP_REST_Request $request)
@@ -132,10 +139,10 @@ class CodeConfig_REST
         delete_option('codeconfig_check_result');
         delete_option('codeconfig_api_status');
 
-        return new WP_REST_Response(array(
+        return new WP_REST_Response([
             'success' => true,
             'message' => 'Cache cleared. Please run check again.',
-        ), 200);
+        ], 200);
     }
 
     private static function clear_update_transient()
@@ -153,11 +160,11 @@ class CodeConfig_REST
         $api_url = ccupd_config('api_url', '') . '/update-check';
         $api_key = get_option('codeconfig_api_key', '');
 
-        $params = array(
+        $params = [
             'version' => $version,
             'slug'    => ccupd_config('slug', ''),
             'domain'  => site_url(),
-        );
+        ];
 
         if ($api_key) {
             $params['api_key'] = $api_key;
@@ -173,9 +180,9 @@ class CodeConfig_REST
             $params['email'] = $email;
         }
 
-        $response = wp_remote_get(add_query_arg($params, $api_url), array(
+        $response = wp_remote_get(add_query_arg($params, $api_url), [
             'timeout' => 15,
-        ));
+        ]);
 
         if (is_wp_error($response)) {
             return new WP_Error(
@@ -186,20 +193,14 @@ class CodeConfig_REST
 
         $code = wp_remote_retrieve_response_code($response);
 
-        if ($code !== 200) {
-            return new WP_Error(
-                'api_error',
-                sprintf('Server returned HTTP %d.', $code)
-            );
-        }
-
         $body = wp_remote_retrieve_body($response);
         $data = json_decode($body, true);
 
-        if (! $data || ! $data['success']) {
+        if (! $data || ! $data['success'] || $code !== 200) {
             $message = ! empty($data['message']) ? $data['message'] : 'Invalid response from update server.';
+
             return new WP_Error(
-                'api_error',
+                $code,
                 $message
             );
         }
@@ -219,10 +220,10 @@ class CodeConfig_REST
             return null;
         }
 
-        return array(
+        return [
             'time'   => $timestamp,
-            'result' => get_option('codeconfig_check_result', array()),
-        );
+            'result' => get_option('codeconfig_check_result', []),
+        ];
     }
 
     public static function force_clear_cache()
@@ -235,40 +236,40 @@ class CodeConfig_REST
     public static function handle_update(WP_REST_Request $request)
     {
         if (ccupd_config('is_pro', false)) {
-            return new WP_REST_Response(array(
+            return new WP_REST_Response([
                 'success' => false,
                 'message' => 'Updates are managed by Freemius.',
-            ), 400);
+            ], 400);
         }
 
         $api_data = self::check_api();
 
         if (is_wp_error($api_data)) {
-            return new WP_REST_Response(array(
+            return new WP_REST_Response([
                 'success' => false,
                 'message' => 'API Error: ' . $api_data->get_error_message(),
-            ), 400);
+            ], 400);
         }
 
         if (empty($api_data) || ! is_array($api_data)) {
-            return new WP_REST_Response(array(
+            return new WP_REST_Response([
                 'success' => false,
                 'message' => 'Invalid API response. Please check your API URL configuration.',
-            ), 400);
+            ], 400);
         }
 
         if (empty($api_data['update'])) {
-            return new WP_REST_Response(array(
+            return new WP_REST_Response([
                 'success' => false,
                 'message' => 'No update available. You are running the latest version.',
-            ), 400);
+            ], 400);
         }
 
         if (empty($api_data['package'])) {
-            return new WP_REST_Response(array(
+            return new WP_REST_Response([
                 'success' => false,
                 'message' => 'Update package URL not available.',
-            ), 400);
+            ], 400);
         }
 
         delete_site_transient('update_plugins');
@@ -279,30 +280,31 @@ class CodeConfig_REST
         require_once ABSPATH . 'wp-admin/includes/plugin.php';
 
         $basename = ccupd_config('basename');
-        $slug = ccupd_config('slug');
+        $slug     = ccupd_config('slug');
 
         deactivate_plugins($basename, false, true);
 
         $skin     = new WP_Ajax_Upgrader_Skin();
         $upgrader = new Plugin_Upgrader($skin);
 
-        $result = $upgrader->run(array(
+        $result = $upgrader->run([
             'package'           => $api_data['package'],
             'destination'       => WP_PLUGIN_DIR . '/' . $slug,
             'clear_destination' => true,
             'clear_working'     => true,
-            'hook_extra'        => array(
+            'hook_extra'        => [
                 'plugin' => $basename,
-            ),
+            ],
             'incompatible_archive' => false,
-        ));
+        ]);
 
         if (is_wp_error($result)) {
             activate_plugin($basename, '', false, true);
-            return new WP_REST_Response(array(
+
+            return new WP_REST_Response([
                 'success' => false,
                 'message' => $result->get_error_message(),
-            ), 400);
+            ], 400);
         }
 
         activate_plugin($basename, '', false, true);
@@ -314,10 +316,10 @@ class CodeConfig_REST
 
         $new_version = ! empty($api_data['new_version']) ? $api_data['new_version'] : '';
 
-        return new WP_REST_Response(array(
+        return new WP_REST_Response([
             'success'      => true,
-            'new_version' => $new_version,
-            'message'     => 'Plugin updated successfully to version ' . $new_version . '!',
-        ), 200);
+            'new_version'  => $new_version,
+            'message'      => 'Plugin updated successfully to version ' . $new_version . '!',
+        ], 200);
     }
 }

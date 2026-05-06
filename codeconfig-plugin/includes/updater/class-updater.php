@@ -10,13 +10,13 @@ class CodeConfig_Updater
     {
         // Remove automatic update check on page reload
         // Updates now only happen via cron or manual check
-        add_filter('plugins_api', array( __CLASS__, 'plugin_info' ), 20, 3);
-        add_action('upgrader_process_complete', array( __CLASS__, 'on_update_complete' ), 10, 2);
-        add_filter('http_request_args', array( __CLASS__, 'allow_api_host' ), 10, 2);
+        add_filter('plugins_api', [ __CLASS__, 'plugin_info' ], 20, 3);
+        add_action('upgrader_process_complete', [ __CLASS__, 'on_update_complete' ], 10, 2);
+        add_filter('http_request_args', [ __CLASS__, 'allow_api_host' ], 10, 2);
 
         // Register cron schedule and event
-        add_filter('cron_schedules', array( __CLASS__, 'add_cron_schedule' ));
-        add_action('codeconfig_cron_update_check', array( __CLASS__, 'cron_check_for_update' ));
+        add_filter('cron_schedules', [ __CLASS__, 'add_cron_schedule' ]);
+        add_action('codeconfig_cron_update_check', [ __CLASS__, 'cron_check_for_update' ]);
     }
 
     public static function activate()
@@ -35,10 +35,11 @@ class CodeConfig_Updater
 
     public static function add_cron_schedule($schedules)
     {
-        $schedules['six_hours'] = array(
+        $schedules['six_hours'] = [
             'interval' => 6 * HOUR_IN_SECONDS,
             'display'  => 'Every 6 Hours (4 times daily)',
-        );
+        ];
+
         return $schedules;
     }
 
@@ -56,7 +57,7 @@ class CodeConfig_Updater
         }
 
         $installed_version = isset($ccupd_config['version']) ? $ccupd_config['version'] : '1.0.0';
-        $data = CodeConfig_REST::check_api_for_version($installed_version);
+        $data              = CodeConfig_REST::check_api_for_version($installed_version);
 
         // Save result to options for AJAX handler
         if (! is_wp_error($data)) {
@@ -68,7 +69,7 @@ class CodeConfig_Updater
         }
 
         $basename = isset($ccupd_config['basename']) ? $ccupd_config['basename'] : '';
-        $slug = isset($ccupd_config['slug']) ? $ccupd_config['slug'] : '';
+        $slug     = isset($ccupd_config['slug']) ? $ccupd_config['slug'] : '';
 
         if (is_wp_error($data) || ! $data['update']) {
             $transient = get_site_transient('update_plugins');
@@ -76,6 +77,7 @@ class CodeConfig_Updater
                 unset($transient->response[ $basename ]);
                 set_site_transient('update_plugins', $transient);
             }
+
             return;
         }
 
@@ -84,7 +86,7 @@ class CodeConfig_Updater
             $transient = new stdClass();
         }
 
-        $transient->response[ $basename ] = (object) array(
+        $transient->response[ $basename ] = (object) [
             'slug'         => $slug,
             'plugin'       => ccupd_config('basename', ''),
             'new_version'  => $data['new_version'],
@@ -93,23 +95,24 @@ class CodeConfig_Updater
             'tested'       => get_bloginfo('version'),
             'requires'     => '',
             'requires_php' => '',
-            'icons'        => array(),
-            'banners'      => array(),
-        );
+            'icons'        => [],
+            'banners'      => [],
+        ];
 
         set_site_transient('update_plugins', $transient);
     }
 
     public static function allow_api_host($args, $url)
     {
-        $parsed = parse_url(ccupd_config('api_url'));
+        $parsed   = parse_url(ccupd_config('api_url'));
         $api_host = isset($parsed['host']) ? $parsed['host'] : '';
         $url_host = parse_url($url, PHP_URL_HOST);
 
         if ($url_host === $api_host) {
             $args['reject_unsafe_urls'] = false;
-            $args['sslverify'] = false;
+            $args['sslverify']          = false;
         }
+
         return $args;
     }
 
@@ -119,13 +122,13 @@ class CodeConfig_Updater
             return $transient;
         }
 
-        if (codeconfig_is_pro()) {
+        if (ccupd_config('is_pro', false)) {
             return $transient;
         }
 
         $basename = ccupd_config('basename');
-        $slug = ccupd_config('slug');
-        $version = ccupd_config('version');
+        $slug     = ccupd_config('slug');
+        $version  = ccupd_config('version');
 
         $installed_version = isset($transient->checked[ $basename ])
             ? $transient->checked[ $basename ]
@@ -137,7 +140,7 @@ class CodeConfig_Updater
             return $transient;
         }
 
-        $transient->response[ $basename ] = (object) array(
+        $transient->response[ $basename ] = (object) [
             'slug'         => $slug,
             'plugin'       => ccupd_config('basename', ''),
             'new_version'  => $data['new_version'],
@@ -146,9 +149,9 @@ class CodeConfig_Updater
             'tested'       => get_bloginfo('version'),
             'requires'     => '',
             'requires_php' => '',
-            'icons'        => array(),
-            'banners'      => array(),
-        );
+            'icons'        => [],
+            'banners'      => [],
+        ];
 
         return $transient;
     }
@@ -167,7 +170,7 @@ class CodeConfig_Updater
             return $false;
         }
 
-        $plugin_info = new stdClass();
+        $plugin_info                 = new stdClass();
         $plugin_info->name           = 'My Plugin';
         $plugin_info->slug           = $slug;
         $plugin_info->version        = $data['new_version'];
@@ -179,14 +182,14 @@ class CodeConfig_Updater
         $plugin_info->requires       = '';
         $plugin_info->requires_php   = '';
         $plugin_info->last_updated   = gmdate('Y-m-d H:i:s');
-        $plugin_info->sections       = array(
+        $plugin_info->sections       = [
             'description' => 'A custom plugin with an update system.',
             'changelog'   => wpautop(esc_html($data['changelog'] ?? 'No changelog available.')),
-        );
-        $plugin_info->banners        = array();
-        $plugin_info->banners_rtl    = array();
-        $plugin_info->icons          = array();
-        $plugin_info->contributors   = array();
+        ];
+        $plugin_info->banners        = [];
+        $plugin_info->banners_rtl    = [];
+        $plugin_info->icons          = [];
+        $plugin_info->contributors   = [];
         $plugin_info->compatibility  = new stdClass();
         $plugin_info->downloaded     = 0;
         $plugin_info->rating         = 0;

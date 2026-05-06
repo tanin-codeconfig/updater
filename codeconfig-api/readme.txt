@@ -30,7 +30,7 @@ CodeConfig API is a custom update server that allows you to host and distribute 
 3. In your client plugin, configure the update server URL:
    ```php
    ccupd(array(
-       'api_url' => 'https://your-site.com/wp-json/codeconfig/v1',
+       'api_url' => 'https://your-site.com/wp-json/plugin/v1',
        'slug' => 'your-plugin-slug',
        'basename' => 'your-plugin/your-plugin.php',
        'version' => '1.0.0',
@@ -40,9 +40,9 @@ CodeConfig API is a custom update server that allows you to host and distribute 
 
 = REST API Endpoints =
 
-* `GET /wp-json/codeconfig/v1/update-check` - Check for updates
+* `GET /wp-json/plugin/v1/update-check` - Check for updates
   * Parameters: `version`, `slug`, `api_key`, `domain`
-* `GET /wp-json/codeconfig/v1/latest-download` - Get latest download URL
+* `GET /wp-json/plugin/v1/latest-download` - Get latest download URL
   * Parameters: `slug`
 
 = Support =
