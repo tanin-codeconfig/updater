@@ -73,24 +73,25 @@ add_action('admin_init', array( 'CodeConfig_Settings', 'register_settings' ));
 add_action('wp_ajax_codeconfig_check_version', array( 'CodeConfig_Admin', 'ajax_check_version' ));
 
 add_action('init', 'codeconfig_headless_mode');
-function codeconfig_headless_mode() {
+function codeconfig_headless_mode()
+{
     $settings = CodeConfig_Settings::get_settings();
 
     if (empty($settings['headless_enabled'])) {
         return;
     }
 
-    if (is_admin() || current_user_can('manage_options')) {
+    if (is_admin() || current_user_can('manage_options') || wp_doing_ajax() || wp_doing_cron()) {
         return;
     }
 
     $request_uri = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '';
     $request_uri = parse_url($request_uri, PHP_URL_PATH);
 
-    $allowed_routes = ! empty($settings['headless_allowed_routes']) 
-        ? explode(',', $settings['headless_allowed_routes']) 
-        : array('/wp-json/', '/wp-admin/', '/xmlrpc.php');
-    
+    $allowed_routes = ! empty($settings['headless_allowed_routes'])
+        ? explode(',', $settings['headless_allowed_routes'])
+        : array('/wp-json/', '/wp-admin/', '/xmlrpc.php', '/wp-login.php', '/wp-cron.php');
+
     // Always allow CodeConfig API download endpoint
     $allowed_routes[] = '/wp-content/plugins/codeconfig-api/download.php';
     $allowed_routes[] = '/codeconfig-api/download.php';
@@ -117,28 +118,28 @@ function codeconfig_headless_mode() {
     if ('404' === $behavior) {
         header('HTTP/1.1 404 Not Found');
         echo '<!DOCTYPE html>
-<html>
-<head><title>404 Not Found</title></head>
-<body>
-<h1>Not Found</h1>
-<p>The requested URL was not found on this server.</p>
-</body>
-</html>';
+        <html>
+        <head><title>404 Not Found</title></head>
+        <body>
+        <h1>Not Found</h1>
+        <p>The requested URL was not found on this server.</p>
+        </body>
+        </html>';
         exit;
     } elseif ('message' === $behavior) {
-        $message = ! empty($settings['headless_message']) 
-            ? $settings['headless_message'] 
+        $message = ! empty($settings['headless_message'])
+            ? $settings['headless_message']
             : 'This site is running in headless mode.';
         header('HTTP/1.1 200 OK');
         header('Content-Type: text/html; charset=utf-8');
         echo '<!DOCTYPE html>
-<html>
-<head><title>Headless Mode</title></head>
-<body>
-<h1>Headless Mode</h1>
-<p>' . esc_html($message) . '</p>
-</body>
-</html>';
+            <html>
+            <head><title>Headless Mode</title></head>
+            <body>
+            <h1>Headless Mode</h1>
+            <p>' . esc_html($message) . '</p>
+            </body>
+            </html>';
         exit;
     } elseif ('redirect' === $behavior) {
         $api_docs = get_site_url(null, '/wp-json/codeconfig/v1');

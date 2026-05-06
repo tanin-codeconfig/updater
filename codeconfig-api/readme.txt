@@ -47,7 +47,7 @@ CodeConfig API is a custom update server that allows you to host and distribute 
 
 = Support =
 
-For support, visit https://codeconfig.io
+For support, visit https://codeconfig.dev
 
 == Installation ==
 
