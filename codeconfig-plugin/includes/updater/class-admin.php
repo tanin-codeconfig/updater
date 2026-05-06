@@ -1,30 +1,42 @@
 <?php
+
 if (! defined('ABSPATH')) {
     exit;
 }
 
 class CodeConfig_Updater_Admin
 {
-    public static function init()
+    private $manager = null;
+    private $slug = '';
+
+    public function __construct($manager)
     {
-        add_filter('plugin_action_links_' . ccupd_config('basename', ''), [ __CLASS__, 'add_plugin_action_links' ]);
-        add_action('admin_menu', [ __CLASS__, 'add_menu' ]);
-        add_action('admin_enqueue_scripts', [ __CLASS__, 'enqueue_assets' ]);
-        add_action('admin_init', [ __CLASS__, 'register_settings' ]);
-        add_action('admin_init', [ __CLASS__, 'handle_upgrade_action' ]);
-        add_action('after_plugin_row_' . ccupd_config('basename', ''), [ __CLASS__, 'render_plugin_update_notice' ], 10, 3);
+        $this->manager = $manager;
+        $this->slug = $manager->get_slug();
     }
 
-    public static function register_settings()
+    public function init()
     {
-        register_setting('codeconfig-plugin-settings', 'codeconfig_api_key');
-        register_setting('codeconfig-plugin-settings', 'codeconfig_name');
-        register_setting('codeconfig-plugin-settings', 'codeconfig_email');
+        $basename = $this->manager->get_config('basename', '');
+        add_filter('plugin_action_links_' . $basename, [$this, 'add_plugin_action_links']);
+        add_action('admin_menu', [$this, 'add_menu']);
+        add_action('admin_enqueue_scripts', [$this, 'enqueue_assets']);
+        add_action('admin_init', [$this, 'register_settings']);
+        add_action('admin_init', [$this, 'handle_upgrade_action']);
+        add_action('after_plugin_row_' . $basename, [$this, 'render_plugin_update_notice'], 10, 3);
     }
 
-    public static function add_plugin_action_links($links)
+    public function register_settings()
     {
-        if (ccupd_config('is_pro', false)) {
+        $option_group = 'ccupd_' . $this->slug . '-settings';
+        register_setting($option_group, 'ccupd_' . $this->slug . '_api_key');
+        register_setting($option_group, 'ccupd_' . $this->slug . '_name');
+        register_setting($option_group, 'ccupd_' . $this->slug . '_email');
+    }
+
+    public function add_plugin_action_links($links)
+    {
+        if ($this->manager->get_config('is_pro', false)) {
             return $links;
         }
 
@@ -36,17 +48,17 @@ class CodeConfig_Updater_Admin
         return $links;
     }
 
-    public static function add_menu()
+    public function add_menu()
     {
-        $show_admin_page = ccupd_config('show_admin_page', false);
-        $menu_config     = ccupd_config('menu', []);
-        $plugin_name     = ccupd_config('name', 'CodeConfig Plugin');
+        $show_admin_page = $this->manager->get_config('show_admin_page', false);
+        $menu_config = $this->manager->get_config('menu', []);
+        $plugin_name = $this->manager->get_config('name', 'CodeConfig Plugin');
 
         if (! $show_admin_page) {
             return;
         }
 
-        $menu_slug = ccupd_config('slug', 'codeconfig-plugin') . '-status';
+        $menu_slug = $this->manager->get_config('slug', 'codeconfig-plugin') . '-status';
 
         if (! empty($menu_config['parent_slug'])) {
             add_submenu_page(
@@ -55,7 +67,7 @@ class CodeConfig_Updater_Admin
                 ! empty($menu_config['menu_title']) ? $menu_config['menu_title'] : 'Updates',
                 'manage_options',
                 $menu_slug,
-                [ __CLASS__, 'render_page' ]
+                [$this, 'render_page']
             );
         } else {
             add_menu_page(
@@ -63,121 +75,122 @@ class CodeConfig_Updater_Admin
                 $plugin_name,
                 'manage_options',
                 $menu_slug,
-                [ __CLASS__, 'render_page' ],
+                [$this, 'render_page'],
                 'dashicons-update',
                 31
             );
         }
     }
 
-    public static function enqueue_assets($hook)
+    public function enqueue_assets($hook)
     {
-        // Load on plugins.php page AND all codeconfig plugin admin pages
-        if (strpos($hook, 'integration-google-drive') === false && $hook !== 'plugins.php') {
+        $slug = $this->manager->get_config('slug', '');
+        if (strpos($hook, $slug) === false && $hook !== 'plugins.php') {
             return;
         }
 
-        // Use native WordPress function - get updater folder URL
         $assets_url = plugin_dir_url(__DIR__) . 'updater/assets/';
 
         wp_enqueue_script(
-            'codeconfig-plugin-admin-js',
+            'codeconfig-plugin-admin-js-' . $this->slug,
             $assets_url . 'js/admin.js',
-            [ 'jquery' ],
+            ['jquery'],
             '1.0.0',
             true
         );
 
-        wp_localize_script('codeconfig-plugin-admin-js', 'codeconfigPluginAdmin', [
-            'restUrl'        => rest_url('ccupd/v1') . '/',
-            'nonce'          => wp_create_nonce('wp_rest'),
-            'checking'       => 'Checking...',
-            'checkBtn'       => 'Check for Updates',
-            'pluginName'     => ccupd_config('name', 'This plugin'),
-            'pluginSlug'     => ccupd_config('slug', ''),
-            'currentVersion' => ccupd_config('version', ''),
-            'basename'       => ccupd_config('basename', ''),
-            'updateNonce'    => wp_create_nonce('codeconfig_do_update'),
-            'updateUrl'      => wp_nonce_url(admin_url('update.php?action=codeconfig-upgrade-plugin&plugin=' . urlencode(ccupd_config('basename', ''))), 'codeconfig_upgrade_plugin_' . ccupd_config('basename', '')),
+        $js_var_name = 'codeconfigPluginAdmin_' . str_replace('-', '_', $this->slug);
+
+        wp_localize_script('codeconfig-plugin-admin-js-' . $this->slug, $js_var_name, [
+            'restUrl' => rest_url('ccupd/v1/' . $slug) . '/',
+            'nonce' => wp_create_nonce('wp_rest'),
+            'checking' => 'Checking...',
+            'checkBtn' => 'Check for Updates',
+            'pluginName' => $this->manager->get_config('name', 'This plugin'),
+            'pluginSlug' => $this->manager->get_config('slug', ''),
+            'currentVersion' => $this->manager->get_config('version', ''),
+            'basename' => $this->manager->get_config('basename', ''),
+            'updateNonce' => wp_create_nonce($this->slug . '_do_update'),
+            'updateUrl' => wp_nonce_url(admin_url('update.php?action=' . $this->slug . '-upgrade-plugin&plugin=' . urlencode($this->manager->get_config('basename', ''))), $this->slug . '_upgrade_plugin_' . $this->manager->get_config('basename', '')),
         ]);
 
         wp_enqueue_style(
-            'codeconfig-plugin-admin-css',
+            'codeconfig-plugin-admin-css-' . $this->slug,
             $assets_url . 'css/admin.css',
             [],
             '1.0.0'
         );
     }
 
-    public static function render_page()
+    public function render_page()
     {
+        $is_pro = $this->manager->get_config('is_pro', false);
+        $option_prefix = 'ccupd_' . $this->slug . '_';
+        $api_status = get_option($option_prefix . 'api_status', 'unknown');
+        $last_check = CodeConfig_REST::get_last_check($this->manager);
+        $api_data = $is_pro ? [] : get_option($option_prefix . 'check_result', []);
 
-        $is_pro     = ccupd_config('is_pro', false);
-        $api_status = get_option('codeconfig_api_status', 'unknown');
-        $last_check = CodeConfig_REST::get_last_check();
-        // Use cached data from cron job instead of calling API on every page load
-        $api_data   = $is_pro ? [] : get_option('codeconfig_check_result', []);
-
-        self::render_notices();
+        $this->render_notices();
         ?>
-		<div class="wrap codeconfig-plugin-status-wrap">
-			<h1><?php echo esc_html(ccupd_config('name', 'This plugin')); ?> — Update Status</h1>
+        <div class="wrap codeconfig-plugin-status-wrap">
+            <h1><?php echo esc_html($this->manager->get_config('name', 'This plugin')); ?> — Update Status</h1>
 
-			<?php self::render_status_card($last_check, $api_status, $is_pro, $api_data); ?>
+            <?php $this->render_status_card($last_check, $api_status, $is_pro, $api_data); ?>
 
-			<?php if (! $is_pro) : ?>
-				<?php self::render_actions($api_data); ?>
-				<?php self::render_connection_info($api_status); ?>
-				<?php self::render_changelog($api_data); ?>
-			<?php else : ?>
-				<?php self::render_pro_notice(); ?>
-			<?php endif; ?>
-		</div>
-		<?php
+            <?php if (! $is_pro) : ?>
+                <?php $this->render_actions($api_data); ?>
+                <?php $this->render_connection_info($api_status); ?>
+                <?php $this->render_changelog($api_data); ?>
+            <?php else : ?>
+                <?php $this->render_pro_notice(); ?>
+            <?php endif; ?>
+        </div>
+        <?php
     }
 
-    private static function get_fresh_api_data()
+    private function get_fresh_api_data()
     {
-        // Only used for manual "Check for Updates" button via AJAX
-        // Page loads now use cached data from cron
-        $result = CodeConfig_REST::check_api();
+        $result = CodeConfig_REST::check_api($this->manager);
+        $option_prefix = 'ccupd_' . $this->slug . '_';
 
         if (is_wp_error($result)) {
-            update_option('codeconfig_api_status', 'error');
+            update_option($option_prefix . 'api_status', 'error');
 
-            return [ 'update' => false, 'error' => $result->get_error_message() ];
+            return ['update' => false, 'error' => $result->get_error_message()];
         }
 
-        update_option('codeconfig_api_status', 'connected');
-        update_option('codeconfig_last_check', time());
-        update_option('codeconfig_check_result', $result);
+        update_option($option_prefix . 'api_status', 'connected');
+        update_option($option_prefix . 'last_check', time());
+        update_option($option_prefix . 'check_result', $result);
 
         return $result;
     }
 
-    private static function render_notices()
+    private function render_notices()
     {
-        $transient_success = get_transient('codeconfig_update_success');
+        $success_transient = 'ccupd_' . $this->slug . '_update_success';
+        $transient_success = get_transient($success_transient);
         if ($transient_success) {
-            delete_transient('codeconfig_update_success');
+            delete_transient($success_transient);
             echo '<div class="notice notice-success is-dismissible"><p>Plugin updated successfully to version ' . esc_html($transient_success) . '! New version is now active.</p></div>';
         }
 
-        if (isset($_GET['codeconfig_update_done'])) {
+        if (isset($_GET['ccupd_update_done'])) {
             echo '<div class="notice notice-success is-dismissible"><p>Plugin updated successfully! New version is now active.</p></div>';
         }
 
-        if (isset($_GET['codeconfig_update_error'])) {
+        if (isset($_GET['ccupd_update_error'])) {
             printf(
                 '<div class="notice notice-error is-dismissible"><p>Update failed: %s</p></div>',
-                esc_html(sanitize_text_field($_GET['codeconfig_update_error']))
+                esc_html(sanitize_text_field($_GET['ccupd_update_error']))
             );
         }
     }
 
-    public static function handle_upgrade_action()
+    public function handle_upgrade_action()
     {
-        if (! isset($_GET['action']) || $_GET['action'] !== 'codeconfig-upgrade-plugin') {
+        $action_slug = $this->slug . '-upgrade-plugin';
+        if (! isset($_GET['action']) || $_GET['action'] !== $action_slug) {
             return;
         }
 
@@ -186,9 +199,10 @@ class CodeConfig_Updater_Admin
         }
 
         $basename = sanitize_text_field($_GET['plugin']);
-        $nonce    = $_GET['_wpnonce'] ?? '';
+        $nonce_action = $this->slug . '_upgrade_plugin_' . $basename;
+        $nonce = $_GET['_wpnonce'] ?? '';
 
-        if (! wp_verify_nonce($nonce, 'codeconfig_upgrade_plugin_' . $basename)) {
+        if (! wp_verify_nonce($nonce, $nonce_action)) {
             wp_die('Security check failed.');
         }
 
@@ -196,11 +210,12 @@ class CodeConfig_Updater_Admin
             wp_die('Permission denied.');
         }
 
-        $api_data = CodeConfig_REST::check_api();
+        $api_data = CodeConfig_REST::check_api($this->manager);
+        $option_prefix = 'ccupd_' . $this->slug . '_';
 
         if (is_wp_error($api_data) || empty($api_data['update'])) {
             wp_redirect(add_query_arg([
-                'codeconfig_update_error' => 'No update available or API error.',
+                'ccupd_update_error' => 'No update available or API error.',
             ], admin_url('plugins.php')));
             exit;
         }
@@ -214,17 +229,18 @@ class CodeConfig_Updater_Admin
 
         deactivate_plugins($basename, false, true);
 
-        $skin     = new WP_Ajax_Upgrader_Skin();
+        $skin = new WP_Ajax_Upgrader_Skin();
         $upgrader = new Plugin_Upgrader($skin);
 
-        $slug = ccupd_config('slug');
+        $slug = $this->manager->get_config('slug');
+        $version = $this->manager->get_config('version', '1.0.0');
 
         $result = $upgrader->run([
-            'package'           => $api_data['package'],
-            'destination'       => WP_PLUGIN_DIR . '/' . $slug,
+            'package' => $api_data['package'],
+            'destination' => WP_PLUGIN_DIR . '/' . $slug,
             'clear_destination' => true,
-            'clear_working'     => true,
-            'hook_extra'        => [
+            'clear_working' => true,
+            'hook_extra' => [
                 'plugin' => $basename,
             ],
             'incompatible_archive' => false,
@@ -233,7 +249,7 @@ class CodeConfig_Updater_Admin
         if (is_wp_error($result)) {
             activate_plugin($basename, '', false, true);
             wp_redirect(add_query_arg([
-                'codeconfig_update_error' => $result->get_error_message(),
+                'ccupd_update_error' => $result->get_error_message(),
             ], admin_url('plugins.php')));
             exit;
         }
@@ -241,156 +257,158 @@ class CodeConfig_Updater_Admin
         activate_plugin($basename, '', false, true);
 
         delete_site_transient('update_plugins');
-        delete_option('codeconfig_check_result');
-        delete_option('codeconfig_api_status');
-        delete_option('codeconfig_last_check');
+        delete_option($option_prefix . 'check_result');
+        delete_option($option_prefix . 'api_status');
+        delete_option($option_prefix . 'last_check');
 
         $new_version = ! empty($api_data['new_version']) ? $api_data['new_version'] : '';
-        set_transient('codeconfig_update_success', $new_version, 30);
+        set_transient($success_transient, $new_version, 30);
 
         wp_redirect(add_query_arg([
-            'codeconfig_update_done' => '1',
+            'ccupd_update_done' => '1',
         ], admin_url('plugins.php')));
         exit;
     }
 
-    private static function render_status_card($last_check, $api_status, $is_pro, $api_data)
+    private function render_status_card($last_check, $api_status, $is_pro, $api_data)
     {
-
         $status_class = 'status-unknown';
-        $status_text  = 'Not checked yet';
-        $status_icon  = '⏳';
+        $status_text = 'Not checked yet';
+        $status_icon = '⏳';
 
-        $new_version     = $api_data['new_version'] ?? '';
-        $current_version = ccupd_config('version', '1.0.0');
-        $has_update      = ! $is_pro && ! empty($api_data['update']) && ! empty($new_version) && version_compare($current_version, $new_version, '<');
+        $new_version = $api_data['new_version'] ?? '';
+        $current_version = $this->manager->get_config('version', '1.0.0');
+        $has_update = ! $is_pro && ! empty($api_data['update']) && ! empty($new_version) && version_compare($current_version, $new_version, '<');
 
         if ($is_pro) {
             $status_class = 'status-pro';
-            $status_text  = 'Managed by Freemius';
-            $status_icon  = '✅';
+            $status_text = 'Managed by Freemius';
+            $status_icon = '✅';
         } elseif ($has_update) {
             $status_class = 'status-update';
-            $status_text  = 'Update Available';
-            $status_icon  = '⚠️';
+            $status_text = 'Update Available';
+            $status_icon = '⚠️';
         } elseif (! empty($api_data['error'])) {
             $status_class = 'status-error';
-            $status_text  = 'API Connection Error';
-            $status_icon  = '❌';
+            $status_text = 'API Connection Error';
+            $status_icon = '❌';
         } elseif ('connected' === $api_status) {
             $status_class = 'status-current';
-            $status_text  = 'Up to Date';
-            $status_icon  = '✅';
+            $status_text = 'Up to Date';
+            $status_icon = '✅';
         }
         ?>
-		<div class="card codeconfig-plugin-status-card <?php echo esc_attr($status_class); ?>">
-			<h2>Current Status</h2>
-			<table class="widefat striped">
-				<tbody>
-					<tr>
-						<th>Current Version</th>
-						<td><code><?php echo esc_html(ccupd_config('version', '1.0.0')); ?></code></td>
-					</tr>
-					<?php if ($has_update && $new_version) : ?>
-						<tr>
-							<th>Latest Version</th>
-							<td><code><?php echo esc_html($new_version); ?></code></td>
-						</tr>
-					<?php endif; ?>
-					<tr>
-						<th>Status</th>
-						<td>
-							<span class="codeconfig-plugin-status-badge <?php echo esc_attr($status_class); ?>"><?php echo esc_html($status_icon); ?> <?php echo esc_html($status_text); ?></span>
-							<?php if ($has_update) : ?>
-								<button type="button" class="button button-primary codeconfig-plugin-update-btn" style="margin-left:10px;<?php echo $has_update ? '' : ' display:none;'; ?>">Update Now to <?php echo esc_html($new_version); ?></button>
-							<?php else : ?>
-								<button type="button" class="button button-primary codeconfig-plugin-update-btn" style="margin-left:10px; display:none;">Update Now</button>
-							<?php endif; ?>
-						</td>
-					</tr>
-					<tr>
-						<th>License</th>
-						<td><?php echo $is_pro ? 'Pro (Freemius)' : 'Free'; ?></td>
-					</tr>
-					<?php if ($last_check) : ?>
-						<tr>
-							<th>Last Checked</th>
-							<td><?php echo esc_html(date('Y-m-d H:i:s', (int) $last_check['time'])); ?></td>
-						</tr>
-					<?php else : ?>
-						<tr>
-							<th>Last Checked</th>
-							<td>Never</td>
-						</tr>
-					<?php endif; ?>
-					<?php if (! empty($api_data['downloads'])) : ?>
-						<tr>
-							<th>Downloads</th>
-							<td><?php echo (int) $api_data['downloads']; ?></td>
-						</tr>
-					<?php endif; ?>
-				</tbody>
-			</table>
-		</div>
-		<?php
+        <div class="card codeconfig-plugin-status-card <?php echo esc_attr($status_class); ?>">
+            <h2>Current Status</h2>
+            <table class="widefat striped">
+                <tbody>
+                    <tr>
+                        <th>Current Version</th>
+                        <td><code><?php echo esc_html($this->manager->get_config('version', '1.0.0')); ?></code></td>
+                    </tr>
+                    <?php if ($has_update && $new_version) : ?>
+                        <tr>
+                            <th>Latest Version</th>
+                            <td><code><?php echo esc_html($new_version); ?></code></td>
+                        </tr>
+                    <?php endif; ?>
+                    <tr>
+                        <th>Status</th>
+                        <td>
+                            <span class="codeconfig-plugin-status-badge <?php echo esc_attr($status_class); ?>"><?php echo esc_html($status_icon); ?> <?php echo esc_html($status_text); ?></span>
+                            <?php if ($has_update) : ?>
+                                <button type="button" class="button button-primary codeconfig-plugin-update-btn" style="margin-left:10px;">Update Now to <?php echo esc_html($new_version); ?></button>
+                            <?php else : ?>
+                                <button type="button" class="button button-primary codeconfig-plugin-update-btn" style="margin-left:10px; display:none;">Update Now</button>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>License</th>
+                        <td><?php echo $is_pro ? 'Pro (Freemius)' : 'Free'; ?></td>
+                    </tr>
+                    <?php if ($last_check) : ?>
+                        <tr>
+                            <th>Last Checked</th>
+                            <td><?php echo esc_html(date('Y-m-d H:i:s', (int) $last_check['time'])); ?></td>
+                        </tr>
+                    <?php else : ?>
+                        <tr>
+                            <th>Last Checked</th>
+                            <td>Never</td>
+                        </tr>
+                    <?php endif; ?>
+                    <?php if (! empty($api_data['downloads'])) : ?>
+                        <tr>
+                            <th>Downloads</th>
+                            <td><?php echo (int) $api_data['downloads']; ?></td>
+                        </tr>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
+        <?php
     }
 
-    private static function render_actions($api_data = [])
+    private function render_actions($api_data = [])
     {
-        $api_key      = get_option('codeconfig_api_key', '');
-        $name         = get_option('codeconfig_name', '');
-        $email        = get_option('codeconfig_email', '');
+        $option_prefix = 'ccupd_' . $this->slug . '_';
+        $api_key = get_option($option_prefix . 'api_key', '');
+        $name = get_option($option_prefix . 'name', '');
+        $email = get_option($option_prefix . 'email', '');
         ?>
-		<div class="card codeconfig-plugin-actions-card">
-			<h2>Actions</h2>
-			<p>
-				<button type="button" id="codeconfig-plugin-check-btn" class="button button-secondary">
-					<span class="dashicons dashicons-update" style="margin-top:3px;"></span>
-					Check for Updates
-				</button>
-				<button type="button" id="codeconfig-plugin-refresh-btn" class="button button-secondary">
-					Force Refresh
-				</button>
-			</p>
-			<div id="codeconfig-plugin-check-result" class="notice inline" style="display:none;"></div>
-		</div>
+        <div class="card codeconfig-plugin-actions-card">
+            <h2>Actions</h2>
+            <p>
+                <button type="button" id="codeconfig-plugin-check-btn" class="button button-secondary">
+                    <span class="dashicons dashicons-update" style="margin-top:3px;"></span>
+                    Check for Updates
+                </button>
+                <button type="button" id="codeconfig-plugin-refresh-btn" class="button button-secondary">
+                    Force Refresh
+                </button>
+            </p>
+            <div id="codeconfig-plugin-check-result" class="notice inline" style="display:none;"></div>
+        </div>
 
-		<div class="card codeconfig-plugin-api-key-card">
-			<h2>API Settings</h2>
-			<p>Enter the API key from your server admin panel to enable authenticated updates. Optionally provide your name and email for better user identification.</p>
-			<form method="post" action="options.php">
-				<?php settings_fields('codeconfig-plugin-settings'); ?>
-				<table class="form-table">
-					<tr>
-						<th><label for="codeconfig_name">Name (optional)</label></th>
-						<td>
-							<input type="text" id="codeconfig_name" name="codeconfig_name" class="regular-text" value="<?php echo esc_attr($name); ?>" placeholder="Your name or site name" />
-							<p class="description">This helps identify your site on the API server.</p>
-						</td>
-					</tr>
-					<tr>
-						<th><label for="codeconfig_email">Email (optional)</label></th>
-						<td>
-							<input type="email" id="codeconfig_email" name="codeconfig_email" class="regular-text" value="<?php echo esc_attr($email); ?>" placeholder="your@email.com" />
-							<p class="description">Your contact email for update notifications.</p>
-						</td>
-					</tr>
-					<tr>
-						<th><label for="codeconfig_api_key">API Key</label></th>
-						<td>
-							<input type="text" id="codeconfig_api_key" name="codeconfig_api_key" class="regular-text" value="<?php echo esc_attr($api_key); ?>" placeholder="Paste your API key here" />
-						</td>
-					</tr>
-				</table>
-				<?php submit_button('Save Settings'); ?>
-			</form>
-		</div>
-		<?php
+        <div class="card codeconfig-plugin-api-key-card">
+            <h2>API Settings</h2>
+            <p>Enter the API key from your server admin panel to enable authenticated updates. Optionally provide your name and email for better user identification.</p>
+            <form method="post" action="options.php">
+                <?php
+                $option_group = 'ccupd_' . $this->slug . '-settings';
+                settings_fields($option_group);
+                ?>
+                <table class="form-table">
+                    <tr>
+                        <th><label for="ccupd_<?php echo esc_attr($this->slug); ?>_name">Name (optional)</label></th>
+                        <td>
+                            <input type="text" id="ccupd_<?php echo esc_attr($this->slug); ?>_name" name="ccupd_<?php echo esc_attr($this->slug); ?>_name" class="regular-text" value="<?php echo esc_attr($name); ?>" placeholder="Your name or site name" />
+                            <p class="description">This helps identify your site on the API server.</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><label for="ccupd_<?php echo esc_attr($this->slug); ?>_email">Email (optional)</label></th>
+                        <td>
+                            <input type="email" id="ccupd_<?php echo esc_attr($this->slug); ?>_email" name="ccupd_<?php echo esc_attr($this->slug); ?>_email" class="regular-text" value="<?php echo esc_attr($email); ?>" placeholder="your@email.com" />
+                            <p class="description">Your contact email for update notifications.</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><label for="ccupd_<?php echo esc_attr($this->slug); ?>_api_key">API Key</label></th>
+                        <td>
+                            <input type="text" id="ccupd_<?php echo esc_attr($this->slug); ?>_api_key" name="ccupd_<?php echo esc_attr($this->slug); ?>_api_key" class="regular-text" value="<?php echo esc_attr($api_key); ?>" placeholder="Paste your API key here" />
+                        </td>
+                    </tr>
+                </table>
+                <?php submit_button('Save Settings'); ?>
+            </form>
+        </div>
+        <?php
     }
 
-    private static function render_connection_info($api_status)
+    private function render_connection_info($api_status)
     {
-
         $status_label = 'Unknown';
         $status_class = 'status-unknown';
 
@@ -405,70 +423,75 @@ class CodeConfig_Updater_Admin
                 break;
         }
         ?>
-		<div class="card codeconfig-plugin-connection-card">
-			<h2>API Connection</h2>
-			<table class="widefat striped">
-				<tbody>
-					<tr>
-						<th>API URL</th>
-						<td><code><?php echo esc_html(ccupd_config('api_url')); ?></code></td>
-					</tr>
-					<tr>
-						<th>Status</th>
-						<td><span class="codeconfig-plugin-status-badge <?php echo esc_attr($status_class); ?>"><?php echo esc_html($status_label); ?></span></td>
-					</tr>
-				</tbody>
-			</table>
-			<p style="margin-top:15px;">
-				<button type="button" id="codeconfig-plugin-test-btn" class="button button-secondary">
-					Test Connection
-				</button>
-			</p>
-			<div id="codeconfig-plugin-test-result" class="notice inline" style="display:none;"></div>
-		</div>
-		<?php
+        <div class="card codeconfig-plugin-connection-card">
+            <h2>API Connection</h2>
+            <table class="widefat striped">
+                <tbody>
+                    <tr>
+                        <th>API URL</th>
+                        <td><code><?php echo esc_html($this->manager->get_config('api_url')); ?></code></td>
+                    </tr>
+                    <tr>
+                        <th>Status</th>
+                        <td><span class="codeconfig-plugin-status-badge <?php echo esc_attr($status_class); ?>"><?php echo esc_html($status_label); ?></span></td>
+                    </tr>
+                </tbody>
+            </table>
+            <p style="margin-top:15px;">
+                <button type="button" id="codeconfig-plugin-test-btn" class="button button-secondary">
+                    Test Connection
+                </button>
+            </p>
+            <div id="codeconfig-plugin-test-result" class="notice inline" style="display:none;"></div>
+        </div>
+        <?php
     }
 
-    private static function render_changelog($api_data)
+    private function render_changelog($api_data)
     {
-
         if (empty($api_data['changelog'])) {
             return;
         }
         ?>
-		<div class="card codeconfig-plugin-changelog-card">
-			<h2>Latest Changelog</h2>
-			<div class="codeconfig-plugin-changelog">
-				<?php echo wpautop(esc_html($api_data['changelog'])); ?>
-			</div>
-		</div>
-		<?php
+        <div class="card codeconfig-plugin-changelog-card">
+            <h2>Latest Changelog</h2>
+            <div class="codeconfig-plugin-changelog">
+                <?php echo wpautop(esc_html($api_data['changelog'])); ?>
+            </div>
+        </div>
+        <?php
     }
 
-    private static function render_pro_notice()
+    private function render_pro_notice()
     {
         ?>
-		<div class="card codeconfig-plugin-pro-card">
-			<h2>Freemius License</h2>
-			<div class="notice notice-success inline">
-				<p>Updates are managed by Freemius. No action needed.</p>
-			</div>
-		</div>
-		<?php
+        <div class="card codeconfig-plugin-pro-card">
+            <h2>Freemius License</h2>
+            <div class="notice notice-success inline">
+                <p>Updates are managed by Freemius. No action needed.</p>
+            </div>
+        </div>
+        <?php
     }
 
-    public static function handle_force_refresh()
-    {
+    private $updater = null;
 
-        if (! check_ajax_referer('codeconfig_check_nonce', 'nonce', false)) {
-            wp_send_json_error([ 'message' => 'Security check failed.' ]);
+    public function set_updater($updater)
+    {
+        $this->updater = $updater;
+    }
+
+    public function handle_force_refresh()
+    {
+        if (! check_ajax_referer('ccupd_check_nonce', 'nonce', false)) {
+            wp_send_json_error(['message' => 'Security check failed.']);
         }
 
         if (! current_user_can('update_plugins')) {
-            wp_send_json_error([ 'message' => 'Permission denied.' ]);
+            wp_send_json_error(['message' => 'Permission denied.']);
         }
 
-        CodeConfig_REST::force_clear_cache();
+        CodeConfig_REST::force_clear_cache($this->manager);
         delete_site_transient('update_plugins');
 
         wp_send_json_success([
@@ -476,71 +499,73 @@ class CodeConfig_Updater_Admin
         ]);
     }
 
-    public static function handle_test_connection()
+    public function handle_test_connection()
     {
-
-        if (! check_ajax_referer('codeconfig_check_nonce', 'nonce', false)) {
-            wp_send_json_error([ 'message' => 'Security check failed.' ]);
+        if (! check_ajax_referer('ccupd_check_nonce', 'nonce', false)) {
+            wp_send_json_error(['message' => 'Security check failed.']);
         }
 
-        $result = CodeConfig_REST::check_api();
+        $result = CodeConfig_REST::check_api($this->manager);
 
         if (is_wp_error($result)) {
-            update_option('codeconfig_api_status', 'error');
+            $option_prefix = 'ccupd_' . $this->slug . '_';
+            update_option($option_prefix . 'api_status', 'error');
             wp_send_json_error([
                 'message' => $result->get_error_message(),
             ]);
         }
 
-        update_option('codeconfig_api_status', 'connected');
+        $option_prefix = 'ccupd_' . $this->slug . '_';
+        update_option($option_prefix . 'api_status', 'connected');
         wp_send_json_success([
             'message' => 'Connection successful!',
         ]);
     }
 
-    public static function render_plugin_update_notice($plugin_file, $plugin_data, $status)
+    public function render_plugin_update_notice($plugin_file, $plugin_data, $status)
     {
-        $is_pro = ccupd_config('is_pro', false);
+        $is_pro = $this->manager->get_config('is_pro', false);
         if ($is_pro) {
             return;
         }
 
-        $basename = ccupd_config('basename', '');
+        $basename = $this->manager->get_config('basename', '');
         if ($plugin_file !== $basename) {
             return;
         }
 
-        $api_data = get_option('codeconfig_check_result', []);
+        $option_prefix = 'ccupd_' . $this->slug . '_';
+        $api_data = get_option($option_prefix . 'check_result', []);
         if (empty($api_data['update'])) {
             return;
         }
 
-        $new_version     = ! empty($api_data['new_version']) ? $api_data['new_version'] : '';
-        $current_version = ccupd_config('version', '1.0.0');
+        $new_version = ! empty($api_data['new_version']) ? $api_data['new_version'] : '';
+        $current_version = $this->manager->get_config('version', '1.0.0');
 
         if (empty($new_version) || version_compare($current_version, $new_version, '>=')) {
             return;
         }
 
-        $plugin_name = ccupd_config('name', 'This plugin');
-        $slug        = ccupd_config('slug', '');
+        $plugin_name = $this->manager->get_config('name', 'This plugin');
+        $slug = $this->manager->get_config('slug', '');
 
-        $wp_list_table = _get_list_table('WP_Plugins_List_Table', [ 'screen' => get_current_screen() ]);
-        $column_count  = $wp_list_table->get_column_count();
+        $wp_list_table = _get_list_table('WP_Plugins_List_Table', ['screen' => get_current_screen()]);
+        $column_count = $wp_list_table->get_column_count();
 
-        $update_nonce = wp_create_nonce('codeconfig_upgrade_plugin_' . $basename);
-        $update_url   = wp_nonce_url(admin_url('update.php?action=codeconfig-upgrade-plugin&plugin=' . urlencode($basename)), 'codeconfig_upgrade_plugin_' . $basename);
+        $update_nonce = wp_create_nonce($this->slug . '_upgrade_plugin_' . $basename);
+        $update_url = wp_nonce_url(admin_url('update.php?action=' . $this->slug . '-upgrade-plugin&plugin=' . urlencode($basename)), $this->slug . '_upgrade_plugin_' . $basename);
 
         $details_url = add_query_arg([
-            'tab'       => 'plugin-information',
-            'plugin'    => $slug,
-            'section'   => 'changelog',
+            'tab' => 'plugin-information',
+            'plugin' => $slug,
+            'section' => 'changelog',
             'TB_iframe' => 'true',
-            'width'     => 600,
-            'height'    => 800,
+            'width' => 600,
+            'height' => 800,
         ], admin_url('plugin-install.php'));
 
-        $is_active    = is_plugin_active($basename);
+        $is_active = is_plugin_active($basename);
         $active_class = $is_active ? ' active' : '';
 
         echo '<tr class="codeconfig-plugin-update-tr' . esc_attr($active_class) . '" id="' . esc_attr($slug . '-update') . '" data-slug="' . esc_attr($slug) . '" data-plugin="' . esc_attr($basename) . '">';

@@ -26,7 +26,7 @@ class CodeConfig
     private function define_constants()
     {
         if (! defined('CODECONFIG_VERSION')) {
-            define('CODECONFIG_VERSION', '1.0.25');
+            define('CODECONFIG_VERSION', '1.0.27');
         }
         if (! defined('CODECONFIG_PATH')) {
             define('CODECONFIG_PATH', plugin_dir_path(__DIR__));
@@ -65,21 +65,23 @@ class CodeConfig
 
                     global $ccp_updater;
 
+                    $config = wp_parse_args($config, [
+                        'api_url'       => 'http://localhost:10078/wp-json/plugin/v1',
+                        'slug'         => 'codeconfig-plugin',
+                        'basename'     => 'codeconfig-plugin/codeconfig-plugin.php',
+                        'version'     => CODECONFIG_VERSION,
+                        'name'        => 'CodeConfig Plugin',
+                        'show_admin_page' => true,
+                        'is_pro'      => defined('CODECONFIG_PRO_ACTIVE') && CODECONFIG_PRO_ACTIVE,
+                        'menu' => [
+                            'parent_slug' => 'options-general.php',
+                            'page_title' => 'CodeConfig Plugin Updates',
+                            'menu_title' => 'CodeConfig Updates',
+                        ],
+                    ]);
+
                     if (! $ccp_updater) {
-                        $ccp_updater = ccupd(array(
-                            'api_url'         => 'http://localhost:10078/wp-json/plugin/v1',
-                            'slug'            => 'codeconfig-plugin',
-                            'basename'        => 'codeconfig-plugin/codeconfig-plugin.php',
-                            'version'         => CODECONFIG_VERSION,
-                            'name'            => 'CodeConfig Plugin',
-                            'show_admin_page' => true,
-                            'is_pro'          => defined('CODECONFIG_PRO_ACTIVE') && CODECONFIG_PRO_ACTIVE,
-                            'menu'           => array(
-                                'parent_slug' => 'options-general.php',
-                                'page_title'  => 'CodeConfig Plugin Updates',
-                                'menu_title'  => 'CodeConfig Updates',
-                            ),
-                        ));
+                        $ccp_updater = ccupd($config);
                     }
 
                     return $ccp_updater;

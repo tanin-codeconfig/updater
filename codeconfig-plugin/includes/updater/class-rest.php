@@ -6,91 +6,136 @@ if (! defined('ABSPATH')) {
 
 class CodeConfig_REST
 {
-    public static function init()
+    private $manager = null;
+    private $slug = '';
+
+    public function __construct($manager)
     {
-        add_action('rest_api_init', [__CLASS__, 'register_routes']);
+        $this->manager = $manager;
+        $this->slug = $manager->get_slug();
     }
 
-    public static function register_routes()
+    public function init()
     {
-        register_rest_route('ccupd/v1', '/check', [
-            'methods'             => 'POST',
-            'callback'            => [__CLASS__, 'handle_check'],
+        add_action('rest_api_init', [$this, 'register_routes']);
+    }
+
+    private function get_namespace()
+    {
+        return 'ccupd/v1/' . $this->slug;
+    }
+
+    public function register_routes()
+    {
+        $namespace = $this->get_namespace();
+
+        register_rest_route($namespace, '/check', [
+            'methods' => 'POST',
+            'callback' => [$this, 'handle_check'],
             'permission_callback' => function () {
                 return current_user_can('update_plugins');
             },
         ]);
 
-        register_rest_route('ccupd/v1', '/test-connection', [
-            'methods'             => 'POST',
-            'callback'            => [__CLASS__, 'handle_test_connection'],
+        register_rest_route($namespace, '/test-connection', [
+            'methods' => 'POST',
+            'callback' => [$this, 'handle_test_connection'],
             'permission_callback' => function () {
                 return current_user_can('manage_options');
             },
         ]);
 
-        register_rest_route('ccupd/v1', '/force-refresh', [
-            'methods'             => 'POST',
-            'callback'            => [__CLASS__, 'handle_force_refresh'],
+        register_rest_route($namespace, '/force-refresh', [
+            'methods' => 'POST',
+            'callback' => [$this, 'handle_force_refresh'],
             'permission_callback' => function () {
                 return current_user_can('update_plugins');
             },
         ]);
 
-        register_rest_route('ccupd/v1', '/update', [
-            'methods'             => 'POST',
-            'callback'            => [__CLASS__, 'handle_update'],
+        register_rest_route($namespace, '/update', [
+            'methods' => 'POST',
+            'callback' => [$this, 'handle_update'],
             'permission_callback' => function () {
                 return current_user_can('update_plugins');
             },
         ]);
     }
 
-    public static function handle_check(WP_REST_Request $request)
+    private function get_manager_from_request(WP_REST_Request $request)
     {
-        if (ccupd_config('is_pro', false)) {
+        $plugin = $request->get_param('plugin');
+        if (empty($plugin)) {
+            return null;
+        }
+        return ccupd_get_manager($plugin);
+    }
+
+    public function handle_check(WP_REST_Request $request)
+    {
+        $manager = $this->get_manager_from_request($request);
+        if (! $manager) {
+            return new WP_REST_Response([
+                'success' => false,
+                'message' => 'Plugin slug is required.',
+            ], 400);
+        }
+
+        if ($manager->get_config('is_pro', false)) {
             return new WP_REST_Response([
                 'update_available' => false,
-                'message'          => 'Updates are managed by Freemius.',
-                'is_pro'           => true,
+                'message' => 'Updates are managed by Freemius.',
+                'is_pro' => true,
             ], 200);
         }
 
-        self::clear_update_transient();
+        $this->clear_update_transient();
 
-        CodeConfig_Updater::force_check_for_update();
+        $updater = $manager->get_updater();
+        if ($updater) {
+            $updater->force_check_for_update();
+        }
 
-        $result = get_option('codeconfig_check_result', []);
+        $option_prefix = 'ccupd_' . $manager->get_slug() . '_';
+        $result = get_option($option_prefix . 'check_result', []);
 
         if (empty($result)) {
-            $result = self::check_api();
+            $result = self::check_api($manager);
         }
 
         if (is_wp_error($result)) {
-            update_option('codeconfig_api_status', 'error');
+            update_option($option_prefix . 'api_status', 'error');
 
             return new WP_REST_Response([
                 'message' => $result->get_error_message(),
             ], 400);
         }
 
-        update_option('codeconfig_api_status', 'connected');
-        update_option('codeconfig_last_check', time());
-        update_option('codeconfig_check_result', $result);
+        update_option($option_prefix . 'api_status', 'connected');
+        update_option($option_prefix . 'last_check', time());
+        update_option($option_prefix . 'check_result', $result);
 
         return new WP_REST_Response([
             'update_available' => ! empty($result['update']),
-            'new_version'      => $result['new_version'] ?? '',
-            'message'          => ! empty($result['update'])
+            'new_version' => $result['new_version'] ?? '',
+            'message' => ! empty($result['update'])
                 ? sprintf('Update available! Version %s is ready to install.', $result['new_version'])
                 : 'You are running the latest version.',
-            'changelog'        => $result['changelog'] ?? '',
+            'changelog' => $result['changelog'] ?? '',
         ], 200);
     }
 
-    public static function handle_test_connection(WP_REST_Request $request)
+    public function handle_test_connection(WP_REST_Request $request)
     {
-        $api_url = ccupd_config('api_url', '');
+        $manager = $this->get_manager_from_request($request);
+        if (! $manager) {
+            return new WP_REST_Response([
+                'success' => false,
+                'message' => 'Plugin slug is required.',
+            ], 400);
+        }
+
+        $api_url = $manager->get_config('api_url', '');
 
         if (empty($api_url)) {
             return new WP_REST_Response([
@@ -100,13 +145,13 @@ class CodeConfig_REST
         }
 
         $params = [
-            'version' => ccupd_config('version', '1.0.0'),
-            'slug'    => ccupd_config('slug', ''),
-            'domain'  => site_url(),
+            'version' => $manager->get_config('version', '1.0.0'),
+            'slug' => $manager->get_config('slug', ''),
+            'domain' => site_url(),
         ];
 
         $response = wp_remote_get(add_query_arg($params, $api_url . '/update-check'), [
-            'timeout'   => 15,
+            'timeout' => 15,
             'sslverify' => false,
         ]);
 
@@ -132,12 +177,20 @@ class CodeConfig_REST
         ], 400);
     }
 
-    public static function handle_force_refresh(WP_REST_Request $request)
+    public function handle_force_refresh(WP_REST_Request $request)
     {
-        self::clear_update_transient();
-        delete_option('codeconfig_last_check');
-        delete_option('codeconfig_check_result');
-        delete_option('codeconfig_api_status');
+        $manager = $this->get_manager_from_request($request);
+        if (! $manager) {
+            return new WP_REST_Response([
+                'success' => false,
+                'message' => 'Plugin slug is required.',
+            ], 400);
+        }
+
+        $option_prefix = 'ccupd_' . $manager->get_slug() . '_';
+        delete_option($option_prefix . 'last_check');
+        delete_option($option_prefix . 'check_result');
+        delete_option($option_prefix . 'api_status');
 
         return new WP_REST_Response([
             'success' => true,
@@ -145,33 +198,41 @@ class CodeConfig_REST
         ], 200);
     }
 
-    private static function clear_update_transient()
+    private function clear_update_transient()
     {
         delete_site_transient('update_plugins');
     }
 
-    public static function check_api()
+    public static function check_api($manager = null)
     {
-        return self::check_api_for_version(ccupd_config('version', '1.0.0'));
+        return self::check_api_for_version($manager ? $manager->get_config('version', '1.0.0') : '1.0.0', $manager);
     }
 
-    public static function check_api_for_version($version)
+    public static function check_api_for_version($version, $manager = null)
     {
-        $api_url = ccupd_config('api_url', '') . '/update-check';
-        $api_key = get_option('codeconfig_api_key', '');
+        if (! $manager) {
+            return new WP_Error(
+                'no_manager',
+                'Manager instance is required.'
+            );
+        }
+
+        $api_url = $manager->get_config('api_url', '') . '/update-check';
+        $option_prefix = 'ccupd_' . $manager->get_slug() . '_';
+        $api_key = get_option($option_prefix . 'api_key', '');
 
         $params = [
             'version' => $version,
-            'slug'    => ccupd_config('slug', ''),
-            'domain'  => site_url(),
+            'slug' => $manager->get_config('slug', ''),
+            'domain' => site_url(),
         ];
 
         if ($api_key) {
             $params['api_key'] = $api_key;
         }
 
-        $name  = get_option('codeconfig_name', '');
-        $email = get_option('codeconfig_email', '');
+        $name = get_option($option_prefix . 'name', '');
+        $email = get_option($option_prefix . 'email', '');
 
         if (! empty($name)) {
             $params['name'] = $name;
@@ -206,43 +267,61 @@ class CodeConfig_REST
         }
 
         if (! empty($data['user_created']) && ! empty($data['api_key'])) {
-            update_option('codeconfig_api_key', sanitize_text_field($data['api_key']));
+            update_option($option_prefix . 'api_key', sanitize_text_field($data['api_key']));
         }
 
         return $data;
     }
 
-    public static function get_last_check()
+    public static function get_last_check($manager = null)
     {
-        $timestamp = get_option('codeconfig_last_check');
+        if (! $manager) {
+            return null;
+        }
+
+        $option_prefix = 'ccupd_' . $manager->get_slug() . '_';
+        $timestamp = get_option($option_prefix . 'last_check');
 
         if (! $timestamp) {
             return null;
         }
 
         return [
-            'time'   => $timestamp,
-            'result' => get_option('codeconfig_check_result', []),
+            'time' => $timestamp,
+            'result' => get_option($option_prefix . 'check_result', []),
         ];
     }
 
-    public static function force_clear_cache()
+    public static function force_clear_cache($manager = null)
     {
-        delete_option('codeconfig_last_check');
-        delete_option('codeconfig_check_result');
-        delete_option('codeconfig_api_status');
+        if (! $manager) {
+            return;
+        }
+
+        $option_prefix = 'ccupd_' . $manager->get_slug() . '_';
+        delete_option($option_prefix . 'last_check');
+        delete_option($option_prefix . 'check_result');
+        delete_option($option_prefix . 'api_status');
     }
 
-    public static function handle_update(WP_REST_Request $request)
+    public function handle_update(WP_REST_Request $request)
     {
-        if (ccupd_config('is_pro', false)) {
+        $manager = $this->get_manager_from_request($request);
+        if (! $manager) {
+            return new WP_REST_Response([
+                'success' => false,
+                'message' => 'Plugin slug is required.',
+            ], 400);
+        }
+
+        if ($manager->get_config('is_pro', false)) {
             return new WP_REST_Response([
                 'success' => false,
                 'message' => 'Updates are managed by Freemius.',
             ], 400);
         }
 
-        $api_data = self::check_api();
+        $api_data = self::check_api($manager);
 
         if (is_wp_error($api_data)) {
             return new WP_REST_Response([
@@ -279,24 +358,26 @@ class CodeConfig_REST
         require_once ABSPATH . 'wp-admin/includes/class-plugin-upgrader.php';
         require_once ABSPATH . 'wp-admin/includes/plugin.php';
 
-        $basename = ccupd_config('basename');
-        $slug     = ccupd_config('slug');
+        $basename = $manager->get_config('basename');
+        $slug = $manager->get_config('slug');
 
         deactivate_plugins($basename, false, true);
 
-        $skin     = new WP_Ajax_Upgrader_Skin();
+        $skin = new WP_Ajax_Upgrader_Skin();
         $upgrader = new Plugin_Upgrader($skin);
 
         $result = $upgrader->run([
-            'package'           => $api_data['package'],
-            'destination'       => WP_PLUGIN_DIR . '/' . $slug,
+            'package' => $api_data['package'],
+            'destination' => WP_PLUGIN_DIR . '/' . $slug,
             'clear_destination' => true,
-            'clear_working'     => true,
-            'hook_extra'        => [
+            'clear_working' => true,
+            'hook_extra' => [
                 'plugin' => $basename,
             ],
             'incompatible_archive' => false,
         ]);
+
+        $option_prefix = 'ccupd_' . $manager->get_slug() . '_';
 
         if (is_wp_error($result)) {
             activate_plugin($basename, '', false, true);
@@ -310,16 +391,16 @@ class CodeConfig_REST
         activate_plugin($basename, '', false, true);
 
         delete_site_transient('update_plugins');
-        delete_option('codeconfig_check_result');
-        delete_option('codeconfig_api_status');
-        delete_option('codeconfig_last_check');
+        delete_option($option_prefix . 'check_result');
+        delete_option($option_prefix . 'api_status');
+        delete_option($option_prefix . 'last_check');
 
         $new_version = ! empty($api_data['new_version']) ? $api_data['new_version'] : '';
 
         return new WP_REST_Response([
-            'success'      => true,
-            'new_version'  => $new_version,
-            'message'      => 'Plugin updated successfully to version ' . $new_version . '!',
+            'success' => true,
+            'new_version' => $new_version,
+            'message' => 'Plugin updated successfully to version ' . $new_version . '!',
         ], 200);
     }
 }

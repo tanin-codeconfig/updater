@@ -1,6 +1,15 @@
 (function( $ ) {
 	'use strict';
 
+	var codeconfigPluginAdmin = null;
+	var keys = Object.keys(window);
+	for (var i = 0; i < keys.length; i++) {
+		if (keys[i].indexOf('codeconfigPluginAdmin_') === 0) {
+			codeconfigPluginAdmin = window[keys[i]];
+			break;
+		}
+	}
+
 	$( document ).ready( function() {
 		var checkBtn = $( '#codeconfig-plugin-check-btn' );
 		var refreshBtn = $( '#codeconfig-plugin-refresh-btn' );
@@ -18,6 +27,9 @@
 				$.ajax( {
 					url: codeconfigPluginAdmin.restUrl + 'check',
 					method: 'POST',
+					data: {
+						plugin: codeconfigPluginAdmin.pluginSlug
+					},
 					beforeSend: function( xhr ) {
 						xhr.setRequestHeader( 'X-WP-Nonce', codeconfigPluginAdmin.nonce );
 					},
@@ -51,6 +63,9 @@
 				$.ajax( {
 					url: codeconfigPluginAdmin.restUrl + 'force-refresh',
 					method: 'POST',
+					data: {
+						plugin: codeconfigPluginAdmin.pluginSlug
+					},
 					beforeSend: function( xhr ) {
 						xhr.setRequestHeader( 'X-WP-Nonce', codeconfigPluginAdmin.nonce );
 					},
@@ -79,6 +94,9 @@
 				$.ajax( {
 					url: codeconfigPluginAdmin.restUrl + 'update',
 					method: 'POST',
+					data: {
+						plugin: codeconfigPluginAdmin.pluginSlug
+					},
 					beforeSend: function( xhr ) {
 						xhr.setRequestHeader( 'X-WP-Nonce', codeconfigPluginAdmin.nonce );
 					},
@@ -114,6 +132,9 @@
 				$.ajax( {
 					url: codeconfigPluginAdmin.restUrl + 'test-connection',
 					method: 'POST',
+					data: {
+						plugin: codeconfigPluginAdmin.pluginSlug
+					},
 					beforeSend: function( xhr ) {
 						xhr.setRequestHeader( 'X-WP-Nonce', codeconfigPluginAdmin.nonce );
 					},
@@ -151,6 +172,9 @@
 				$.ajax( {
 					url: codeconfigPluginAdmin.restUrl + 'check',
 					method: 'POST',
+					data: {
+						plugin: codeconfigPluginAdmin.pluginSlug
+					},
 					beforeSend: function( xhr ) {
 						xhr.setRequestHeader( 'X-WP-Nonce', codeconfigPluginAdmin.nonce );
 					},

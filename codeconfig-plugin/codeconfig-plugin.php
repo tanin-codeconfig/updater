@@ -3,7 +3,7 @@
 /**
  * Plugin Name: CodeConfig Plugin
  * Description: A plugin developed by CodeConfig with custom update system
- * Version: 1.0.25
+ * Version: 1.0.27
  * Author: CodeConfig
  * Author URI: https://codeconfig.io
  * Text Domain: codeconfig-plugin
