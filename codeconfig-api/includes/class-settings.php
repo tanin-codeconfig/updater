@@ -282,7 +282,9 @@ class CodeConfig_Settings {
 					var parentRow = el.closest('tr');
 					if (!parentRow) return;
 					
-					if (showIf === value) {
+					if (showIf === '') {
+						parentRow.style.display = 'table-row';
+					} else if (showIf === value) {
 						parentRow.style.display = 'table-row';
 					} else {
 						parentRow.style.display = 'none';
