@@ -255,6 +255,8 @@ class CodeConfig_Admin
                 }
 
                 $rename = CODECONFIG_API_STORAGE . $slug . '-v' . $version . '.zip';
+                $upload_file = str_replace('//', '/', $upload_file);
+                $rename = str_replace('//', '/', $rename);
 
                 if (file_exists($upload_file) && $upload_file !== $rename) {
                     if (file_exists($rename)) {
@@ -265,12 +267,16 @@ class CodeConfig_Admin
                     $rename = $upload_file;
                 }
 
+                if (! file_exists($rename)) {
+                    $args['codeconfig_notice'] = 'upload_failed';
+                    nocache_headers();
+                    wp_redirect(add_query_arg($args, admin_url('admin.php')), 303);
+                    exit;
+                }
+
                 $existing = CodeConfig_Version_DB::get_existing_version($slug, $version);
 
                 if ($existing) {
-                    if (! empty($existing['download_path']) && file_exists($existing['download_path'])) {
-                        unlink($existing['download_path']);
-                    }
                     CodeConfig_Version_DB::update_version($existing['id'], array(
                         'changelog'      => $changelog,
                         'download_path'  => $rename,
@@ -531,19 +537,19 @@ class CodeConfig_Admin
 				<?php else : ?>
 					<?php foreach ($versions as $v) : ?>
 						<?php
-						$file_exists = ! empty( $v['download_path'] ) && file_exists( $v['download_path'] );
-						$file_display = $file_exists ? basename( $v['download_path'] ) : 'File not found';
-						$file_color = $file_exists ? '' : 'color: #d63638;';
-						$is_active = $v['is_active'] && $file_exists;
-						$download_url = CODECONFIG_API_URL . 'download.php?id=' . (int) $v['id'];
-						?>
+                        $file_exists = ! empty($v['download_path']) && file_exists($v['download_path']);
+					    $file_display = $file_exists ? basename($v['download_path']) : 'File not found';
+					    $file_color = $file_exists ? '' : 'color: #d63638;';
+					    $is_active = $v['is_active'] && $file_exists;
+					    $download_url = CODECONFIG_API_URL . 'download.php?id=' . (int) $v['id'];
+					    ?>
 						<tr>
 							<th scope="row" class="check-column"><input type="checkbox" name="bulk_ids[]" value="<?php echo (int) $v['id']; ?>" /></th>
 							<td><?php echo esc_html($v['id']); ?></td>
-							<td style="<?php echo esc_attr( $file_color ); ?>">
+							<td style="<?php echo esc_attr($file_color); ?>">
 								<?php echo esc_html($file_display); ?>
 								<div class="row-actions">
-									<?php if ( $file_exists ) : ?>
+									<?php if ($file_exists) : ?>
 										<a href="<?php echo $download_url; ?>" class="button-link" target="_blank">Download</a>
 										|
 										<button type="button" class="button-link codeconfig-edit-btn" data-id="<?php echo (int) $v['id']; ?>" data-version="<?php echo esc_attr($v['version']); ?>" data-slug="<?php echo esc_attr($v['slug']); ?>">Edit</button>
@@ -565,20 +571,20 @@ class CodeConfig_Admin
 							<td><?php echo $is_active ? '<span class="codeconfig-status-active">Active</span>' : '<span class="codeconfig-status-inactive">Inactive</span>'; ?></td>
 							<td>
 								<?php
-                                $download_count = 0;
-                                if (class_exists('CodeConfig_Analytics_DB')) {
-                                    global $wpdb;
-                                    $analytics_table = $wpdb->prefix . 'codeconfig_analytics';
-                                    $download_count = (int) $wpdb->get_var(
-                                        $wpdb->prepare(
-                                            "SELECT COUNT(*) FROM {$analytics_table} WHERE slug = %s AND version = %s AND request_type = 'download'",
-                                            $v['slug'],
-                                            $v['version']
-                                        )
-                                    );
-                                }
-                                echo esc_html($download_count);
-                                ?>
+					            $download_count = 0;
+					    if (class_exists('CodeConfig_Analytics_DB')) {
+					        global $wpdb;
+					        $analytics_table = $wpdb->prefix . 'codeconfig_analytics';
+					        $download_count = (int) $wpdb->get_var(
+					            $wpdb->prepare(
+					                "SELECT COUNT(*) FROM {$analytics_table} WHERE slug = %s AND version = %s AND request_type = 'download'",
+					                $v['slug'],
+					                $v['version']
+					            )
+					        );
+					    }
+					    echo esc_html($download_count);
+					    ?>
 							</td>
 							<td><?php echo esc_html($v['created_at']); ?></td>
 						</tr>
@@ -658,13 +664,13 @@ class CodeConfig_Admin
                 return false;
             }
 
-            return $upload['file'];
+            return str_replace('//', '/', $upload['file']);
         }
 
         if ($has_attachment) {
             $source_path = get_attached_file($attachment_id);
             if ($source_path && file_exists($source_path)) {
-                $copied_file = CODECONFIG_API_STORAGE . basename($source_path);
+                $copied_file = str_replace('//', '/', CODECONFIG_API_STORAGE . basename($source_path));
                 copy($source_path, $copied_file);
                 return $copied_file;
             }
